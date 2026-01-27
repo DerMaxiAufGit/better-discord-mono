@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import websocketRoutes from './routes/websocket.js';
 import keyRoutes from './routes/keys.js';
+import messageRoutes from './routes/messages.js';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ fastify.decorate('authenticate', async function (request: any, reply: any) {
 await fastify.register(authRoutes, { prefix: '/api/auth' });
 await fastify.register(websocketRoutes, { prefix: '/api' });
 await fastify.register(keyRoutes, { prefix: '/api' });
+await fastify.register(messageRoutes, { prefix: '/api' });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {

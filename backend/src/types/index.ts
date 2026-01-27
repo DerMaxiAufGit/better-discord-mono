@@ -24,3 +24,18 @@ export interface PublicKeyResponse {
   userId: string;
   publicKey: string | null;
 }
+
+export interface Message {
+  id: number;
+  senderId: string;
+  recipientId: string;
+  encryptedContent: string;
+  createdAt: Date;
+  deliveredAt: Date | null;
+  readAt: Date | null;
+}
+
+export interface MessageHistoryResponse {
+  messages: Message[];
+  hasMore: boolean;
+}
