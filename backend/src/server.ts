@@ -2,8 +2,10 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
+import websocket from '@fastify/websocket';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import websocketRoutes from './routes/websocket.js';
 
 dotenv.config();
 
@@ -23,8 +25,12 @@ await fastify.register(jwt, {
 
 await fastify.register(cookie);
 
+// Register WebSocket plugin BEFORE routes
+await fastify.register(websocket);
+
 // Register routes
 await fastify.register(authRoutes, { prefix: '/api/auth' });
+await fastify.register(websocketRoutes, { prefix: '/api' });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
