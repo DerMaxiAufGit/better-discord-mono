@@ -1,18 +1,27 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { ChevronLeft, ChevronRight, User, LogOut } from 'lucide-react'
+import { useNavigate, useLocation, Link } from 'react-router'
+import { ChevronLeft, ChevronRight, User, LogOut, MessageCircle, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuthStore } from '@/stores/auth'
+import { useCryptoStore } from '@/stores/cryptoStore'
 import { cn } from '@/lib/utils'
+
+const navItems = [
+  { href: '/messages', icon: MessageCircle, label: 'Messages' },
+  { href: '/contacts', icon: Users, label: 'Contacts' },
+]
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+  const clearKeys = useCryptoStore((state) => state.clearKeys)
 
   const handleLogout = async () => {
+    clearKeys() // Clear crypto keys on logout
     await logout()
     navigate('/login')
   }
@@ -43,8 +52,28 @@ export function Sidebar() {
         </Button>
       </div>
 
-      {/* Spacer to push controls to bottom */}
-      <div className="flex-1" />
+      {/* Navigation */}
+      <nav className="flex-1 p-2 space-y-1">
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const isActive = location.pathname.startsWith(item.href)
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                'hover:bg-accent',
+                isActive && 'bg-accent',
+                collapsed && 'justify-center'
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              {!collapsed && <span>{item.label}</span>}
+            </Link>
+          )
+        })}
+      </nav>
 
       {/* Bottom controls */}
       <div className="p-3 space-y-2 border-t border-border">
