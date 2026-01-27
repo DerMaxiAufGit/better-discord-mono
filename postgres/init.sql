@@ -16,6 +16,26 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 -- Add public_key column for E2E encryption (stores X25519 public key, base64 encoded)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS public_key TEXT;
 
+-- Add username column for display name (required before using the app)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(32) UNIQUE;
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+-- Friend requests table for contact management
+-- Status: 'pending', 'accepted', 'rejected'
+CREATE TABLE IF NOT EXISTS friend_requests (
+    id SERIAL PRIMARY KEY,
+    requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    addressee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(requester_id, addressee_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_friend_requests_requester ON friend_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_addressee ON friend_requests(addressee_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_status ON friend_requests(status);
+
 -- Messages table for encrypted messaging
 -- Note: encrypted_content is E2E encrypted by the client; server cannot decrypt it
 CREATE TABLE IF NOT EXISTS messages (

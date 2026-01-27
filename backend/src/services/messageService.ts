@@ -63,6 +63,24 @@ class MessageService {
     );
   }
 
+  // Get list of conversations (contacts the user has exchanged messages with)
+  async getConversations(userId: string): Promise<{ contactId: string; lastMessageAt: Date }[]> {
+    const result = await query(
+      `SELECT DISTINCT
+        CASE WHEN sender_id = $1 THEN recipient_id ELSE sender_id END as contact_id,
+        MAX(created_at) as last_message_at
+      FROM messages
+      WHERE sender_id = $1 OR recipient_id = $1
+      GROUP BY contact_id
+      ORDER BY last_message_at DESC`,
+      [userId]
+    );
+    return result.rows.map((row: any) => ({
+      contactId: row.contact_id,
+      lastMessageAt: row.last_message_at,
+    }));
+  }
+
   private mapRow(row: any): Message {
     return {
       id: row.id,

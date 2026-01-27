@@ -21,6 +21,8 @@ export async function encryptMessage(
 ): Promise<string> {
   const s = await initSodium();
 
+  console.log('ENCRYPT using key:', Array.from(sessionKey.slice(0, 8)));
+
   // Generate random nonce (XChaCha20 has 192-bit nonce, safe for random generation)
   const nonce = s.randombytes_buf(s.crypto_secretbox_NONCEBYTES);
   const message = s.from_string(plaintext);
@@ -48,6 +50,8 @@ export async function decryptMessage(
   sessionKey: Uint8Array
 ): Promise<string | null> {
   const s = await initSodium();
+
+  console.log('DECRYPT using key:', Array.from(sessionKey.slice(0, 8)));
 
   try {
     const data = s.from_base64(encrypted);

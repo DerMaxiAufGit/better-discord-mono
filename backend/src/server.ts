@@ -9,6 +9,7 @@ import websocketRoutes from './routes/websocket.js';
 import keyRoutes from './routes/keys.js';
 import messageRoutes from './routes/messages.js';
 import userRoutes from './routes/users.js';
+import friendRoutes from './routes/friends.js';
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ await fastify.register(websocketRoutes, { prefix: '/api' });
 await fastify.register(keyRoutes, { prefix: '/api' });
 await fastify.register(messageRoutes, { prefix: '/api' });
 await fastify.register(userRoutes, { prefix: '/api' });
+await fastify.register(friendRoutes, { prefix: '/api' });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {

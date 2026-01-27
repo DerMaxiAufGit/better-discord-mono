@@ -4,7 +4,8 @@ import { authApi } from '@/lib/api'
 interface User {
   id: number
   email: string
-  createdAt: string
+  username: string | null
+  createdAt?: string
 }
 
 interface AuthState {
@@ -19,6 +20,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   checkAuth: () => Promise<void>
+  setUsername: (username: string) => Promise<void>
   clearError: () => void
 }
 
@@ -112,6 +114,18 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: false,
         isInitialized: true,
       })
+    }
+  },
+
+  setUsername: async (username: string) => {
+    try {
+      set({ error: null })
+      const user = await authApi.setUsername(username)
+      set({ user })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to set username'
+      set({ error: message })
+      throw error
     }
   },
 

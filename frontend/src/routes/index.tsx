@@ -1,9 +1,11 @@
 import { createBrowserRouter, Navigate } from "react-router"
 import { LoginPage } from "@/pages/LoginPage"
 import { SignupPage } from "@/pages/SignupPage"
+import { SetupUsernamePage } from "@/pages/SetupUsernamePage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { ContactsPage } from "@/pages/ContactsPage"
 import { MessagesPage } from "@/pages/MessagesPage"
+import { SettingsPage } from "@/pages/SettingsPage"
 import { ProtectedRoute } from "./ProtectedRoute"
 
 export const router = createBrowserRouter([
@@ -32,10 +34,26 @@ export const router = createBrowserRouter([
     element: <SignupPage />,
   },
   {
+    path: "/setup-username",
+    element: (
+      <ProtectedRoute requireUsername={false}>
+        <SetupUsernamePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: "/contacts",
     element: (
       <ProtectedRoute>
         <ContactsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings",
+    element: (
+      <ProtectedRoute>
+        <SettingsPage />
       </ProtectedRoute>
     ),
   },

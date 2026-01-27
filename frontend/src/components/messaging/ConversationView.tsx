@@ -13,7 +13,7 @@ interface Message {
 
 interface ConversationViewProps {
   contactId: string;
-  contactEmail: string;
+  contactUsername: string;
   currentUserId: string;
   messages: Message[];
   onSendMessage: (content: string) => void;
@@ -23,7 +23,7 @@ interface ConversationViewProps {
 
 export function ConversationView({
   contactId: _contactId, // Reserved for future use (e.g., fetching more messages)
-  contactEmail,
+  contactUsername,
   currentUserId,
   messages,
   onSendMessage,
@@ -31,12 +31,12 @@ export function ConversationView({
   isLoading,
 }: ConversationViewProps) {
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b">
-        <Avatar fallback={contactEmail} className="h-10 w-10" />
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Header - fixed at top */}
+      <div className="h-[73px] flex items-center gap-3 px-4 border-b flex-shrink-0">
+        <Avatar fallback={contactUsername} className="h-10 w-10" />
         <div className="flex-1">
-          <h2 className="font-semibold">{contactEmail}</h2>
+          <h2 className="font-semibold">{contactUsername}</h2>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Lock className="h-3 w-3" />
             <span>End-to-end encrypted</span>
@@ -49,25 +49,29 @@ export function ConversationView({
         )}
       </div>
 
-      {/* Messages */}
+      {/* Messages - scrollable area */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           Loading messages...
         </div>
       ) : (
-        <MessageList
-          messages={messages}
-          currentUserId={currentUserId}
-          contactEmail={contactEmail}
-        />
+        <div className="flex-1 overflow-hidden">
+          <MessageList
+            messages={messages}
+            currentUserId={currentUserId}
+            contactUsername={contactUsername}
+          />
+        </div>
       )}
 
-      {/* Input */}
-      <MessageInput
-        onSend={onSendMessage}
-        disabled={!isConnected}
-        placeholder={isConnected ? 'Type a message...' : 'Connecting...'}
-      />
+      {/* Input - fixed at bottom */}
+      <div className="flex-shrink-0">
+        <MessageInput
+          onSend={onSendMessage}
+          disabled={!isConnected}
+          placeholder={isConnected ? 'Type a message...' : 'Connecting...'}
+        />
+      </div>
     </div>
   );
 }

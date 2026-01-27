@@ -11,6 +11,24 @@ interface HistoryQuery {
 }
 
 export default async function messageRoutes(fastify: FastifyInstance) {
+  // Get list of conversations (contacts user has chatted with)
+  // Returns only contactId - frontend fetches username separately
+  fastify.get(
+    '/conversations',
+    { preValidation: [fastify.authenticate] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const userId = (request.user as { userId: string }).userId;
+      const conversations = await messageService.getConversations(userId);
+
+      return {
+        conversations: conversations.map(c => ({
+          contactId: c.contactId,
+          lastMessageAt: c.lastMessageAt,
+        })),
+      };
+    }
+  );
+
   // Get message history with a contact
   fastify.get<{ Params: HistoryParams; Querystring: HistoryQuery }>(
     '/messages/:contactId',

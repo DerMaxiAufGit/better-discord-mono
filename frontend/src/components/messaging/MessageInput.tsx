@@ -63,6 +63,7 @@ export function MessageInput({ onSend, disabled, placeholder = 'Type a message..
         type="submit"
         size="icon"
         disabled={disabled || !message.trim()}
+        className="h-10 w-10 flex-shrink-0"
       >
         <Send className="h-4 w-4" />
         <span className="sr-only">Send message</span>

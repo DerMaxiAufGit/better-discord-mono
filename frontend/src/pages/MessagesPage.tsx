@@ -7,7 +7,7 @@ import { useContactStore } from '@/stores/contactStore';
 import { useCryptoStore } from '@/stores/cryptoStore';
 import { useMessaging } from '@/lib/websocket/useMessaging';
 import { decryptMessage } from '@/lib/crypto/messageEncryption';
-import { usersApi } from '@/lib/api';
+import { usersApi, messageApi } from '@/lib/api';
 
 export function MessagesPage() {
   const { contactId } = useParams<{ contactId?: string }>();
@@ -17,12 +17,61 @@ export function MessagesPage() {
   const { conversations, loadHistory, isLoadingHistory } = useMessageStore();
   const { contacts, addContact, setActiveContact, fetchContactPublicKey } = useContactStore();
   const { getOrDeriveSessionKeys, isInitialized: cryptoReady } = useCryptoStore();
-  const { isConnected, sendMessage } = useMessaging();
+  const { isConnected, sendMessage, markAsRead } = useMessaging();
+
+  // Load conversations on mount
+  React.useEffect(() => {
+    const loadConversations = async () => {
+      try {
+        const { conversations: convos } = await messageApi.getConversations();
+        // Fetch username for each contact
+        for (const c of convos) {
+          try {
+            const user = await usersApi.getUser(c.contactId);
+            addContact({
+              id: c.contactId,
+              username: user.username || 'Unknown',
+              publicKey: null,
+            });
+          } catch {
+            // Skip contacts we can't fetch
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load conversations:', e);
+      }
+    };
+    loadConversations();
+  }, [addContact]);
 
   // Set active contact when route changes
   React.useEffect(() => {
     setActiveContact(contactId || null);
   }, [contactId, setActiveContact]);
+
+  // Get messages for the active contact to watch for new incoming messages
+  const activeMessages = contactId ? conversations.get(contactId) || [] : [];
+
+  // Mark messages as read when actively viewing a conversation
+  // Also marks new incoming messages as read while in the chat
+  React.useEffect(() => {
+    if (!contactId || !isConnected || !user) return;
+
+    // Check if there are unread messages from the contact (messages we received)
+    const hasUnreadFromContact = activeMessages.some(
+      msg => msg.senderId === contactId && msg.status === 'delivered'
+    );
+
+    // Only send read receipt if there are unread messages or on initial view
+    if (!hasUnreadFromContact && activeMessages.length > 0) return;
+
+    // Delay marking as read to ensure user is actually viewing the chat
+    const timer = setTimeout(() => {
+      markAsRead(contactId);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [contactId, isConnected, markAsRead, user, activeMessages]);
 
   // Load contact info if navigating directly to a conversation
   React.useEffect(() => {
@@ -30,7 +79,7 @@ export function MessagesPage() {
       usersApi.getUser(contactId).then((contactUser) => {
         addContact({
           id: contactUser.id,
-          email: contactUser.email,
+          username: contactUser.username || 'Unknown',
           publicKey: null,
         });
       }).catch(console.error);
@@ -97,7 +146,7 @@ export function MessagesPage() {
       const lastMsg = msgs[msgs.length - 1];
       return {
         contactId: contact.id,
-        contactEmail: contact.email,
+        contactUsername: contact.username,
         lastMessage: lastMsg?.content,
         lastMessageAt: lastMsg?.timestamp,
       };
@@ -109,28 +158,38 @@ export function MessagesPage() {
   }, [contacts, conversations]);
 
   const activeContact = contactId ? contacts.get(contactId) : null;
-  const activeMessages = contactId ? conversations.get(contactId) || [] : [];
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-screen overflow-hidden">
       {/* Conversation list sidebar */}
-      <div className="w-64 border-r flex-shrink-0">
-        <div className="p-4 border-b">
+      <div className="w-64 border-r flex-shrink-0 flex flex-col h-full">
+        <div className="h-[73px] px-4 border-b flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => navigate('/')}
+            className="p-1 hover:bg-muted rounded"
+            title="Back to menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+          </button>
           <h2 className="font-semibold">Messages</h2>
         </div>
-        <ConversationList
-          conversations={conversationList}
-          activeId={contactId || null}
-          onSelect={handleSelectConversation}
-        />
+        <div className="flex-1 overflow-hidden">
+          <ConversationList
+            conversations={conversationList}
+            activeId={contactId || null}
+            onSelect={handleSelectConversation}
+          />
+        </div>
       </div>
 
       {/* Conversation view */}
-      <div className="flex-1">
+      <div className="flex-1 h-full overflow-hidden">
         {contactId && activeContact && user ? (
           <ConversationView
             contactId={contactId}
-            contactEmail={activeContact.email}
+            contactUsername={activeContact.username}
             currentUserId={String(user.id)}
             messages={activeMessages}
             onSendMessage={handleSendMessage}

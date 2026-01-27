@@ -3,6 +3,7 @@ export interface User {
   email: string;
   password_hash: string;
   email_verified: boolean;
+  username: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -17,6 +18,7 @@ export interface AuthResponse {
   user: {
     id: string;
     email: string;
+    username: string | null;
   };
 }
 

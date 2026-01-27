@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router'
-import { ChevronLeft, ChevronRight, User, LogOut, MessageCircle, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, LogOut, MessageCircle, Users, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuthStore } from '@/stores/auth'
 import { useCryptoStore } from '@/stores/cryptoStore'
 import { cn } from '@/lib/utils'
@@ -76,11 +75,11 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom controls */}
-      <div className="p-3 space-y-2 border-t border-border">
-        {/* User avatar */}
+      <div className="p-3 space-y-1 border-t border-border">
+        {/* User info */}
         <div
           className={cn(
-            "flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer",
+            "flex items-center gap-3 p-2 rounded-lg",
             collapsed && "justify-center"
           )}
         >
@@ -90,21 +89,25 @@ export function Sidebar() {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">
-                {user?.email || 'User'}
+                {user?.username || 'User'}
               </p>
             </div>
           )}
         </div>
 
-        {/* Theme toggle */}
-        <div
+        {/* Settings button */}
+        <Link
+          to="/settings"
           className={cn(
-            "flex items-center",
-            collapsed ? "justify-center" : "justify-start px-2"
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+            'hover:bg-accent',
+            location.pathname === '/settings' && 'bg-accent',
+            collapsed && 'justify-center'
           )}
         >
-          <ThemeToggle />
-        </div>
+          <Settings className="h-5 w-5" />
+          {!collapsed && <span>Settings</span>}
+        </Link>
 
         {/* Logout button */}
         <Button

@@ -3,7 +3,7 @@ import { keyApi } from '@/lib/api'
 
 interface Contact {
   id: string
-  email: string
+  username: string
   publicKey: string | null
   lastMessageAt?: Date
 }

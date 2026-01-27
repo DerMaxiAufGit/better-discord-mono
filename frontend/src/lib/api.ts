@@ -1,12 +1,13 @@
 // API client with automatic token refresh
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 interface AuthResponse {
   accessToken: string
   user: {
     id: number
     email: string
-    createdAt: string
+    username: string | null
+    createdAt?: string
   }
 }
 
@@ -82,7 +83,7 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }))
-    throw new Error(error.message || `HTTP ${response.status}`)
+    throw new Error(error.error || error.message || `HTTP ${response.status}`)
   }
 
   return response.json()
@@ -118,6 +119,15 @@ export const authApi = {
     })
     return response.user
   },
+
+  async setUsername(username: string): Promise<AuthResponse['user']> {
+    const response = await apiRequest<{ user: AuthResponse['user'] }>('/api/auth/username', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    })
+    return response.user
+  },
 }
 
 export const keyApi = {
@@ -143,6 +153,14 @@ export const keyApi = {
 }
 
 export const messageApi = {
+  // Get list of conversations (returns contactId only, fetch username separately)
+  getConversations: async () => {
+    return apiRequest<{ conversations: Array<{
+      contactId: string
+      lastMessageAt: string
+    }> }>('/api/conversations')
+  },
+
   // Get message history with a contact
   getHistory: async (contactId: string, limit?: number, beforeId?: number) => {
     const params = new URLSearchParams()
@@ -167,15 +185,65 @@ export const messageApi = {
 }
 
 export const usersApi = {
-  // Get list of users for contact discovery
-  getUsers: async (search?: string): Promise<{ users: { id: string; email: string }[] }> => {
-    const params = search ? `?search=${encodeURIComponent(search)}` : '';
+  // Search users by username (requires search term)
+  searchUsers: async (search: string): Promise<{ users: { id: string; username: string }[] }> => {
+    if (!search || search.trim().length < 2) {
+      return { users: [] };
+    }
+    const params = `?search=${encodeURIComponent(search)}`;
     return apiRequest(`/api/users${params}`);
   },
 
-  // Get single user
-  getUser: async (userId: string): Promise<{ id: string; email: string }> => {
+  // Get single user by ID
+  getUser: async (userId: string): Promise<{ id: string; username: string }> => {
     return apiRequest(`/api/users/${userId}`);
+  },
+}
+
+export const friendsApi = {
+  // Get all friends
+  getFriends: async () => {
+    return apiRequest<{ friends: Array<{ id: number; oderId: string; username: string; status: string; createdAt: string }> }>('/api/friends')
+  },
+
+  // Get pending friend requests
+  getPendingRequests: async () => {
+    return apiRequest<{ requests: Array<{ id: number; oderId: string; username: string; status: string; createdAt: string }> }>('/api/friends/requests')
+  },
+
+  // Send friend request
+  sendRequest: async (userId: string) => {
+    return apiRequest<{ request: any }>('/api/friends/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+  },
+
+  // Accept friend request
+  acceptRequest: async (requestId: number) => {
+    return apiRequest<{ request: any }>(`/api/friends/requests/${requestId}/accept`, {
+      method: 'POST',
+    })
+  },
+
+  // Reject friend request
+  rejectRequest: async (requestId: number) => {
+    return apiRequest<{ success: boolean }>(`/api/friends/requests/${requestId}/reject`, {
+      method: 'POST',
+    })
+  },
+
+  // Remove friend
+  removeFriend: async (friendId: string) => {
+    return apiRequest<{ success: boolean }>(`/api/friends/${friendId}`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Get friendship status
+  getStatus: async (userId: string) => {
+    return apiRequest<{ status: { status: string; requestId?: number; isRequester?: boolean } | null }>(`/api/friends/status/${userId}`)
   },
 }
 
@@ -184,4 +252,5 @@ export const api = {
   keys: keyApi,
   messages: messageApi,
   users: usersApi,
+  friends: friendsApi,
 }

@@ -32,12 +32,13 @@ async function openKeyStore(): Promise<IDBDatabase> {
 }
 
 /**
- * Generate a new X25519 key pair for asymmetric encryption
+ * Generate a new X25519 key pair for key exchange (crypto_kx)
  * @returns Base64-encoded public and private keys
  */
 export async function generateKeyPair(): Promise<KeyPair> {
   const s = await initSodium();
-  const keyPair = s.crypto_box_keypair();
+  // Use crypto_kx_keypair for compatibility with crypto_kx_*_session_keys
+  const keyPair = s.crypto_kx_keypair();
 
   return {
     publicKey: s.to_base64(keyPair.publicKey),

@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Conversation {
   contactId: string;
-  contactEmail: string;
+  contactUsername: string;
   lastMessage?: string;
   lastMessageAt?: Date;
   unreadCount?: number;
@@ -49,11 +49,11 @@ export function ConversationList({ conversations, activeId, onSelect }: Conversa
                 activeId === conv.contactId && 'bg-accent'
               )}
             >
-              <Avatar fallback={conv.contactEmail} className="h-10 w-10" />
+              <Avatar fallback={conv.contactUsername} className="h-10 w-10" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm truncate">
-                    {conv.contactEmail}
+                    {conv.contactUsername}
                   </span>
                   {conv.lastMessageAt && (
                     <span className="text-xs text-muted-foreground">

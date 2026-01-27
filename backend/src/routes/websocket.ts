@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import type { WebSocket } from '@fastify/websocket';
 import { wsAuthHook } from '../middleware/wsAuth.js';
 import { messageService } from '../services/messageService.js';
+import { friendService } from '../services/friendService.js';
 
 // Store active WebSocket connections by userId
 // Exported so message service can access it for message delivery
@@ -71,6 +72,16 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             return;
           }
 
+          // Check if users are friends
+          const areFriends = await friendService.areFriends(userId, msg.recipientId);
+          if (!areFriends) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'You can only message friends',
+            } as ErrorMessage));
+            return;
+          }
+
           // Save to database
           const saved = await messageService.saveMessage(
             userId,
@@ -78,12 +89,13 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             msg.encryptedContent
           );
 
-          // Acknowledge to sender
+          // Acknowledge to sender (include recipientId so client can match pending message)
           socket.send(JSON.stringify({
             type: 'message_ack',
             id: saved.id,
+            recipientId: msg.recipientId,
             timestamp: saved.createdAt.toISOString(),
-          } as MessageAck));
+          }));
 
           // Forward to recipient if online
           const recipientSocket = activeConnections.get(msg.recipientId);
@@ -96,6 +108,13 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
               timestamp: saved.createdAt.toISOString(),
             } as OutgoingMessage));
             await messageService.markDelivered(saved.id);
+
+            // Notify sender that message was delivered
+            socket.send(JSON.stringify({
+              type: 'delivered',
+              messageId: saved.id,
+              recipientId: msg.recipientId,
+            }));
           }
         } else if (msg.type === 'typing') {
           // Forward typing indicator to recipient

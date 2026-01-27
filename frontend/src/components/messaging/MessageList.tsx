@@ -14,7 +14,7 @@ interface Message {
 interface MessageListProps {
   messages: Message[];
   currentUserId: string;
-  contactEmail?: string;
+  contactUsername?: string;
 }
 
 function formatTime(date: Date): string {
@@ -35,7 +35,7 @@ function formatDate(date: Date): string {
   }
 }
 
-export function MessageList({ messages, currentUserId, contactEmail }: MessageListProps) {
+export function MessageList({ messages, currentUserId, contactUsername }: MessageListProps) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const endRef = React.useRef<HTMLDivElement>(null);
 
@@ -63,8 +63,8 @@ export function MessageList({ messages, currentUserId, contactEmail }: MessageLi
   }, [messages]);
 
   return (
-    <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-      <div className="space-y-4">
+    <ScrollArea className="h-full" ref={scrollRef}>
+      <div className="space-y-4 p-4">
         {groupedMessages.map((group) => (
           <div key={group.date}>
             <div className="flex justify-center my-4">
@@ -86,7 +86,7 @@ export function MessageList({ messages, currentUserId, contactEmail }: MessageLi
                     {!isOwn && (
                       <Avatar
                         className="h-8 w-8"
-                        fallback={contactEmail || '?'}
+                        fallback={contactUsername || '?'}
                       />
                     )}
                     <div
@@ -108,11 +108,14 @@ export function MessageList({ messages, currentUserId, contactEmail }: MessageLi
                           {formatTime(message.timestamp)}
                         </span>
                         {isOwn && (
-                          <span className="text-xs opacity-70">
-                            {message.status === 'sending' && '...'}
-                            {message.status === 'sent' && '\u2713'}
-                            {message.status === 'delivered' && '\u2713\u2713'}
-                            {message.status === 'read' && '\u2713\u2713'}
+                          <span className={cn(
+                            'text-sm font-bold',
+                            message.status === 'read' ? 'text-blue-500' : 'text-gray-400'
+                          )}>
+                            {message.status === 'sending' && '•••'}
+                            {message.status === 'sent' && '✓'}
+                            {message.status === 'delivered' && '✓✓'}
+                            {message.status === 'read' && '✓✓'}
                           </span>
                         )}
                       </div>

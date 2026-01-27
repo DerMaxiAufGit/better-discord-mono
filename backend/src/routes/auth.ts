@@ -50,6 +50,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         user: {
           id: user.id,
           email: user.email,
+          username: user.username,
         },
       };
 
@@ -97,6 +98,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         user: {
           id: user.id,
           email: user.email,
+          username: user.username,
         },
       };
 
@@ -183,11 +185,61 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         user: {
           id: user.id,
           email: user.email,
+          username: user.username,
           emailVerified: user.email_verified,
         },
       });
     } catch (error) {
       return reply.code(401).send({ error: 'Invalid token' });
+    }
+  });
+
+  // POST /auth/username - set username (required before using app)
+  fastify.post<{
+    Body: { username: string };
+  }>('/username', async (request, reply) => {
+    try {
+      // Extract token from Authorization header
+      const authHeader = request.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return reply.code(401).send({ error: 'No authorization token' });
+      }
+
+      const token = authHeader.substring(7);
+      const decoded = fastify.jwt.verify<{ userId: string }>(token);
+
+      const { username } = request.body;
+
+      // Validate username
+      if (!username || username.length < 3 || username.length > 32) {
+        return reply.code(400).send({ error: 'Username must be 3-32 characters' });
+      }
+
+      // Only allow alphanumeric, underscore, hyphen
+      if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        return reply.code(400).send({ error: 'Username can only contain letters, numbers, underscore, and hyphen' });
+      }
+
+      // Set the username
+      const user = await authService.setUsername(decoded.userId, username);
+
+      return reply.send({
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+        },
+      });
+    } catch (error: any) {
+      if (error.message === 'Username already taken') {
+        return reply.code(400).send({ error: 'Username already taken' });
+      }
+      if (error.message === 'User not found') {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 };

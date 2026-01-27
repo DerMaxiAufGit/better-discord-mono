@@ -1,13 +1,16 @@
-import { Navigate } from "react-router"
+import { Navigate, useLocation } from "react-router"
 import { useAuthStore } from "@/stores/auth"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  requireUsername?: boolean
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requireUsername = true }: ProtectedRouteProps) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const isInitialized = useAuthStore((state) => state.isInitialized)
+  const user = useAuthStore((state) => state.user)
+  const location = useLocation()
 
   // Wait for auth check to complete before making decision
   if (!isInitialized) {
@@ -20,6 +23,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  // Redirect to username setup if no username and not already there
+  if (requireUsername && user && !user.username && location.pathname !== '/setup-username') {
+    return <Navigate to="/setup-username" replace />
   }
 
   return <>{children}</>

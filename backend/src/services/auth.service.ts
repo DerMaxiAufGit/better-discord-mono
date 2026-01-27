@@ -18,7 +18,7 @@ export class AuthService {
       const result = await pool.query(
         `INSERT INTO users (email, password_hash, email_verified)
          VALUES ($1, $2, false)
-         RETURNING id, email, password_hash, email_verified, created_at, updated_at`,
+         RETURNING id, email, password_hash, email_verified, username, created_at, updated_at`,
         [email, passwordHash]
       );
 
@@ -39,7 +39,7 @@ export class AuthService {
   async login(email: string, password: string): Promise<User | null> {
     // Query user by email
     const result = await pool.query(
-      'SELECT id, email, password_hash, email_verified, created_at, updated_at FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, email_verified, username, created_at, updated_at FROM users WHERE email = $1',
       [email]
     );
 
@@ -64,11 +64,37 @@ export class AuthService {
    */
   async findById(userId: string): Promise<User | null> {
     const result = await pool.query(
-      'SELECT id, email, password_hash, email_verified, created_at, updated_at FROM users WHERE id = $1',
+      'SELECT id, email, password_hash, email_verified, username, created_at, updated_at FROM users WHERE id = $1',
       [userId]
     );
 
     return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  /**
+   * Set username for a user
+   * @throws Error if username already taken
+   */
+  async setUsername(userId: string, username: string): Promise<User> {
+    try {
+      const result = await pool.query(
+        `UPDATE users SET username = $1, updated_at = NOW()
+         WHERE id = $2
+         RETURNING id, email, password_hash, email_verified, username, created_at, updated_at`,
+        [username, userId]
+      );
+
+      if (result.rows.length === 0) {
+        throw new Error('User not found');
+      }
+
+      return result.rows[0];
+    } catch (error: any) {
+      if (error.code === '23505' && error.constraint === 'users_username_key') {
+        throw new Error('Username already taken');
+      }
+      throw error;
+    }
   }
 
   /**

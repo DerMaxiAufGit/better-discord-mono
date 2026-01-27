@@ -57,7 +57,10 @@ export const useCryptoStore = create<CryptoState>((set, get) => ({
 
     // Check cache first
     const cached = sessionKeys.get(contactId)
-    if (cached) return cached
+    if (cached) {
+      console.log('Using cached session keys for contact:', contactId)
+      return cached
+    }
 
     // Determine who is "client" role (lower userId lexicographically)
     // CRITICAL: crypto_kx guarantees bidirectional symmetry:
@@ -69,6 +72,7 @@ export const useCryptoStore = create<CryptoState>((set, get) => ({
     // And when B sends to A:
     //   B encrypts with B.tx -> A decrypts with A.rx (A.rx == B.tx)
     const isClient = userId < contactId
+    console.log('Deriving session keys:', { userId, contactId, isClient, myPubKey: keyPair.publicKey.slice(0, 20) + '...', contactPubKey: contactPublicKey.slice(0, 20) + '...' })
 
     const keys = await deriveSessionKeys(
       keyPair.publicKey,
@@ -76,6 +80,8 @@ export const useCryptoStore = create<CryptoState>((set, get) => ({
       contactPublicKey,
       isClient
     )
+
+    console.log('Derived keys - tx:', Array.from(keys.tx.slice(0, 8)), 'rx:', Array.from(keys.rx.slice(0, 8)))
 
     // Cache session keys
     set((state) => ({

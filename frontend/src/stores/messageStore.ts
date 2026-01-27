@@ -18,6 +18,8 @@ interface MessageState {
   // Actions
   addMessage: (contactId: string, message: Message) => void
   updateMessageStatus: (contactId: string, messageId: number, status: Message['status']) => void
+  updatePendingMessage: (contactId: string, realId: number, status: Message['status']) => void
+  markAllAsRead: (contactId: string, currentUserId: string) => void
   loadHistory: (contactId: string, decrypt: (encrypted: string, senderId: string) => Promise<string | null>) => Promise<void>
   clearMessages: () => void
 }
@@ -46,6 +48,39 @@ export const useMessageStore = create<MessageState>((set) => ({
 
       const updated = messages.map((m) =>
         m.id === messageId ? { ...m, status } : m
+      )
+      return {
+        conversations: new Map(state.conversations).set(contactId, updated),
+      }
+    })
+  },
+
+  // Update a pending message (negative ID) with real ID and status
+  updatePendingMessage: (contactId: string, realId: number, status: Message['status']) => {
+    set((state) => {
+      const messages = state.conversations.get(contactId)
+      if (!messages) return state
+
+      // Find the first pending message (negative ID) for this contact
+      const pendingIndex = messages.findIndex((m) => m.id < 0)
+      if (pendingIndex === -1) return state
+
+      const updated = [...messages]
+      updated[pendingIndex] = { ...updated[pendingIndex], id: realId, status }
+      return {
+        conversations: new Map(state.conversations).set(contactId, updated),
+      }
+    })
+  },
+
+  markAllAsRead: (contactId: string, currentUserId: string) => {
+    set((state) => {
+      const messages = state.conversations.get(contactId)
+      if (!messages) return state
+
+      // Mark all messages sent by current user to this contact as read
+      const updated = messages.map((m) =>
+        m.senderId === currentUserId && m.status !== 'read' ? { ...m, status: 'read' as const } : m
       )
       return {
         conversations: new Map(state.conversations).set(contactId, updated),

@@ -11,7 +11,7 @@ export function DashboardPage() {
           Welcome to ChatApp
         </h1>
         <p className="text-muted-foreground">
-          {user ? `Logged in as ${user.email}` : 'Select a conversation to get started'}
+          {user ? `Welcome, ${user.username || user.email}` : 'Select a conversation to get started'}
         </p>
       </div>
     </AppShell>

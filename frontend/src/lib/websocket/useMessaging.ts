@@ -4,6 +4,7 @@ import { useCryptoStore } from '@/stores/cryptoStore'
 import { useMessageStore } from '@/stores/messageStore'
 import { useContactStore } from '@/stores/contactStore'
 import { encryptMessage, decryptMessage } from '@/lib/crypto/messageEncryption'
+import { usersApi } from '@/lib/api'
 
 interface UseMessagingOptions {
   onError?: (error: Error) => void
@@ -16,11 +17,18 @@ export function useMessaging(options: UseMessagingOptions = {}) {
 
   const { accessToken, user } = useAuthStore()
   const { getOrDeriveSessionKeys, isInitialized: cryptoReady } = useCryptoStore()
-  const { addMessage } = useMessageStore()
-  const { fetchContactPublicKey } = useContactStore()
+  const { addMessage, updateMessageStatus, updatePendingMessage, markAllAsRead } = useMessageStore()
+  const { fetchContactPublicKey, addContact, getContact } = useContactStore()
 
-  // Connect to WebSocket
-  const connect = useCallback(() => {
+  // Use refs for callbacks and user to avoid stale closures
+  const storeRefs = useRef({ getOrDeriveSessionKeys, addMessage, updateMessageStatus, updatePendingMessage, markAllAsRead, fetchContactPublicKey, addContact, getContact, options, user })
+  storeRefs.current = { getOrDeriveSessionKeys, addMessage, updateMessageStatus, updatePendingMessage, markAllAsRead, fetchContactPublicKey, addContact, getContact, options, user }
+
+  // Reconnect trigger state
+  const [reconnectTrigger, setReconnectTrigger] = useState(0)
+
+  // Connect on mount and when auth state changes
+  useEffect(() => {
     if (!accessToken || !cryptoReady || !user) return
 
     // Determine WebSocket URL (same host, /api/ws path)
@@ -38,10 +46,36 @@ export function useMessaging(options: UseMessagingOptions = {}) {
     ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data)
+        const { getOrDeriveSessionKeys, addMessage, fetchContactPublicKey, options, user: currentUser } = storeRefs.current
+
+        console.log('WebSocket message received:', data.type)
 
         if (data.type === 'message') {
           // Incoming message from another user
           const { id, senderId, encryptedContent, timestamp } = data
+          const { addContact, getContact } = storeRefs.current
+          console.log('Processing incoming message from:', senderId)
+
+          if (!currentUser) {
+            console.error('No user in storeRefs')
+            return
+          }
+
+          // Ensure sender is in contacts (so UI shows the conversation)
+          if (!getContact(senderId)) {
+            try {
+              const senderInfo = await usersApi.getUser(senderId)
+              addContact({
+                id: senderId,
+                username: senderInfo.username || 'Unknown',
+                publicKey: null,
+              })
+              console.log('Added sender to contacts:', senderId)
+            } catch (e) {
+              console.error('Failed to fetch sender info:', e)
+              // Continue anyway - message will be stored but contact name may be missing
+            }
+          }
 
           // Get sender's public key and derive session keys
           const publicKey = await fetchContactPublicKey(senderId)
@@ -50,25 +84,45 @@ export function useMessaging(options: UseMessagingOptions = {}) {
             return
           }
 
-          const sessionKeys = await getOrDeriveSessionKeys(String(user.id), senderId, publicKey)
+          const sessionKeys = await getOrDeriveSessionKeys(String(currentUser.id), senderId, publicKey)
+          console.log('Receiver using rx key:', Array.from(sessionKeys.rx.slice(0, 8)), 'tx key:', Array.from(sessionKeys.tx.slice(0, 8)))
 
           // Decrypt message
           const content = await decryptMessage(encryptedContent, sessionKeys.rx)
+          console.log('Decrypted content:', content ? 'success' : 'failed')
           if (content) {
             addMessage(senderId, {
               id,
               senderId,
-              recipientId: String(user.id),
+              recipientId: String(currentUser.id),
               content,
               timestamp: new Date(timestamp),
               status: 'delivered',
             })
+            console.log('Message added to store')
           }
         } else if (data.type === 'message_ack') {
-          // Acknowledgment for sent message
-          // Message ID is assigned, update status
-          // Note: We'd need to track pending messages to update them
-          console.log('Message acknowledged:', data.id)
+          // Acknowledgment for sent message - update pending message with real ID and mark as sent
+          const { updatePendingMessage } = storeRefs.current
+          const { id, recipientId } = data
+          console.log('Message acknowledged:', id, 'for recipient:', recipientId)
+          if (recipientId) {
+            updatePendingMessage(recipientId, id, 'sent')
+          }
+        } else if (data.type === 'delivered') {
+          // Message was delivered to recipient
+          const { updateMessageStatus } = storeRefs.current
+          const { messageId, recipientId } = data
+          console.log('Message delivered:', messageId, 'to', recipientId)
+          updateMessageStatus(recipientId, messageId, 'delivered')
+        } else if (data.type === 'read_receipt') {
+          // Recipient read our messages
+          const { markAllAsRead, user: currentUser } = storeRefs.current
+          const { readerId } = data
+          console.log('Messages read by:', readerId)
+          if (currentUser) {
+            markAllAsRead(readerId, String(currentUser.id))
+          }
         } else if (data.type === 'error') {
           console.error('WebSocket error:', data.message)
           options.onError?.(new Error(data.message))
@@ -85,14 +139,23 @@ export function useMessaging(options: UseMessagingOptions = {}) {
 
       // Reconnect after delay
       reconnectTimeoutRef.current = window.setTimeout(() => {
-        connect()
+        setReconnectTrigger(t => t + 1)
       }, 3000)
     }
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error)
     }
-  }, [accessToken, cryptoReady, user, fetchContactPublicKey, getOrDeriveSessionKeys, addMessage, options])
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+      ws.close()
+      wsRef.current = null
+    }
+  }, [accessToken, cryptoReady, user?.id, reconnectTrigger]) // reconnectTrigger forces reconnect
 
   // Send encrypted message
   const sendMessage = useCallback(async (recipientId: string, plaintext: string) => {
@@ -100,6 +163,8 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       throw new Error('WebSocket not connected')
     }
     if (!user) throw new Error('Not authenticated')
+
+    const { getOrDeriveSessionKeys, addMessage, fetchContactPublicKey } = storeRefs.current
 
     // Get recipient's public key
     const publicKey = await fetchContactPublicKey(recipientId)
@@ -109,6 +174,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
 
     // Derive session keys
     const sessionKeys = await getOrDeriveSessionKeys(String(user.id), recipientId, publicKey)
+    console.log('Sender using tx key:', Array.from(sessionKeys.tx.slice(0, 8)), 'rx key:', Array.from(sessionKeys.rx.slice(0, 8)))
 
     // Encrypt message
     const encryptedContent = await encryptMessage(plaintext, sessionKeys.tx)
@@ -130,22 +196,22 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       recipientId,
       encryptedContent,
     }))
-  }, [user, fetchContactPublicKey, getOrDeriveSessionKeys, addMessage])
+  }, [user])
 
-  // Connect on mount, disconnect on unmount
-  useEffect(() => {
-    connect()
-
-    return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-      }
-      wsRef.current?.close()
+  // Mark messages from a contact as read
+  const markAsRead = useCallback((contactId: string) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      return
     }
-  }, [connect])
+    wsRef.current.send(JSON.stringify({
+      type: 'read',
+      recipientId: contactId,
+    }))
+  }, [])
 
   return {
     isConnected,
     sendMessage,
+    markAsRead,
   }
 }
