@@ -29,10 +29,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can log in and stay logged in across browser restarts
   4. User can toggle between light and dark mode
   5. All containers report healthy status in Docker
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 01-01-PLAN.md — Docker infrastructure with PostgreSQL, health checks, and env config
+- [ ] 01-02-PLAN.md — Backend auth API (signup, login, refresh, logout)
+- [ ] 01-03-PLAN.md — Frontend shell with shadcn/ui and theme toggle
+- [ ] 01-04-PLAN.md — Frontend auth integration with protected routes
+- [ ] 01-05-PLAN.md — Documentation and final verification
 
 ### Phase 2: E2E Encrypted Messaging
 **Goal**: Users can send private, encrypted messages that only participants can read
@@ -84,11 +88,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Deployment | 0/TBD | Not started | - |
+| 1. Foundation & Deployment | 0/5 | Planned | - |
 | 2. E2E Encrypted Messaging | 0/TBD | Not started | - |
 | 3. Voice/Video Calls | 0/TBD | Not started | - |
 | 4. UI Polish & Production Readiness | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Last updated: 2026-01-27 after initial creation*
+*Last updated: 2026-01-27 after Phase 1 planning*
