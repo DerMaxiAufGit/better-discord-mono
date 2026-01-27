@@ -9,8 +9,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can sign up with email and password
-- [ ] **AUTH-02**: User can log in and stay logged in across sessions (persistent auth)
+- [x] **AUTH-01**: User can sign up with email and password
+- [x] **AUTH-02**: User can log in and stay logged in across sessions (persistent auth)
 
 ### Messaging
 
@@ -24,16 +24,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### UI/UX
 
-- [ ] **UI-01**: User can toggle between light and dark mode
+- [x] **UI-01**: User can toggle between light and dark mode
 - [ ] **UI-02**: App works on mobile browsers (responsive design)
 - [ ] **UI-03**: App shows loading states and handles errors gracefully
 
 ### Deployment
 
-- [ ] **DEP-01**: Instance deploys via `docker compose up`
-- [ ] **DEP-02**: Instance is configurable via environment variables
-- [ ] **DEP-03**: Documentation covers setup and usage
-- [ ] **DEP-04**: Containers include health checks
+- [x] **DEP-01**: Instance deploys via `docker compose up`
+- [x] **DEP-02**: Instance is configurable via environment variables
+- [x] **DEP-03**: Documentation covers setup and usage
+- [x] **DEP-04**: Containers include health checks
 
 ## v2 Requirements
 
@@ -94,13 +94,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| DEP-01 | Phase 1 | Pending |
-| DEP-02 | Phase 1 | Pending |
-| DEP-03 | Phase 1 | Pending |
-| DEP-04 | Phase 1 | Pending |
-| UI-01 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| DEP-01 | Phase 1 | Complete |
+| DEP-02 | Phase 1 | Complete |
+| DEP-03 | Phase 1 | Complete |
+| DEP-04 | Phase 1 | Complete |
+| UI-01 | Phase 1 | Complete |
 | MSG-01 | Phase 2 | Pending |
 | MSG-02 | Phase 2 | Pending |
 | CALL-01 | Phase 3 | Pending |

@@ -12,7 +12,7 @@ This roadmap transforms a vision into a working product: a self-hosted, E2E encr
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Deployment** - Docker infrastructure, authentication, and basic UI
+- [x] **Phase 1: Foundation & Deployment** - Docker infrastructure, authentication, and basic UI
 - [ ] **Phase 2: E2E Encrypted Messaging** - Core value prop: private 1:1 messaging
 - [ ] **Phase 3: Voice/Video Calls** - Real-time P2P communication with WebRTC
 - [ ] **Phase 4: UI Polish & Production Readiness** - UX refinement and production hardening
@@ -32,11 +32,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 5 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Docker infrastructure with PostgreSQL, health checks, and env config
-- [ ] 01-02-PLAN.md — Backend auth API (signup, login, refresh, logout)
-- [ ] 01-03-PLAN.md — Frontend shell with shadcn/ui and theme toggle
-- [ ] 01-04-PLAN.md — Frontend auth integration with protected routes
-- [ ] 01-05-PLAN.md — Documentation and final verification
+- [x] 01-01-PLAN.md — Docker infrastructure with PostgreSQL, health checks, and env config
+- [x] 01-02-PLAN.md — Backend auth API (signup, login, refresh, logout)
+- [x] 01-03-PLAN.md — Frontend shell with shadcn/ui and theme toggle
+- [x] 01-04-PLAN.md — Frontend auth integration with protected routes
+- [x] 01-05-PLAN.md — Documentation and final verification
 
 ### Phase 2: E2E Encrypted Messaging
 **Goal**: Users can send private, encrypted messages that only participants can read
@@ -88,11 +88,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Deployment | 0/5 | Planned | - |
+| 1. Foundation & Deployment | 5/5 | ✓ Complete | 2026-01-27 |
 | 2. E2E Encrypted Messaging | 0/TBD | Not started | - |
 | 3. Voice/Video Calls | 0/TBD | Not started | - |
 | 4. UI Polish & Production Readiness | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Last updated: 2026-01-27 after Phase 1 planning*
+*Last updated: 2026-01-27 after Phase 1 completion*
