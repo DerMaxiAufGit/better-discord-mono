@@ -1,10 +1,42 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { WebSocket } from '@fastify/websocket';
 import { wsAuthHook } from '../middleware/wsAuth.js';
+import { messageService } from '../services/messageService.js';
 
 // Store active WebSocket connections by userId
 // Exported so message service can access it for message delivery
 export const activeConnections = new Map<string, WebSocket>();
+
+// Message types for WebSocket communication
+interface IncomingMessage {
+  type: 'message' | 'typing' | 'read';
+  recipientId?: string;
+  encryptedContent?: string;
+}
+
+interface OutgoingMessage {
+  type: 'message';
+  id: number;
+  senderId: string;
+  encryptedContent: string;
+  timestamp: string;
+}
+
+interface MessageAck {
+  type: 'message_ack';
+  id: number;
+  timestamp: string;
+}
+
+interface TypingIndicator {
+  type: 'typing';
+  senderId: string;
+}
+
+interface ErrorMessage {
+  type: 'error';
+  message: string;
+}
 
 const websocketRoutes: FastifyPluginAsync = async (fastify) => {
   // Apply authentication to all routes in this plugin
@@ -24,11 +56,81 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
     activeConnections.set(userId, socket);
     fastify.log.info(`User ${userId} connected via WebSocket`);
 
-    // Handle incoming messages (logging for now, actual handling in Plan 03)
-    socket.on('message', (message: Buffer | ArrayBuffer | Buffer[]) => {
-      const messageStr = message.toString();
-      fastify.log.info(`Message from ${userId}: ${messageStr}`);
-      // TODO: Handle message types in Plan 03
+    // Handle incoming messages
+    socket.on('message', async (data: Buffer | ArrayBuffer | Buffer[]) => {
+      try {
+        const msg: IncomingMessage = JSON.parse(data.toString());
+
+        if (msg.type === 'message') {
+          // Validate required fields
+          if (!msg.recipientId || !msg.encryptedContent) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'recipientId and encryptedContent are required',
+            } as ErrorMessage));
+            return;
+          }
+
+          // Save to database
+          const saved = await messageService.saveMessage(
+            userId,
+            msg.recipientId,
+            msg.encryptedContent
+          );
+
+          // Acknowledge to sender
+          socket.send(JSON.stringify({
+            type: 'message_ack',
+            id: saved.id,
+            timestamp: saved.createdAt.toISOString(),
+          } as MessageAck));
+
+          // Forward to recipient if online
+          const recipientSocket = activeConnections.get(msg.recipientId);
+          if (recipientSocket && recipientSocket.readyState === 1) {
+            recipientSocket.send(JSON.stringify({
+              type: 'message',
+              id: saved.id,
+              senderId: userId,
+              encryptedContent: saved.encryptedContent,
+              timestamp: saved.createdAt.toISOString(),
+            } as OutgoingMessage));
+            await messageService.markDelivered(saved.id);
+          }
+        } else if (msg.type === 'typing') {
+          // Forward typing indicator to recipient
+          if (!msg.recipientId) {
+            return;
+          }
+          const recipientSocket = activeConnections.get(msg.recipientId);
+          if (recipientSocket && recipientSocket.readyState === 1) {
+            recipientSocket.send(JSON.stringify({
+              type: 'typing',
+              senderId: userId,
+            } as TypingIndicator));
+          }
+        } else if (msg.type === 'read') {
+          // Mark messages as read and notify sender
+          if (!msg.recipientId) {
+            return;
+          }
+          await messageService.markRead(userId, msg.recipientId);
+          // Optionally notify the other user that their messages were read
+          const senderSocket = activeConnections.get(msg.recipientId);
+          if (senderSocket && senderSocket.readyState === 1) {
+            senderSocket.send(JSON.stringify({
+              type: 'read_receipt',
+              readerId: userId,
+            }));
+          }
+        }
+      } catch (err) {
+        fastify.log.error(err, 'WebSocket message handling error');
+        socket.send(JSON.stringify({
+          type: 'error',
+          message: 'Failed to process message',
+        } as ErrorMessage));
+      }
     });
 
     // Handle connection close
