@@ -6,6 +6,7 @@ import websocket from '@fastify/websocket';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import websocketRoutes from './routes/websocket.js';
+import keyRoutes from './routes/keys.js';
 
 dotenv.config();
 
@@ -28,9 +29,19 @@ await fastify.register(cookie);
 // Register WebSocket plugin BEFORE routes
 await fastify.register(websocket);
 
+// Decorate with authenticate function for protected routes
+fastify.decorate('authenticate', async function (request: any, reply: any) {
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    reply.code(401).send({ error: 'Unauthorized' });
+  }
+});
+
 // Register routes
 await fastify.register(authRoutes, { prefix: '/api/auth' });
 await fastify.register(websocketRoutes, { prefix: '/api' });
+await fastify.register(keyRoutes, { prefix: '/api' });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
