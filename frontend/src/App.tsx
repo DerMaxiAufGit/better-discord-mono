@@ -1,19 +1,19 @@
+import { useEffect } from 'react'
+import { RouterProvider } from 'react-router'
 import { ThemeProvider } from 'next-themes'
-import { AppShell } from './components/layout/AppShell'
+import { useAuthStore } from '@/stores/auth'
+import { router } from '@/routes'
 
 function App() {
+  const checkAuth = useAuthStore((state) => state.checkAuth)
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AppShell>
-        <div className="flex flex-col items-center justify-center h-full">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Welcome to ChatApp
-          </h1>
-          <p className="text-muted-foreground">
-            Select a conversation to get started
-          </p>
-        </div>
-      </AppShell>
+      <RouterProvider router={router} />
     </ThemeProvider>
   )
 }

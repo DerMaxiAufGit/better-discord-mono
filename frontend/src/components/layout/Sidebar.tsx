@@ -1,11 +1,21 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { ChevronLeft, ChevronRight, User, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { useAuthStore } from '@/stores/auth'
 import { cn } from '@/lib/utils'
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const navigate = useNavigate()
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
+  }
 
   return (
     <div
@@ -51,7 +61,7 @@ export function Sidebar() {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">
-                User
+                {user?.email || 'User'}
               </p>
             </div>
           )}
@@ -74,7 +84,7 @@ export function Sidebar() {
             "w-full",
             collapsed ? "px-0" : "justify-start"
           )}
-          onClick={() => console.log('Logout clicked')}
+          onClick={handleLogout}
         >
           <LogOut className="w-5 h-5" />
           {!collapsed && <span className="ml-2">Logout</span>}
