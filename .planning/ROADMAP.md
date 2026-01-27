@@ -47,10 +47,15 @@ Plans:
   2. User can view message history with a contact after logging back in
   3. Messages stored on server cannot be decrypted without client keys
   4. User's encryption keys never leave their device unencrypted
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 02-01-PLAN.md — Database schema and WebSocket infrastructure
+- [ ] 02-02-PLAN.md — Frontend crypto library with libsodium.js
+- [ ] 02-03-PLAN.md — Backend key and message services
+- [ ] 02-04-PLAN.md — Frontend messaging stores and WebSocket hook
+- [ ] 02-05-PLAN.md — Messaging UI components
+- [ ] 02-06-PLAN.md — Integration wiring and verification checkpoint
 
 ### Phase 3: Voice/Video Calls
 **Goal**: Users can start peer-to-peer voice calls with reliable connectivity
@@ -89,10 +94,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Deployment | 5/5 | ✓ Complete | 2026-01-27 |
-| 2. E2E Encrypted Messaging | 0/TBD | Not started | - |
+| 2. E2E Encrypted Messaging | 0/6 | Planning complete | - |
 | 3. Voice/Video Calls | 0/TBD | Not started | - |
 | 4. UI Polish & Production Readiness | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Last updated: 2026-01-27 after Phase 1 completion*
+*Last updated: 2026-01-27 after Phase 2 planning*
