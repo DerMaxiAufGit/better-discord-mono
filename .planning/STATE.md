@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 1 of 4 (Foundation & Deployment)
-Plan: Not planned yet
-Status: Ready to plan
-Last activity: 2026-01-27 — Roadmap created with 4 phases covering 13 requirements
+Plan: 01 of 05 complete
+Status: In progress
+Last activity: 2026-01-27 — Completed 01-01-PLAN.md (Docker infrastructure)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 20% (1/5 Phase 1 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: N/A
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 4 minutes
+- Total execution time: 0.07 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-foundation-deployment | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: None yet
-- Trend: N/A
+- Last 5 plans: 01-01 (4 min)
+- Trend: First plan completed
 
 *Updated after each plan completion*
 
@@ -42,10 +42,15 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Roadmap creation: Derived 4 natural phases from 13 requirements (not imposed structure)
-- P2P for 1:1 calls: Privacy, reduced server load (from PROJECT.md)
-- E2E encryption for messages: Core value proposition (from PROJECT.md)
-- Docker Compose deployment: Accessible to self-hosters (from PROJECT.md)
+| Date | Decision | Context | Impact |
+|------|----------|---------|--------|
+| 2026-01-27 | PostgreSQL 18-alpine for database | Latest stable, smaller image | Foundation for all data storage |
+| 2026-01-27 | Fastify over Express for backend | 20-30% faster, TypeScript-native | API framework for all endpoints |
+| 2026-01-27 | Nginx reverse proxy with /api pattern | Single port in production, simpler CORS | Frontend/backend communication pattern |
+| 2026-01-27 | Health check orchestration | Reliable startup ordering | All services use depends_on: service_healthy |
+| - | P2P for 1:1 calls | Privacy, reduced server load (from PROJECT.md) | Future Phase 3 |
+| - | E2E encryption for messages | Core value proposition (from PROJECT.md) | Future Phase 2 |
+| - | Docker Compose deployment | Accessible to self-hosters (from PROJECT.md) | Completed in 01-01 |
 
 ### Pending Todos
 
@@ -53,12 +58,16 @@ None yet.
 
 ### Blockers/Concerns
 
+**Current (Phase 1, Plan 01):**
+- Docker runtime verification pending (requires user to test `docker compose up`)
+- Backend npm dependencies have 2 high severity vulnerabilities (should run `npm audit fix`)
+
 **Phase 2 (E2E Encryption):** Research flagged this phase for deeper investigation during planning. Custom E2EE protocol design using libsodium.js vs full Signal Protocol needs validation based on cryptographic complexity vs team expertise.
 
 **General:** All phases marked as "TBD" for plan count — will be refined during plan-phase execution.
 
 ## Session Continuity
 
-Last session: 2026-01-27 during roadmap creation
-Stopped at: ROADMAP.md, STATE.md created; REQUIREMENTS.md traceability ready for update
-Resume file: None
+Last session: 2026-01-27 during plan execution
+Stopped at: Completed 01-01-PLAN.md — Docker infrastructure with postgres, backend, frontend
+Resume file: None (plan complete, ready for 01-02)
