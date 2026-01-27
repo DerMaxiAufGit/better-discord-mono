@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 2 of 4 (E2E Encrypted Messaging)
-Plan: 02 of 06 (WebSocket Infrastructure & Frontend Crypto complete)
+Plan: 03 of 06 (Server-side Key & Message Endpoints complete)
 Status: **In progress**
-Last activity: 2026-01-27 — Completed 02-01-PLAN.md
+Last activity: 2026-01-27 — Completed 02-03-PLAN.md
 
-Progress: [███░░░░░░░] 33% (2/6 Phase 2 plans complete)
+Progress: [█████░░░░░] 50% (3/6 Phase 2 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 4.1 minutes
-- Total execution time: 0.48 hours
+- Total plans completed: 8
+- Average duration: 4.4 minutes
+- Total execution time: 0.58 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
-| 02-e2e-encrypted-messaging | 2 | 12 min | 6.0 min |
+| 02-e2e-encrypted-messaging | 3 | 20 min | 6.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-04 (5 min), 01-05 (2 min), 02-01 (8 min), 02-02 (4 min)
-- Trend: Infrastructure setup (02-01) longer due to schema + WebSocket work
+- Last 5 plans: 01-05 (2 min), 02-01 (8 min), 02-02 (4 min), 02-03 (8 min)
+- Trend: Service layer plans taking longer due to multiple file coordination
 
 *Updated after each plan completion*
 
@@ -45,6 +45,9 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-27 | Fastify authenticate decorator | request.jwtVerify() for protected REST endpoints (from 02-03) | Simpler than manual header parsing |
+| 2026-01-27 | Cursor-based message pagination | beforeId with limit cap at 100 (from 02-03) | Efficient infinite scroll without offset issues |
+| 2026-01-27 | Read receipts via WebSocket | Sender notified when recipient marks read (from 02-03) | Real-time read status updates |
 | 2026-01-27 | Three development setup options | Docker hybrid, full Docker, fully local (from 01-05) | Developers have different preferences for local development |
 | 2026-01-27 | Single refresh promise for thundering herd | Concurrent 401s share one refresh request | Prevents API stampede when multiple requests fail simultaneously |
 | 2026-01-27 | ProtectedRoute isInitialized check | Wait for auth check before redirecting | Avoids flashing login page when already authenticated |
@@ -87,7 +90,8 @@ None yet.
 **Phase 2 Progress:**
 - 02-01: WebSocket infrastructure and messages table schema complete
 - 02-02: Frontend crypto library complete (libsodium, X25519, XChaCha20-Poly1305)
-- Next: 02-03 (server-side key and message endpoints)
+- 02-03: Server-side key and message endpoints complete (keyService, messageService, REST APIs)
+- Next: 02-04 (chat UI components)
 
 **General:** All phases marked as "TBD" for plan count — will be refined during plan-phase execution.
 
@@ -109,5 +113,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 02-01-PLAN.md (WebSocket Infrastructure & Database Schema)
-Resume file: None (ready for 02-03-PLAN.md)
+Stopped at: Completed 02-03-PLAN.md (Server-side Key & Message Endpoints)
+Resume file: None (ready for 02-04-PLAN.md)
