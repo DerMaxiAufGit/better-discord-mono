@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 2 of 4 (E2E Encrypted Messaging)
-Plan: 02 of 06 (Frontend Crypto Library complete)
+Plan: 02 of 06 (WebSocket Infrastructure & Frontend Crypto complete)
 Status: **In progress**
-Last activity: 2026-01-27 — Completed 02-02-PLAN.md
+Last activity: 2026-01-27 — Completed 02-01-PLAN.md
 
 Progress: [███░░░░░░░] 33% (2/6 Phase 2 plans complete)
 
@@ -20,19 +20,19 @@ Progress: [███░░░░░░░] 33% (2/6 Phase 2 plans complete)
 
 **Velocity:**
 - Total plans completed: 7
-- Average duration: 4.0 minutes
-- Total execution time: 0.47 hours
+- Average duration: 4.1 minutes
+- Total execution time: 0.48 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
-| 02-e2e-encrypted-messaging | 2 | 7 min | 3.5 min |
+| 02-e2e-encrypted-messaging | 2 | 12 min | 6.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (8 min), 01-04 (5 min), 01-05 (2 min), 02-01 (3 min), 02-02 (4 min)
-- Trend: Crypto library work efficient, schema and crypto tasks averaging 3-4 min
+- Last 5 plans: 01-04 (5 min), 01-05 (2 min), 02-01 (8 min), 02-02 (4 min)
+- Trend: Infrastructure setup (02-01) longer due to schema + WebSocket work
 
 *Updated after each plan completion*
 
@@ -61,11 +61,14 @@ Recent decisions affecting current work:
 | 2026-01-27 | Fastify over Express for backend | 20-30% faster, TypeScript-native | API framework for all endpoints |
 | 2026-01-27 | Nginx reverse proxy with /api pattern | Single port in production, simpler CORS | Frontend/backend communication pattern |
 | 2026-01-27 | Health check orchestration | Reliable startup ordering | All services use depends_on: service_healthy |
-| - | P2P for 1:1 calls | Privacy, reduced server load (from PROJECT.md) | Future Phase 3 |
+| 2026-01-27 | JWT via WebSocket query param | Headers not easily accessible in WebSocket (from 02-01) | Token passed as ?token= |
+| 2026-01-27 | Connection tracking via Map | O(1) lookup for message delivery (from 02-01) | activeConnections exported for cross-module access |
+| 2026-01-27 | Nullable public_key column | Keys generated client-side after registration (from 02-01) | Column starts null until key upload |
 | 2026-01-27 | XChaCha20-Poly1305 for symmetric encryption | 192-bit nonce safe for random generation (from 02-02) | No nonce tracking needed, simplifies implementation |
 | 2026-01-27 | X25519 key exchange via crypto_kx | Bidirectional session keys from asymmetric pairs (from 02-02) | Signal-style key derivation pattern |
 | 2026-01-27 | IndexedDB for client-side key storage | Persistent across sessions, better for binary data (from 02-02) | Keys survive page refresh |
 | 2026-01-27 | Lexicographic user ID for initiator role | Deterministic role assignment for session keys (from 02-02) | Both parties derive same keys |
+| - | P2P for 1:1 calls | Privacy, reduced server load (from PROJECT.md) | Future Phase 3 |
 | - | E2E encryption for messages | Core value proposition (from PROJECT.md) | In progress Phase 2 |
 | - | Docker Compose deployment | Accessible to self-hosters (from PROJECT.md) | Completed in 01-01 |
 
@@ -76,12 +79,15 @@ None yet.
 ### Blockers/Concerns
 
 **Phase 1 Complete:**
-- ✅ All Phase 1 success criteria verified programmatically
-- ✅ Complete documentation suite created
-- ✅ End-to-end deployment tested and confirmed working
-- Note: Backend npm dependencies have 2 high severity vulnerabilities (non-blocking, should run `npm audit fix` before Phase 2)
+- All Phase 1 success criteria verified programmatically
+- Complete documentation suite created
+- End-to-end deployment tested and confirmed working
+- Note: Backend npm dependencies have 2 high severity vulnerabilities (non-blocking, should run npm audit fix)
 
-**Phase 2 (E2E Encryption):** Crypto library complete (02-02). Using libsodium.js with X25519 + XChaCha20-Poly1305, following Signal-style patterns without full Double Ratchet complexity. Next: server-side key endpoints (02-03).
+**Phase 2 Progress:**
+- 02-01: WebSocket infrastructure and messages table schema complete
+- 02-02: Frontend crypto library complete (libsodium, X25519, XChaCha20-Poly1305)
+- Next: 02-03 (server-side key and message endpoints)
 
 **General:** All phases marked as "TBD" for plan count — will be refined during plan-phase execution.
 
@@ -102,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-27 19:09 UTC
-Stopped at: Completed 02-02-PLAN.md (Frontend Crypto Library)
+Last session: 2026-01-27
+Stopped at: Completed 02-01-PLAN.md (WebSocket Infrastructure & Database Schema)
 Resume file: None (ready for 02-03-PLAN.md)
