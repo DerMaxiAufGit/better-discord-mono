@@ -94,25 +94,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| MSG-01 | TBD | Pending |
-| MSG-02 | TBD | Pending |
-| CALL-01 | TBD | Pending |
-| CALL-02 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| DEP-01 | TBD | Pending |
-| DEP-02 | TBD | Pending |
-| DEP-03 | TBD | Pending |
-| DEP-04 | TBD | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| DEP-01 | Phase 1 | Pending |
+| DEP-02 | Phase 1 | Pending |
+| DEP-03 | Phase 1 | Pending |
+| DEP-04 | Phase 1 | Pending |
+| UI-01 | Phase 1 | Pending |
+| MSG-01 | Phase 2 | Pending |
+| MSG-02 | Phase 2 | Pending |
+| CALL-01 | Phase 3 | Pending |
+| CALL-02 | Phase 3 | Pending |
+| UI-02 | Phase 4 | Pending |
+| UI-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13 ⚠️
+- Mapped to phases: 13 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2025-01-27*
-*Last updated: 2025-01-27 after initial definition*
+*Last updated: 2026-01-27 after roadmap creation*
