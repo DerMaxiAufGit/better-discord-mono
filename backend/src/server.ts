@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
 import dotenv from 'dotenv';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
@@ -12,7 +13,7 @@ const fastify = Fastify({
 
 // Register plugins
 await fastify.register(cors, {
-  origin: true, // Allow all origins for now, will configure properly in auth phase
+  origin: process.env.CORS_ORIGIN || '*',
   credentials: true
 });
 
@@ -21,6 +22,9 @@ await fastify.register(jwt, {
 });
 
 await fastify.register(cookie);
+
+// Register routes
+await fastify.register(authRoutes, { prefix: '/auth' });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
