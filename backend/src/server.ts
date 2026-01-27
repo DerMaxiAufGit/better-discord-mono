@@ -24,7 +24,7 @@ await fastify.register(jwt, {
 await fastify.register(cookie);
 
 // Register routes
-await fastify.register(authRoutes, { prefix: '/auth' });
+await fastify.register(authRoutes, { prefix: '/api/auth' });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {

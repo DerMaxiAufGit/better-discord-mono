@@ -145,8 +145,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /auth/logout
   fastify.post('/logout', async (request, reply) => {
-    // Clear refresh token cookie
+    // Clear refresh token cookie (must match all options from setCookie)
     reply.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const,
       path: '/api/auth',
     });
 

@@ -113,7 +113,10 @@ export const authApi = {
   },
 
   async me(): Promise<AuthResponse['user']> {
-    return apiRequest<AuthResponse['user']>('/api/auth/me')
+    const response = await apiRequest<{ user: AuthResponse['user'] }>('/api/auth/me', {
+      method: 'POST',
+    })
+    return response.user
   },
 }
 
