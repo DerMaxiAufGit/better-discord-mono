@@ -120,6 +120,54 @@ export const authApi = {
   },
 }
 
+export const keyApi = {
+  // Upload current user's public key
+  setPublicKey: async (publicKey: string): Promise<void> => {
+    await apiRequest('/api/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ publicKey }),
+    })
+  },
+
+  // Get another user's public key
+  getPublicKey: async (userId: string): Promise<string | null> => {
+    try {
+      const response = await apiRequest<{ publicKey: string }>(`/api/keys/${userId}`)
+      return response.publicKey
+    } catch (e) {
+      if ((e as Error).message.includes('404')) return null
+      throw e
+    }
+  },
+}
+
+export const messageApi = {
+  // Get message history with a contact
+  getHistory: async (contactId: string, limit?: number, beforeId?: number) => {
+    const params = new URLSearchParams()
+    if (limit) params.set('limit', limit.toString())
+    if (beforeId) params.set('beforeId', beforeId.toString())
+    const query = params.toString() ? `?${params.toString()}` : ''
+    return apiRequest<{ messages: Array<{
+      id: number
+      senderId: string
+      recipientId: string
+      encryptedContent: string
+      createdAt: string
+      deliveredAt?: string
+      readAt?: string
+    }> }>(`/api/messages/${contactId}${query}`)
+  },
+
+  // Mark messages as read
+  markRead: async (contactId: string): Promise<void> => {
+    await apiRequest(`/api/messages/${contactId}/read`, { method: 'POST' })
+  },
+}
+
 export const api = {
   auth: authApi,
+  keys: keyApi,
+  messages: messageApi,
 }
