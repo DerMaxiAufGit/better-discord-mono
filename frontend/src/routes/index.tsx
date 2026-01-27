@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router"
 import { LoginPage } from "@/pages/LoginPage"
 import { SignupPage } from "@/pages/SignupPage"
 import { DashboardPage } from "@/pages/DashboardPage"
+import { ContactsPage } from "@/pages/ContactsPage"
 import { ProtectedRoute } from "./ProtectedRoute"
 
 export const router = createBrowserRouter([
@@ -28,6 +29,14 @@ export const router = createBrowserRouter([
   {
     path: "/signup",
     element: <SignupPage />,
+  },
+  {
+    path: "/contacts",
+    element: (
+      <ProtectedRoute>
+        <ContactsPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "*",

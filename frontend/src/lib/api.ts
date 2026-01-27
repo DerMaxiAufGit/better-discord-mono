@@ -166,8 +166,22 @@ export const messageApi = {
   },
 }
 
+export const usersApi = {
+  // Get list of users for contact discovery
+  getUsers: async (search?: string): Promise<{ users: { id: string; email: string }[] }> => {
+    const params = search ? `?search=${encodeURIComponent(search)}` : '';
+    return apiRequest(`/api/users${params}`);
+  },
+
+  // Get single user
+  getUser: async (userId: string): Promise<{ id: string; email: string }> => {
+    return apiRequest(`/api/users/${userId}`);
+  },
+}
+
 export const api = {
   auth: authApi,
   keys: keyApi,
   messages: messageApi,
+  users: usersApi,
 }
