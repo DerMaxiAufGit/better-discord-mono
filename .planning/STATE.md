@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 2 of 4 (E2E Encrypted Messaging)
-Plan: 05 of 07 (Messaging UI Components complete)
+Plan: 06 of 07 (Frontend State & Messaging complete)
 Status: **In progress**
-Last activity: 2026-01-27 — Completed 02-05-PLAN.md
+Last activity: 2026-01-27 — Completed 02-04-PLAN.md
 
-Progress: [███████░░░] 71% (5/7 Phase 2 plans complete)
+Progress: [████████░░] 86% (6/7 Phase 2 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 4.6 minutes
-- Total execution time: 0.77 hours
+- Total execution time: 0.85 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
-| 02-e2e-encrypted-messaging | 5 | 25 min | 5.0 min |
+| 02-e2e-encrypted-messaging | 6 | 34 min | 5.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (8 min), 02-02 (4 min), 02-03 (8 min), 02-04 (no data), 02-05 (7 min)
-- Trend: UI component plans executing faster
+- Last 5 plans: 02-02 (4 min), 02-03 (8 min), 02-04 (9 min), 02-05 (7 min)
+- Trend: Consistent execution pace for state management plans
 
 *Updated after each plan completion*
 
@@ -45,6 +45,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-27 | Session keys cached per contactId | O(1) lookup for derived session keys (from 02-04) | Performance optimization for repeated messaging |
+| 2026-01-27 | loadHistory accepts decrypt function | Decouples messageStore from crypto implementation (from 02-04) | Cleaner separation of concerns |
+| 2026-01-27 | Optimistic messages use negative tempId | -Date.now() avoids collision with server IDs (from 02-04) | Smooth UI updates for sent messages |
+| 2026-01-27 | WebSocket reconnects after 3s delay | Prevent rapid reconnection loops (from 02-04) | Stable reconnection behavior |
 | 2026-01-27 | Simplified shadcn/ui components | Avatar and ScrollArea without Radix UI dependency (from 02-05) | Simpler setup while maintaining shadcn patterns |
 | 2026-01-27 | Unicode checkmarks for message status | Avoid emojis for cross-platform consistency (from 02-05) | Consistent rendering across systems |
 | 2026-01-27 | Fastify authenticate decorator | request.jwtVerify() for protected REST endpoints (from 02-03) | Simpler than manual header parsing |
@@ -93,9 +97,9 @@ None yet.
 - 02-01: WebSocket infrastructure and messages table schema complete
 - 02-02: Frontend crypto library complete (libsodium, X25519, XChaCha20-Poly1305)
 - 02-03: Server-side key and message endpoints complete (keyService, messageService, REST APIs)
-- 02-04: Pending (skipped in sequence)
+- 02-04: Frontend state management and WebSocket hook complete (cryptoStore, messageStore, contactStore, useMessaging)
 - 02-05: Messaging UI components complete (Avatar, ScrollArea, MessageList, MessageInput, ConversationList, ConversationView)
-- Next: 02-06 (State management and WebSocket integration)
+- Next: 02-06 (E2E messaging verification checkpoint) or 02-07 (Integration)
 
 **General:** All phases marked as "TBD" for plan count — will be refined during plan-phase execution.
 
@@ -117,5 +121,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 02-05-PLAN.md (Messaging UI Components)
-Resume file: None (ready for 02-06-PLAN.md)
+Stopped at: Completed 02-04-PLAN.md (Frontend State & Messaging)
+Resume file: None (ready for 02-06-PLAN.md or 02-07-PLAN.md)
