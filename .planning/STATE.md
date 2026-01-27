@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 2 of 4 (E2E Encrypted Messaging)
-Plan: 03 of 06 (Server-side Key & Message Endpoints complete)
+Plan: 05 of 07 (Messaging UI Components complete)
 Status: **In progress**
-Last activity: 2026-01-27 — Completed 02-03-PLAN.md
+Last activity: 2026-01-27 — Completed 02-05-PLAN.md
 
-Progress: [█████░░░░░] 50% (3/6 Phase 2 plans complete)
+Progress: [███████░░░] 71% (5/7 Phase 2 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 4.4 minutes
-- Total execution time: 0.58 hours
+- Total plans completed: 10
+- Average duration: 4.6 minutes
+- Total execution time: 0.77 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
-| 02-e2e-encrypted-messaging | 3 | 20 min | 6.7 min |
+| 02-e2e-encrypted-messaging | 5 | 25 min | 5.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-05 (2 min), 02-01 (8 min), 02-02 (4 min), 02-03 (8 min)
-- Trend: Service layer plans taking longer due to multiple file coordination
+- Last 5 plans: 02-01 (8 min), 02-02 (4 min), 02-03 (8 min), 02-04 (no data), 02-05 (7 min)
+- Trend: UI component plans executing faster
 
 *Updated after each plan completion*
 
@@ -45,6 +45,8 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-27 | Simplified shadcn/ui components | Avatar and ScrollArea without Radix UI dependency (from 02-05) | Simpler setup while maintaining shadcn patterns |
+| 2026-01-27 | Unicode checkmarks for message status | Avoid emojis for cross-platform consistency (from 02-05) | Consistent rendering across systems |
 | 2026-01-27 | Fastify authenticate decorator | request.jwtVerify() for protected REST endpoints (from 02-03) | Simpler than manual header parsing |
 | 2026-01-27 | Cursor-based message pagination | beforeId with limit cap at 100 (from 02-03) | Efficient infinite scroll without offset issues |
 | 2026-01-27 | Read receipts via WebSocket | Sender notified when recipient marks read (from 02-03) | Real-time read status updates |
@@ -91,7 +93,9 @@ None yet.
 - 02-01: WebSocket infrastructure and messages table schema complete
 - 02-02: Frontend crypto library complete (libsodium, X25519, XChaCha20-Poly1305)
 - 02-03: Server-side key and message endpoints complete (keyService, messageService, REST APIs)
-- Next: 02-04 (chat UI components)
+- 02-04: Pending (skipped in sequence)
+- 02-05: Messaging UI components complete (Avatar, ScrollArea, MessageList, MessageInput, ConversationList, ConversationView)
+- Next: 02-06 (State management and WebSocket integration)
 
 **General:** All phases marked as "TBD" for plan count — will be refined during plan-phase execution.
 
@@ -113,5 +117,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 02-03-PLAN.md (Server-side Key & Message Endpoints)
-Resume file: None (ready for 02-04-PLAN.md)
+Stopped at: Completed 02-05-PLAN.md (Messaging UI Components)
+Resume file: None (ready for 02-06-PLAN.md)
