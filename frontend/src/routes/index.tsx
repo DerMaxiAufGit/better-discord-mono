@@ -3,6 +3,7 @@ import { LoginPage } from "@/pages/LoginPage"
 import { SignupPage } from "@/pages/SignupPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { ContactsPage } from "@/pages/ContactsPage"
+import { MessagesPage } from "@/pages/MessagesPage"
 import { ProtectedRoute } from "./ProtectedRoute"
 
 export const router = createBrowserRouter([
@@ -35,6 +36,22 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <ContactsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/messages",
+    element: (
+      <ProtectedRoute>
+        <MessagesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/messages/:contactId",
+    element: (
+      <ProtectedRoute>
+        <MessagesPage />
       </ProtectedRoute>
     ),
   },

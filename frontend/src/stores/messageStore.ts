@@ -18,7 +18,7 @@ interface MessageState {
   // Actions
   addMessage: (contactId: string, message: Message) => void
   updateMessageStatus: (contactId: string, messageId: number, status: Message['status']) => void
-  loadHistory: (contactId: string, decrypt: (encrypted: string) => Promise<string | null>) => Promise<void>
+  loadHistory: (contactId: string, decrypt: (encrypted: string, senderId: string) => Promise<string | null>) => Promise<void>
   clearMessages: () => void
 }
 
@@ -53,7 +53,7 @@ export const useMessageStore = create<MessageState>((set) => ({
     })
   },
 
-  loadHistory: async (contactId: string, decrypt: (encrypted: string) => Promise<string | null>) => {
+  loadHistory: async (contactId: string, decrypt: (encrypted: string, senderId: string) => Promise<string | null>) => {
     set({ isLoadingHistory: true })
 
     try {
@@ -61,7 +61,7 @@ export const useMessageStore = create<MessageState>((set) => ({
 
       const decryptedMessages: Message[] = []
       for (const msg of encryptedMessages) {
-        const content = await decrypt(msg.encryptedContent)
+        const content = await decrypt(msg.encryptedContent, msg.senderId)
         if (content) {
           decryptedMessages.push({
             id: msg.id,
