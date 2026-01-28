@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 4 of 4 (UI Polish & Production Readiness)
-Plan: 5 of 5 (04-05 complete)
+Plan: 6 of 6 (04-06 complete)
 Status: **Phase complete**
-Last activity: 2026-01-28 — Completed 04-05-PLAN.md (Connection state feedback & error toasts)
+Last activity: 2026-01-28 — Completed 04-06-PLAN.md (Session recovery modal)
 
-Progress: [████████████████████] 100% (24 plans complete, all phases complete)
+Progress: [████████████████████] 100% (25 plans complete, all phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
-- Average duration: 4.1 minutes
-- Total execution time: 1.6 hours
+- Total plans completed: 25
+- Average duration: 4.3 minutes
+- Total execution time: 1.8 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [████████████████████] 100% (2
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
-| 04-ui-polish-production-readiness | 5 | 23 min | 4.6 min |
+| 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (3 min), 04-02 (5 min), 04-03 (4 min), 04-04 (5 min), 04-05 (6 min)
-- Trend: Consistent 4-6 minute execution in Phase 4
+- Last 5 plans: 04-02 (5 min), 04-03 (4 min), 04-04 (5 min), 04-05 (6 min), 04-06 (9 min)
+- Trend: Session recovery took longer due to file write challenges
 
 *Updated after each plan completion*
 
@@ -47,6 +47,9 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | In-place modal for session recovery | Instead of redirect to login page (from 04-06) | Preserves app state (open conversation, scroll position) during re-authentication |
+| 2026-01-28 | sessionExpired boolean in auth store | Single source of truth for session state (from 04-06) | Triggers global modal, simple true/false state |
+| 2026-01-28 | relogin reuses login endpoint | No separate reauth endpoint (from 04-06) | DRY principle, same token refresh and crypto key logic |
 | 2026-01-28 | showApiError for non-401 errors | 401 has dedicated auth flow (from 04-05) | Prevents duplicate error feedback, all errors visible to user |
 | 2026-01-28 | Toast only on reconnection success | Not on initial connect (from 04-05) | Reduces toast fatigue, initial connect is expected |
 | 2026-01-28 | Connection status in messageStore | Not separate store (from 04-05) | WebSocket already in useMessaging, logical coupling |
@@ -156,7 +159,8 @@ None yet.
 - 04-02: Skeleton loading & toast notifications complete
 - 04-03: Mobile bottom navigation complete
 - 04-04: Mobile-friendly messaging complete
-- 04-05: Connection state feedback & error toasts complete
+- 04-05: Connection state feedback - 04-05: Connection state feedback & error toasts complete error toasts complete
+- 04-06: Session recovery modal complete
 - All Phase 4 success criteria verified
 
 **All Phase 3 success criteria verified:**
@@ -191,5 +195,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 04-05-PLAN.md (connection state feedback & error toasts)
+Stopped at: Completed 04-06-PLAN.md (session recovery modal)
 Resume file: None (all phases complete)
