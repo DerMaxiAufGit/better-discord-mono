@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 4 of 4 (UI Polish & Production Readiness)
-Plan: 1 of 5 (04-01 complete)
+Plan: 2 of 5 (04-02 complete)
 Status: **In progress**
 Last activity: 2026-01-28 — Completed 04-01-PLAN.md (Foundation utilities)
 
-Progress: [████████████████████] ~96% (20 plans complete, Phase 4 in progress)
+Progress: [████████████████████] ~97% (21 plans complete, Phase 4 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
-- Average duration: 4.1 minutes
-- Total execution time: 1.32 hours
+- Total plans completed: 21
+- Average duration: 4.0 minutes
+- Total execution time: 1.4 hours
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [████████████████████] ~96% (2
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
-| 04-ui-polish-production-readiness | 1 | 3 min | 3.0 min |
+| 04-ui-polish-production-readiness | 2 | 8 min | 4.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (2 min), 03-05 (4 min), 03-06 (2 min), 03-07 (0 min), 04-01 (3 min)
+- Last 5 plans: 03-05 (4 min), 03-06 (2 min), 03-07 (0 min), 04-01 (3 min), 04-02 (5 min)
 - Trend: Fast execution continues in Phase 4
 
 *Updated after each plan completion*
@@ -47,6 +47,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | Theme-aware skeleton colors | Skeleton components detect dark/light mode via useTheme (from 04-02) | Skeletons visible in both themes |
+| 2026-01-28 | Top-center toast positioning | Toaster positioned at top-center (from 04-02) | Mobile-friendly, doesn't obscure bottom UI |
+| 2026-01-28 | Toast fatigue prevention | Limit to 3 visible toasts, 4s duration (from 04-02) | Prevents notification spam |
+| 2026-01-28 | showApiError with retry support | API error helper includes optional retry callback (from 04-02) | Better UX for network errors |
 | 2026-01-28 | Inline Switch/Select components | Built simple components in AudioSettings (from 03-06) | Consistent styling without external deps |
 | 2026-01-28 | Permission request in settings | Request mic permission in settings flow (from 03-06) | No surprise prompts during call |
 | 2026-01-28 | Custom events for call signaling | Window CustomEvent dispatch (from 03-05) | Decouples call signaling from useMessaging |
@@ -135,6 +139,12 @@ None yet.
 - 03-05: Call hook and UI complete (useCall, CallControls, IncomingCallBanner, ActiveCallWindow)
 - 03-06: Audio settings UI complete (AudioSettings component in SettingsPage)
 - 03-07: Integration verified with ringtone feature added
+
+**Phase 4 Progress:**
+- 04-RESEARCH: Research complete (accessibility, performance, error handling patterns)
+- 04-01: Foundation utilities complete (useBreakpoint, retry utilities)
+- 04-02: Skeleton loading & toast notifications complete
+- Next: 04-03 (Error boundaries and error handling)
 
 **All Phase 3 success criteria verified:**
 1. ✓ User can initiate voice call with online contact
