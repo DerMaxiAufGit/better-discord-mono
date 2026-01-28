@@ -58,3 +58,17 @@
     transition: background-color 200ms ease, color 200ms ease;
   }
 }
+
+/* Typing indicator animation */
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-typing-bounce {
+  animation: typing-bounce 1s infinite;
+}
