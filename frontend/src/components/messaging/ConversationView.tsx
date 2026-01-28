@@ -2,7 +2,7 @@ import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Lock, Phone } from 'lucide-react';
+import { Lock, Phone, ArrowLeft } from 'lucide-react';
 import { useCall } from '@/lib/webrtc/useCall';
 
 interface Message {
@@ -21,6 +21,7 @@ interface ConversationViewProps {
   onSendMessage: (content: string) => void;
   isConnected: boolean;
   isLoading?: boolean;
+  onBack?: () => void;  // Called when back button clicked (mobile)
 }
 
 export function ConversationView({
@@ -31,6 +32,7 @@ export function ConversationView({
   onSendMessage,
   isConnected,
   isLoading,
+  onBack,
 }: ConversationViewProps) {
   const { startCall, status: callStatus } = useCall();
 
@@ -42,6 +44,11 @@ export function ConversationView({
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header - fixed at top */}
       <div className="h-[73px] flex items-center gap-3 px-4 border-b flex-shrink-0">
+        {onBack && (
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
         <Avatar fallback={contactUsername} className="h-10 w-10" />
         <div className="flex-1">
           <h2 className="font-semibold">{contactUsername}</h2>
