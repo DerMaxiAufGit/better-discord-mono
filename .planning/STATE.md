@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-27)
 
 **Core value:** Own your communication — your server, your data, your rules. Privacy through self-hosting and E2E encryption.
-**Current focus:** Phase 2: E2E Encrypted Messaging
+**Current focus:** Phase 3: Voice & Video Calls
 
 ## Current Position
 
-Phase: 2 of 4 (E2E Encrypted Messaging) - COMPLETE
-Plan: 07 of 07 (Integration and Verification complete)
-Status: **Phase 2 Complete**
-Last activity: 2026-01-28 — Completed 02-07-PLAN.md with password-derived keys
+Phase: 3 of 4 (Voice & Video Calls)
+Plan: 02 of TBD (Call & Settings Stores complete)
+Status: **In progress**
+Last activity: 2026-01-28 — Completed 03-02-PLAN.md with call and settings stores
 
-Progress: [██████████] 100% (7/7 Phase 2 plans complete)
+Progress: [██████████████░░░░░░] ~70% (12 plans complete, Phase 3 started)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: 4.9 minutes
-- Total execution time: 0.98 hours
+- Total plans completed: 13
+- Average duration: 4.7 minutes
+- Total execution time: 1.01 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [██████████] 100% (7/7 Phase 2 plans complete)
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
+| 03-voice-video-calls | 1 | 2 min | 2.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (8 min), 02-04 (9 min), 02-05 (7 min), 02-06 (4 min)
-- Trend: Consistent execution pace for messaging infrastructure plans
+- Last 5 plans: 02-05 (7 min), 02-06 (4 min), 02-07 (TBD), 03-01 (research), 03-02 (2 min)
+- Trend: Fast execution for store-only plans
 
 *Updated after each plan completion*
 
@@ -45,6 +46,11 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | Quality uses 1-4 scale | Signal bar UI display for call quality (from 03-02) | Matches common call UI patterns |
+| 2026-01-28 | isPolite boolean for Perfect Negotiation | Role tracking for WebRTC SDP exchange (from 03-02) | Deterministic collision resolution |
+| 2026-01-28 | Audio settings use 'audio-settings' localStorage key | Zustand persist middleware storage (from 03-02) | Settings survive page refresh |
+| 2026-01-28 | All audio processing enabled by default | echoCancellation, noiseSuppression, autoGainControl (from 03-02) | Best quality out of the box |
+| 2026-01-28 | ringTimeout defaults to 30 seconds | Reasonable wait before auto-reject (from 03-02) | Standard call timeout |
 | 2026-01-27 | 50 user limit on contact search | Prevent large result sets in user discovery (from 02-06) | API performance bounded |
 | 2026-01-27 | ILIKE pattern for email search | Case-insensitive partial matching (from 02-06) | User-friendly search experience |
 | 2026-01-27 | 300ms debounce on search | Prevent excessive API calls during typing (from 02-06) | Reduced backend load |
@@ -80,8 +86,8 @@ Recent decisions affecting current work:
 | 2026-01-27 | X25519 key exchange via crypto_kx | Bidirectional session keys from asymmetric pairs (from 02-02) | Signal-style key derivation pattern |
 | 2026-01-27 | IndexedDB for client-side key storage | Persistent across sessions, better for binary data (from 02-02) | Keys survive page refresh |
 | 2026-01-27 | Lexicographic user ID for initiator role | Deterministic role assignment for session keys (from 02-02) | Both parties derive same keys |
-| - | P2P for 1:1 calls | Privacy, reduced server load (from PROJECT.md) | Future Phase 3 |
-| - | E2E encryption for messages | Core value proposition (from PROJECT.md) | In progress Phase 2 |
+| - | P2P for 1:1 calls | Privacy, reduced server load (from PROJECT.md) | Phase 3 in progress |
+| - | E2E encryption for messages | Core value proposition (from PROJECT.md) | Completed Phase 2 |
 | - | Docker Compose deployment | Accessible to self-hosters (from PROJECT.md) | Completed in 01-01 |
 
 ### Pending Todos
@@ -96,16 +102,21 @@ None yet.
 - End-to-end deployment tested and confirmed working
 - Note: Backend npm dependencies have 2 high severity vulnerabilities (non-blocking, should run npm audit fix)
 
-**Phase 2 Progress:**
+**Phase 2 Complete:**
 - 02-01: WebSocket infrastructure and messages table schema complete
 - 02-02: Frontend crypto library complete (libsodium, X25519, XChaCha20-Poly1305)
 - 02-03: Server-side key and message endpoints complete (keyService, messageService, REST APIs)
 - 02-04: Frontend state management and WebSocket hook complete (cryptoStore, messageStore, contactStore, useMessaging)
 - 02-05: Messaging UI components complete (Avatar, ScrollArea, MessageList, MessageInput, ConversationList, ConversationView)
 - 02-06: User discovery API and ContactsPage complete (users endpoint, search, contact navigation)
-- Next: 02-07 (Integration and verification)
+- 02-07: Integration and verification complete with password-derived keys
 
-**General:** All phases marked as "TBD" for plan count — will be refined during plan-phase execution.
+**Phase 3 Progress:**
+- 03-01: Research complete (WebRTC P2P, Perfect Negotiation, ICE candidates)
+- 03-02: Call and settings stores complete (callStore, settingsStore with persistence)
+- Next: 03-03 (Signal server for WebRTC signaling)
+
+**General:** Phase 3 plan count TBD — will be refined during plan-phase execution.
 
 ## Development Infrastructure
 
@@ -124,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-27
-Stopped at: Completed 02-06-PLAN.md (User Discovery & ContactsPage)
-Resume file: None (ready for 02-07-PLAN.md)
+Last session: 2026-01-28
+Stopped at: Completed 03-02-PLAN.md (Call & Settings Stores)
+Resume file: None (ready for 03-03-PLAN.md)
