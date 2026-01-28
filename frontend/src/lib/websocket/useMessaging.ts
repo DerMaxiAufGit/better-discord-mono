@@ -194,6 +194,16 @@ export function useMessaging(options: UseMessagingOptions = {}) {
         } else if (data.type === 'error') {
           console.error('WebSocket error:', data.message)
           options.onError?.(new Error(data.message))
+        } else if (data.type === 'typing') {
+          // Typing indicator event - dispatch custom event for useTypingIndicator hook
+          window.dispatchEvent(new CustomEvent('typing-indicator', {
+            detail: {
+              conversationId: data.conversationId,
+              userId: data.userId,
+              email: data.email,
+              isTyping: data.isTyping
+            }
+          }))
         } else if (data.type?.startsWith('call-')) {
           // Call signaling messages - dispatch to useCall hook
           console.log('Call signaling message received:', data.type)
@@ -321,11 +331,25 @@ export function useMessaging(options: UseMessagingOptions = {}) {
   // Get WebSocket reference for call signaling
   const getWebSocket = useCallback(() => wsRef.current, [])
 
+  // Send typing indicator event
+  const sendTyping = useCallback((conversationId: string, recipientId: string, isTyping: boolean) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      return
+    }
+    wsRef.current.send(JSON.stringify({
+      type: 'typing',
+      conversationId,
+      recipientId,
+      isTyping
+    }))
+  }, [])
+
   return {
     isConnected,
     sendMessage,
     markAsRead,
     sendCallSignal,
     getWebSocket,
+    sendTyping,
   }
 }
