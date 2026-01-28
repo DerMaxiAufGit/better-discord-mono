@@ -247,10 +247,22 @@ export const friendsApi = {
   },
 }
 
+export const turnApi = {
+  async getCredentials(): Promise<{
+    username: string;
+    password: string;
+    ttl: number;
+    uris: string[];
+  }> {
+    return apiRequest('/api/turn/credentials');
+  },
+};
+
 export const api = {
   auth: authApi,
   keys: keyApi,
   messages: messageApi,
   users: usersApi,
   friends: friendsApi,
+  turn: turnApi,
 }
