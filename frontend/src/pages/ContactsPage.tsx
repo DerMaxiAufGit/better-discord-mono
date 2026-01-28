@@ -1,4 +1,5 @@
 import * as React from 'react';
+import PullToRefresh from 'react-simple-pull-to-refresh';
 import { useNavigate } from 'react-router';
 import { Search, MessageCircle, ArrowLeft, UserPlus, Check, X, Clock, Users, Phone } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
@@ -139,6 +140,12 @@ export function ContactsPage() {
     navigate(`/messages/${userId}`);
   };
 
+  // Handle pull-to-refresh
+  const handleRefresh = async () => {
+    await loadFriends();
+    await loadPendingRequests();
+  };
+
   const renderFriendButton = (user: User) => {
     const status = friendshipStatuses.get(user.id);
     const isSending = sendingRequest === user.id;
@@ -238,6 +245,11 @@ export function ContactsPage() {
 
       {/* Friends Tab */}
       {tab === 'friends' && (
+        <PullToRefresh
+          onRefresh={handleRefresh}
+          pullingContent={<div className="text-center py-4 text-muted-foreground">Pull to refresh</div>}
+          refreshingContent={<div className="text-center py-4 text-muted-foreground">Refreshing...</div>}
+        >
         <div>
           {friends.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
@@ -278,10 +290,16 @@ export function ContactsPage() {
             </div>
           )}
         </div>
+        </PullToRefresh>
       )}
 
       {/* Requests Tab */}
       {tab === 'requests' && (
+        <PullToRefresh
+          onRefresh={handleRefresh}
+          pullingContent={<div className="text-center py-4 text-muted-foreground">Pull to refresh</div>}
+          refreshingContent={<div className="text-center py-4 text-muted-foreground">Refreshing...</div>}
+        >
         <div>
           {pendingRequests.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
@@ -322,6 +340,7 @@ export function ContactsPage() {
             </div>
           )}
         </div>
+        </PullToRefresh>
       )}
 
       {/* Search Tab */}
