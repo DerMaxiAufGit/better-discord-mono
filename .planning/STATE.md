@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
 Version: 1.1.0 target
 Status: **Executing Phase 5**
-Last activity: 2026-01-28 — Completed 05-01-PLAN.md (database schema for enhanced communication)
+Last activity: 2026-01-28 — Completed 05-06-PLAN.md (backend reaction service)
 
-Progress: [████████████████████░░░] 88% (29 of 33 plans complete)
+Progress: [████████████████████░░░] 91% (30 of 33 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29
-- Average duration: 4.2 minutes
-- Total execution time: 2.1 hours
+- Total plans completed: 30
+- Average duration: 4.3 minutes
+- Total execution time: 2.3 hours
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [████████████████████░░░
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
-| 05-enhanced-communication | 4 | 24 min | 6.0 min |
+| 05-enhanced-communication | 5 | 36 min | 7.2 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-05 (6 min), 04-06 (9 min), 05-02 (5 min), 05-03 (5 min), 05-01 (9 min)
-- Trend: Consistent execution time across new phase
+- Last 5 plans: 04-06 (9 min), 05-02 (5 min), 05-03 (5 min), 05-01 (9 min), 05-06 (12 min)
+- Trend: Phase 5 plans averaging longer due to complexity
 
 *Updated after each plan completion*
 
@@ -48,6 +48,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | Toggle endpoint for reactions | Single POST adds or removes (from 05-06) | Cleaner than separate add/remove endpoints |
+| 2026-01-28 | 50 unique emoji limit per message | Prevents emoji spam (from 05-06) | Applies to distinct emoji, not total count |
+| 2026-01-28 | Reaction summaries grouped by emoji | ReactionSummary with count and user list (from 05-06) | Efficient for UI display |
+| 2026-01-28 | Authorization via hasAccessToMessage | Check sender/recipient/group membership (from 05-06) | Returns 404 for unauthorized (doesn't leak existence) |
 | 2026-01-28 | Four-tier group role system | owner, admin, moderator, member (from 05-01) | Provides granular permissions without excessive complexity |
 | 2026-01-28 | Optional invite expiry and usage limits | Nullable expires_at and max_uses columns (from 05-01) | Supports both permanent and temporary invite links |
 | 2026-01-28 | Nullable recipient_id for group messages | ALTER COLUMN recipient_id DROP NOT NULL (from 05-01) | Group messages use group_id instead of recipient_id |
@@ -178,7 +182,8 @@ None yet.
 - 05-01: Database schema for enhanced communication complete (groups, files, reactions)
 - 05-02: Frontend typing indicator integration complete
 - 05-03: Video helper library complete (videoConstraints, backgroundBlur, useCamera)
-- Next: 05-04 (Screen sharing support)
+- 05-06: Backend reaction service complete (toggle, get, delete endpoints)
+- Next: Continue Phase 5 Wave 2
 
 **All Phase 3 success criteria verified:**
 1. ✓ User can initiate voice call with online contact
@@ -206,5 +211,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 05-01-PLAN.md (database schema for enhanced communication)
+Stopped at: Completed 05-06-PLAN.md (backend reaction service)
 Resume file: None
