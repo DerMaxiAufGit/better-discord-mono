@@ -1,5 +1,6 @@
 import { query } from '../db/index.js';
 import { Message } from '../types/index.js';
+import { getReactionsForMessages, ReactionSummary } from './reactionService.js';
 
 class MessageService {
   // Save encrypted message to database
@@ -23,7 +24,7 @@ class MessageService {
     contactId: string,
     limit: number = 50,
     beforeId?: number
-  ): Promise<{ messages: Message[]; hasMore: boolean }> {
+  ): Promise<{ messages: (Message & { reactions?: ReactionSummary[] })[]; hasMore: boolean }> {
     let queryText = `
       SELECT id, sender_id, recipient_id, encrypted_content, created_at, delivered_at, read_at
       FROM messages
@@ -43,7 +44,16 @@ class MessageService {
     const hasMore = result.rows.length > limit;
     const messages = result.rows.slice(0, limit).map(this.mapRow);
 
-    return { messages: messages.reverse(), hasMore }; // Return in chronological order
+    // Add reactions to messages
+    const messageIds = messages.map(m => m.id);
+    const reactionsMap = await getReactionsForMessages(messageIds, userId);
+
+    const messagesWithReactions = messages.map(msg => ({
+      ...msg,
+      reactions: reactionsMap.get(msg.id) || []
+    }));
+
+    return { messages: messagesWithReactions.reverse(), hasMore }; // Return in chronological order
   }
 
   // Mark message as delivered

@@ -36,8 +36,9 @@ export default async function fileRoutes(fastify: FastifyInstance) {
     const encryptionHeader = Buffer.from((encryptionHeaderBase64 as any).value, 'base64')
 
     try {
+      const userId = (request.user as unknown as { id: string }).id
       const file = await fileService.uploadFile({
-        uploaderId: request.user.id,
+        uploaderId: userId,
         conversationId: request.query.conversationId,
         filename: data.filename,
         mimeType: data.mimetype,
@@ -59,7 +60,8 @@ export default async function fileRoutes(fastify: FastifyInstance) {
 
   // Download file
   fastify.get<{ Params: { fileId: string } }>('/files/:fileId', async (request, reply) => {
-    const result = await fileService.getFileStream(request.params.fileId, request.user.id)
+    const userId = (request.user as unknown as { id: string }).id
+    const result = await fileService.getFileStream(request.params.fileId, userId)
 
     if (!result) {
       return reply.code(404).send({ error: 'File not found' })
@@ -78,7 +80,8 @@ export default async function fileRoutes(fastify: FastifyInstance) {
 
   // Get file metadata
   fastify.get<{ Params: { fileId: string } }>('/files/:fileId/meta', async (request, reply) => {
-    const file = await fileService.getFile(request.params.fileId, request.user.id)
+    const userId = (request.user as unknown as { id: string }).id
+    const file = await fileService.getFile(request.params.fileId, userId)
 
     if (!file) {
       return reply.code(404).send({ error: 'File not found' })
@@ -96,7 +99,8 @@ export default async function fileRoutes(fastify: FastifyInstance) {
 
   // Delete file
   fastify.delete<{ Params: { fileId: string } }>('/files/:fileId', async (request, reply) => {
-    const success = await fileService.deleteFile(request.params.fileId, request.user.id)
+    const userId = (request.user as unknown as { id: string }).id
+    const success = await fileService.deleteFile(request.params.fileId, userId)
 
     if (!success) {
       return reply.code(403).send({ error: 'Permission denied or file not found' })
@@ -109,10 +113,11 @@ export default async function fileRoutes(fastify: FastifyInstance) {
   fastify.patch<{ Params: { fileId: string }; Body: { messageId: number } }>(
     '/files/:fileId',
     async (request, reply) => {
+      const userId = (request.user as unknown as { id: string }).id
       const success = await fileService.associateFileWithMessage(
         request.params.fileId,
         request.body.messageId,
-        request.user.id
+        userId
       )
 
       if (!success) {

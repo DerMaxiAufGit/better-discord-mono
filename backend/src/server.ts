@@ -11,6 +11,8 @@ import messageRoutes from './routes/messages.js';
 import userRoutes from './routes/users.js';
 import friendRoutes from './routes/friends.js';
 import turnRoutes from './routes/turn.js';
+import fileRoutes from './routes/files.js';
+import reactionRoutes from './routes/reactions.js';
 
 dotenv.config();
 
@@ -50,6 +52,8 @@ await fastify.register(messageRoutes, { prefix: '/api' });
 await fastify.register(userRoutes, { prefix: '/api' });
 await fastify.register(friendRoutes, { prefix: '/api' });
 await fastify.register(turnRoutes, { prefix: '/api/turn' });
+await fastify.register(fileRoutes, { prefix: '/api' });
+await fastify.register(reactionRoutes, { prefix: '/api' });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
