@@ -3,6 +3,7 @@ import { useCallStore, CallStatus } from '@/stores/callStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/auth'
 import { PeerConnectionManager, createPeerConnection, SignalingChannel } from './PeerConnection'
+import { sendViaSharedWebSocket } from '@/lib/websocket/sharedWebSocket'
 
 /**
  * Return type for useCall hook
@@ -141,7 +142,6 @@ export function useCall(): UseCallReturn {
   const ringTimeoutRef = useRef<number | null>(null)
   const audioElementRef = useRef<HTMLAudioElement | null>(null)
   const pendingSdpRef = useRef<string | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
 
   // Use ref to access current state in callbacks without stale closures
   const stateRef = useRef({
@@ -157,53 +157,12 @@ export function useCall(): UseCallReturn {
   stateRef.current = { callId, remoteUserId, isPolite, status, user, accessToken, selectedMicId, ringTimeout }
 
   /**
-   * Create WebSocket signaling channel
+   * Get signaling channel using shared WebSocket from useMessaging
    */
-  const createSignalingChannel = useCallback((): SignalingChannel => {
-    // Determine WebSocket URL (same host, /api/ws path)
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}/api/ws?token=${stateRef.current.accessToken}`
-
-    // Reuse existing WebSocket if connected
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      return {
-        send: (msg) => wsRef.current?.send(JSON.stringify(msg)),
-      }
-    }
-
-    // Create new WebSocket for call signaling
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
-
-    ws.onopen = () => {
-      console.log('[useCall] WebSocket connected for signaling')
-    }
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        // Dispatch call signaling messages
-        if (data.type?.startsWith('call-')) {
-          dispatchCallSignaling(data as CallSignalingMessage)
-        }
-      } catch (e) {
-        console.error('[useCall] Failed to parse WebSocket message:', e)
-      }
-    }
-
-    ws.onclose = () => {
-      console.log('[useCall] WebSocket disconnected')
-      wsRef.current = null
-    }
-
+  const getSignalingChannel = useCallback((): SignalingChannel => {
     return {
       send: (msg) => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify(msg))
-        } else {
-          // Queue message until connected
-          ws.addEventListener('open', () => ws.send(JSON.stringify(msg)), { once: true })
-        }
+        sendViaSharedWebSocket(msg)
       },
     }
   }, [])
@@ -375,7 +334,7 @@ export function useCall(): UseCallReturn {
    */
   const setupPeerConnection = useCallback(
     async (callIdToUse: string, remoteUserIdToUse: string, isPoliteToUse: boolean): Promise<PeerConnectionManager> => {
-      const signaling = createSignalingChannel()
+      const signaling = getSignalingChannel()
 
       const pc = await createPeerConnection({
         isPolite: isPoliteToUse,
@@ -389,7 +348,7 @@ export function useCall(): UseCallReturn {
       peerConnectionRef.current = pc
       return pc
     },
-    [createSignalingChannel, handleRemoteTrack, handleIceConnectionStateChange]
+    [getSignalingChannel, handleRemoteTrack, handleIceConnectionStateChange]
   )
 
   /**
@@ -423,7 +382,7 @@ export function useCall(): UseCallReturn {
         await pc.addLocalStream(stream)
 
         // Send call-offer signaling message
-        const signaling = createSignalingChannel()
+        const signaling = getSignalingChannel()
         signaling.send({
           type: 'call-offer',
           recipientId: userId,
@@ -458,7 +417,7 @@ export function useCall(): UseCallReturn {
       startOutgoingCall,
       getLocalAudioStream,
       setupPeerConnection,
-      createSignalingChannel,
+      getSignalingChannel,
       cleanup,
       endCall,
     ]
@@ -479,31 +438,48 @@ export function useCall(): UseCallReturn {
     storeAcceptCall()
     setConnecting()
 
+    // Send call-accept FIRST so caller knows we're accepting
+    // Do this before WebRTC setup which may fail (e.g., mic permissions)
+    const signaling = getSignalingChannel()
+    signaling.send({
+      type: 'call-accept',
+      recipientId: currentRemoteUserId,
+      callId: currentCallId,
+    })
+    console.log('[useCall] Sent call-accept')
+
     try {
       // Get local audio stream
+      console.log('[useCall] Getting local audio stream...')
       const stream = await getLocalAudioStream()
+      console.log('[useCall] Got local audio stream')
 
       // Setup peer connection
+      console.log('[useCall] Setting up peer connection...')
       const pc = await setupPeerConnection(currentCallId, currentRemoteUserId, currentIsPolite)
+      console.log('[useCall] Peer connection setup complete')
 
       // Add local stream
       await pc.addLocalStream(stream)
+      console.log('[useCall] Added local stream to peer connection')
 
       // Handle pending SDP offer if received
       if (pendingSdpRef.current) {
+        console.log('[useCall] Handling pending SDP offer...')
         await pc.handleRemoteDescription({ type: 'offer', sdp: pendingSdpRef.current })
         pendingSdpRef.current = null
+        console.log('[useCall] Handled pending SDP offer')
       }
-
-      // Send call-accept
-      const signaling = createSignalingChannel()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      console.error('[useCall] Accept call error:', errorMessage, error)
+      // Send hangup with error info since we already sent accept but setup failed
       signaling.send({
-        type: 'call-accept',
+        type: 'call-hangup',
         recipientId: currentRemoteUserId,
         callId: currentCallId,
+        error: errorMessage, // Include error for debugging
       })
-    } catch (error) {
-      console.error('[useCall] Accept call error:', error)
       cleanup()
       endCall()
       throw error
@@ -513,7 +489,7 @@ export function useCall(): UseCallReturn {
     setConnecting,
     getLocalAudioStream,
     setupPeerConnection,
-    createSignalingChannel,
+    getSignalingChannel,
     cleanup,
     endCall,
   ])
@@ -528,7 +504,7 @@ export function useCall(): UseCallReturn {
     console.log('[useCall] Rejecting call:', currentCallId)
 
     // Send call-reject
-    const signaling = createSignalingChannel()
+    const signaling = getSignalingChannel()
     signaling.send({
       type: 'call-reject',
       recipientId: currentRemoteUserId,
@@ -538,7 +514,7 @@ export function useCall(): UseCallReturn {
     // Update store
     storeRejectCall()
     cleanup()
-  }, [storeRejectCall, createSignalingChannel, cleanup])
+  }, [storeRejectCall, getSignalingChannel, cleanup])
 
   /**
    * Hangup current call
@@ -551,7 +527,7 @@ export function useCall(): UseCallReturn {
 
     // Send call-hangup if we have a remote user
     if (currentRemoteUserId) {
-      const signaling = createSignalingChannel()
+      const signaling = getSignalingChannel()
       signaling.send({
         type: 'call-hangup',
         recipientId: currentRemoteUserId,
@@ -561,7 +537,7 @@ export function useCall(): UseCallReturn {
 
     cleanup()
     endCall()
-  }, [createSignalingChannel, cleanup, endCall])
+  }, [getSignalingChannel, cleanup, endCall])
 
   /**
    * Toggle mute state
@@ -595,9 +571,22 @@ export function useCall(): UseCallReturn {
       switch (message.type) {
         case 'call-offer': {
           // Incoming call
+          console.log('[useCall] call-offer received, currentStatus:', currentStatus, 'currentCallId:', currentCallId, 'messageCallId:', message.callId)
+
+          // If we're already handling this exact call (same callId), just store the SDP
+          // This happens because caller sends initial notification, then Perfect Negotiation sends offer with SDP
+          if (currentStatus === 'incoming' && currentCallId === message.callId) {
+            console.log('[useCall] Same callId for existing incoming call, storing SDP')
+            if (message.sdp) {
+              pendingSdpRef.current = message.sdp
+            }
+            return
+          }
+
           if (currentStatus !== 'idle') {
-            // Already in a call, reject this one
-            const signaling = createSignalingChannel()
+            // Already in a different call, reject this one
+            console.log('[useCall] Rejecting because status is not idle:', currentStatus)
+            const signaling = getSignalingChannel()
             signaling.send({
               type: 'call-reject',
               recipientId: message.senderId,
@@ -615,7 +604,9 @@ export function useCall(): UseCallReturn {
           }
 
           // Update store with incoming call
+          console.log('[useCall] Calling receiveIncomingCall:', message.callId, message.senderId, message.senderUsername, isPoliteRole)
           receiveIncomingCall(message.callId, message.senderId, message.senderUsername, isPoliteRole)
+          console.log('[useCall] After receiveIncomingCall, store state:', useCallStore.getState())
 
           // Set auto-reject timeout
           const { ringTimeout } = stateRef.current
@@ -623,7 +614,7 @@ export function useCall(): UseCallReturn {
             console.log('[useCall] Auto-rejecting (ring timeout)')
             const currentState = useCallStore.getState()
             if (currentState.status === 'incoming') {
-              const signaling = createSignalingChannel()
+              const signaling = getSignalingChannel()
               signaling.send({
                 type: 'call-reject',
                 recipientId: message.senderId,
@@ -689,7 +680,7 @@ export function useCall(): UseCallReturn {
       window.removeEventListener(CALL_SIGNALING_EVENT, handleSignaling)
     }
   }, [
-    createSignalingChannel,
+    getSignalingChannel,
     receiveIncomingCall,
     setConnecting,
     cleanup,

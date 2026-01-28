@@ -26,8 +26,13 @@ export function AppShell({ children }: AppShellProps) {
     toggleMinimized,
   } = useCall()
 
+  // Debug logging - log on every render
+  console.log('[AppShell] Render - Call state:', { status, remoteUsername, callStoreState: useCallStore.getState() })
+
   const showIncomingCall = status === 'incoming' && remoteUsername
   const showActiveCall = ['outgoing', 'connecting', 'connected', 'reconnecting'].includes(status) && remoteUsername
+
+  console.log('[AppShell] Show conditions:', { showIncomingCall, showActiveCall, statusIsIncoming: status === 'incoming', hasRemoteUsername: !!remoteUsername })
 
   return (
     <>

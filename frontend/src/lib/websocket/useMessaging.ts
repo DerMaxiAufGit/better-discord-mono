@@ -6,6 +6,7 @@ import { useContactStore } from '@/stores/contactStore'
 import { encryptMessage, decryptMessage } from '@/lib/crypto/messageEncryption'
 import { usersApi } from '@/lib/api'
 import { dispatchCallSignaling } from '@/lib/webrtc/useCall'
+import { setSharedWebSocket } from './sharedWebSocket'
 
 interface UseMessagingOptions {
   onError?: (error: Error) => void
@@ -42,6 +43,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
     ws.onopen = () => {
       console.log('WebSocket connected')
       setIsConnected(true)
+      setSharedWebSocket(ws)  // Share for call signaling
     }
 
     ws.onmessage = async (event) => {
@@ -142,6 +144,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       console.log('WebSocket disconnected, reconnecting in 3s...')
       setIsConnected(false)
       wsRef.current = null
+      setSharedWebSocket(null)  // Clear shared reference
 
       // Reconnect after delay
       reconnectTimeoutRef.current = window.setTimeout(() => {

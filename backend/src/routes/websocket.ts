@@ -28,6 +28,7 @@ interface IncomingMessage {
   callId?: string;
   sdp?: string;                              // SDP offer/answer as string
   candidate?: RTCIceCandidateInit;           // ICE candidate
+  senderUsername?: string;                   // Caller's username for call notifications
 }
 
 interface OutgoingMessage {
@@ -160,25 +161,33 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
         }
         // ===== CALL SIGNALING HANDLERS =====
         else if (msg.type === 'call-offer') {
-          // Forward SDP offer to recipient
-          if (!msg.recipientId || !msg.callId || !msg.sdp) {
+          // Forward call offer to recipient (sdp is optional - sent later during negotiation)
+          fastify.log.info(`[CALL] call-offer from ${userId} to ${msg.recipientId}, callId: ${msg.callId}, hasSdp: ${!!msg.sdp}`);
+
+          if (!msg.recipientId || !msg.callId) {
             socket.send(JSON.stringify({
               type: 'error',
-              message: 'call-offer requires recipientId, callId, and sdp',
+              message: 'call-offer requires recipientId and callId',
             } as ErrorMessage));
             return;
           }
 
           const recipientSocket = activeConnections.get(msg.recipientId);
+          fastify.log.info(`[CALL] Recipient ${msg.recipientId} socket exists: ${!!recipientSocket}, readyState: ${recipientSocket?.readyState}`);
+          fastify.log.info(`[CALL] Active connections: ${Array.from(activeConnections.keys()).join(', ')}`);
+
           if (recipientSocket && recipientSocket.readyState === 1) {
             recipientSocket.send(JSON.stringify({
               type: 'call-offer',
               senderId: userId,
+              senderUsername: msg.senderUsername || 'Unknown',
               callId: msg.callId,
-              sdp: msg.sdp,
+              sdp: msg.sdp,  // May be undefined for initial call notification
             }));
+            fastify.log.info(`[CALL] call-offer forwarded to ${msg.recipientId}`);
           } else {
             // Recipient offline - caller should handle timeout
+            fastify.log.info(`[CALL] Recipient ${msg.recipientId} offline, sending call-error`);
             socket.send(JSON.stringify({
               type: 'call-error',
               callId: msg.callId,
@@ -187,6 +196,8 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
           }
         } else if (msg.type === 'call-answer') {
           // Forward SDP answer to caller
+          fastify.log.info(`[CALL] call-answer from ${userId} to ${msg.recipientId}, callId: ${msg.callId}`);
+
           if (!msg.recipientId || !msg.callId || !msg.sdp) {
             socket.send(JSON.stringify({
               type: 'error',
@@ -203,7 +214,9 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
               callId: msg.callId,
               sdp: msg.sdp,
             }));
+            fastify.log.info(`[CALL] call-answer forwarded to ${msg.recipientId}`);
           } else {
+            fastify.log.info(`[CALL] call-answer: recipient ${msg.recipientId} offline`);
             socket.send(JSON.stringify({
               type: 'call-error',
               callId: msg.callId,
@@ -232,6 +245,8 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
           // ICE candidates can be dropped silently if recipient offline
         } else if (msg.type === 'call-accept') {
           // Forward call acceptance to caller
+          fastify.log.info(`[CALL] call-accept from ${userId} to ${msg.recipientId}, callId: ${msg.callId}`);
+
           if (!msg.recipientId || !msg.callId) {
             socket.send(JSON.stringify({
               type: 'error',
@@ -247,7 +262,9 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
               senderId: userId,
               callId: msg.callId,
             }));
+            fastify.log.info(`[CALL] call-accept forwarded to ${msg.recipientId}`);
           } else {
+            fastify.log.info(`[CALL] call-accept: recipient ${msg.recipientId} offline`);
             socket.send(JSON.stringify({
               type: 'call-error',
               callId: msg.callId,
@@ -275,6 +292,10 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
           // If caller offline, rejection doesn't matter
         } else if (msg.type === 'call-hangup') {
           // Forward hangup to peer
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const errorInfo = (msg as any).error;
+          fastify.log.info(`[CALL] call-hangup from ${userId} to ${msg.recipientId}, callId: ${msg.callId}, error: ${errorInfo || 'none'}`);
+
           if (!msg.recipientId || !msg.callId) {
             socket.send(JSON.stringify({
               type: 'error',
