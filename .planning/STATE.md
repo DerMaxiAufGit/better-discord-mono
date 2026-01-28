@@ -49,6 +49,9 @@ Recent decisions affecting current work:
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
 | 2026-01-29 | 64KB chunk size for SecretStream | Balance memory and performance (from 05-08) | Efficient streaming encryption for files up to 100MB |
+| 2026-01-29 | CustomEvent pattern for typing indicators | Decoupled communication via window events (from 05-09) | Multiple components can listen to typing events |
+| 2026-01-29 | 300ms debounce on typing input | Reduces WebSocket traffic (from 05-09) | Responsive UX without excessive network calls |
+| 2026-01-29 | window.setTimeout for TypeScript compatibility | Avoid NodeJS namespace in browser (from 05-09) | Proper TypeScript types, number return value |
 | 2026-01-29 | Encryption header as base64 form field | Send to server for BYTEA storage (from 05-08) | Enables server to store decryption metadata |
 | 2026-01-29 | Progress tracking with 7 states | pending → encrypting → uploading → complete/error (from 05-08) | Detailed UI feedback for file operations |
 | 2026-01-29 | Defer file key management | Upload complete, download awaits per-recipient encryption (from 05-08) | Postpone key distribution until message integration |
@@ -122,5 +125,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-29
-Stopped at: Completed 05-07-PLAN.md (group store & encryption)
+Stopped at: Completed 05-09-PLAN.md (reaction store & typing indicator)
 Resume file: None
