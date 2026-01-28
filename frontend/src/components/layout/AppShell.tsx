@@ -5,12 +5,16 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { IncomingCallBanner } from '@/components/call/IncomingCallBanner'
 import { ActiveCallWindow } from '@/components/call/ActiveCallWindow'
 import { useCall } from '@/lib/webrtc/useCall'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { BottomNav } from '@/components/mobile/BottomNav'
+import { cn } from '@/lib/utils'
 
 interface AppShellProps {
   children: ReactNode
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const { isMobile } = useBreakpoint()
   const { status, remoteUsername } = useCallStore()
   const { ringTimeout } = useSettingsStore()
   const {
@@ -63,11 +67,20 @@ export function AppShell({ children }: AppShellProps) {
       )}
 
       <div className="flex h-screen overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-auto bg-background">
+        {/* Sidebar only on desktop/tablet */}
+        {!isMobile && <Sidebar />}
+
+        {/* Main content with bottom padding on mobile for nav */}
+        <main className={cn(
+          "flex-1 overflow-auto bg-background",
+          isMobile && "pb-16"
+        )}>
           {children}
         </main>
       </div>
+
+      {/* Bottom nav only on mobile */}
+      {isMobile && <BottomNav />}
     </>
   )
 }
