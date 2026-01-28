@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useFileStore } from '@/stores/fileStore'
-import { downloadFile, triggerDownload, getFileMeta } from '@/lib/file/chunkedUpload'
+import { downloadFile, triggerDownload } from '@/lib/file/chunkedUpload'
 import { cn } from '@/lib/utils'
 
 interface FilePreviewProps {
