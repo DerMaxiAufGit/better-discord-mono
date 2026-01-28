@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 ## Current Position
 
-Phase: 4 of 4 (UI Polish & Production Readiness) - COMPLETE
-Version: 1.0.0
-Status: **All phases complete - v1.0.0 released**
-Last activity: 2026-01-28 — Phase 4 verified and committed
+Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
+Version: 1.1.0 target
+Status: **Executing Phase 5**
+Last activity: 2026-01-28 — Completed 05-03-PLAN.md (video helper library)
 
-Progress: [████████████████████] 100% (All 4 phases complete)
+Progress: [████████████████████░░░] 85% (28 of 33 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
-- Average duration: 4.3 minutes
-- Total execution time: 1.8 hours
+- Total plans completed: 28
+- Average duration: 4.2 minutes
+- Total execution time: 2.0 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [████████████████████] 100% (A
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
+| 05-enhanced-communication | 3 | 15 min | 5.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-02 (5 min), 04-03 (4 min), 04-04 (5 min), 04-05 (6 min), 04-06 (9 min)
-- Trend: Session recovery took longer due to file write challenges
+- Last 5 plans: 04-04 (5 min), 04-05 (6 min), 04-06 (9 min), 05-02 (5 min), 05-03 (5 min)
+- Trend: Consistent execution time across new phase
 
 *Updated after each plan completion*
 
@@ -47,6 +48,11 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | 20fps throttle for background blur | Balance smoothness and CPU usage (from 05-03) | Prevents CPU overload while maintaining acceptable visual quality |
+| 2026-01-28 | MediaPipe landscape model for blur | Model 1 faster than general model 0 (from 05-03) | Better real-time performance for video calls |
+| 2026-01-28 | Chromium + OffscreenCanvas for blur support | MediaPipe reliable only in Chromium (from 05-03) | Clear browser compatibility detection, graceful degradation |
+| 2026-01-28 | Video constraints use ideal/max not exact | Avoid OverconstrainedError on devices (from 05-03) | Better device compatibility, graceful fallback |
+| 2026-01-28 | Quality presets: low/medium/high | Standard video quality tiers (from 05-03) | Simple user-facing control, predictable resource usage |
 | 2026-01-28 | In-place modal for session recovery | Instead of redirect to login page (from 04-06) | Preserves app state (open conversation, scroll position) during re-authentication |
 | 2026-01-28 | sessionExpired boolean in auth store | Single source of truth for session state (from 04-06) | Triggers global modal, simple true/false state |
 | 2026-01-28 | relogin reuses login endpoint | No separate reauth endpoint (from 04-06) | DRY principle, same token refresh and crypto key logic |
@@ -159,9 +165,16 @@ None yet.
 - 04-02: Skeleton loading & toast notifications complete
 - 04-03: Mobile bottom navigation complete
 - 04-04: Mobile-friendly messaging complete
-- 04-05: Connection state feedback - 04-05: Connection state feedback & error toasts complete error toasts complete
+- 04-05: Connection state feedback & error toasts complete
 - 04-06: Session recovery modal complete
 - All Phase 4 success criteria verified
+
+**Phase 5 In Progress:**
+- 05-RESEARCH: Research complete (typing indicators, read receipts, video processing)
+- 05-01: Backend typing indicator service complete
+- 05-02: Frontend typing indicator integration complete
+- 05-03: Video helper library complete (videoConstraints, backgroundBlur, useCamera)
+- Next: 05-04 (Screen sharing support)
 
 **All Phase 3 success criteria verified:**
 1. ✓ User can initiate voice call with online contact
@@ -170,12 +183,6 @@ None yet.
 4. ✓ Calls establish successfully even behind NAT/firewall (TURN relay)
 5. ✓ User sees connection quality indicators during call
 
-**Phase 4 Progress:**
-- 04-01: Foundation utilities complete (useBreakpoint, retry utilities)
-- 04-02: Skeleton loading & toast notifications complete
-- 04-03: Mobile bottom navigation complete
-- 04-04: Mobile-friendly messaging complete
-- Next: 04-05 (Error boundaries and error handling)
 
 ## Development Infrastructure
 
@@ -195,5 +202,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 04-06-PLAN.md (session recovery modal)
-Resume file: None (all phases complete)
+Stopped at: Completed 05-03-PLAN.md (video helper library)
+Resume file: None
