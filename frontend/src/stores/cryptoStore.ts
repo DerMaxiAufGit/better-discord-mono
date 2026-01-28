@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { generateKeyPair, storeKeyPair, getKeyPair, hasStoredKeys } from '@/lib/crypto/keyManager'
+import { deriveKeyPairFromCredentials } from '@/lib/crypto/keyManager'
 import { deriveSessionKeys } from '@/lib/crypto/keyExchange'
 import { keyApi } from '@/lib/api'
 
@@ -19,7 +19,7 @@ interface CryptoState {
   isInitialized: boolean
 
   // Actions
-  initializeKeys: (userId: string) => Promise<void>
+  initializeKeys: (email: string, password: string) => Promise<void>
   getOrDeriveSessionKeys: (userId: string, contactId: string, contactPublicKey: string) => Promise<SessionKeys>
   clearKeys: () => void
 }
@@ -29,24 +29,13 @@ export const useCryptoStore = create<CryptoState>((set, get) => ({
   sessionKeys: new Map(),
   isInitialized: false,
 
-  initializeKeys: async (userId: string) => {
-    // Check if keys already exist in IndexedDB
-    const hasKeys = await hasStoredKeys(userId)
+  initializeKeys: async (email: string, password: string) => {
+    // Derive deterministic keypair from email + password
+    // Same credentials will always produce the same keys
+    const keyPair = await deriveKeyPairFromCredentials(email, password)
 
-    let keyPair: KeyPair
-    if (hasKeys) {
-      const storedKeyPair = await getKeyPair(userId)
-      if (!storedKeyPair) {
-        throw new Error('Failed to retrieve stored keys')
-      }
-      keyPair = storedKeyPair
-    } else {
-      // Generate new keypair
-      keyPair = await generateKeyPair()
-      await storeKeyPair(userId, keyPair)
-      // Upload public key to server
-      await keyApi.setPublicKey(keyPair.publicKey)
-    }
+    // Always upload public key to server (ensures it's current)
+    await keyApi.setPublicKey(keyPair.publicKey)
 
     set({ keyPair, isInitialized: true })
   },

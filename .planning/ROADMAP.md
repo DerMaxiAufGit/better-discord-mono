@@ -13,7 +13,7 @@ This roadmap transforms a vision into a working product: a self-hosted, E2E encr
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Deployment** - Docker infrastructure, authentication, and basic UI
-- [ ] **Phase 2: E2E Encrypted Messaging** - Core value prop: private 1:1 messaging
+- [x] **Phase 2: E2E Encrypted Messaging** - Core value prop: private 1:1 messaging
 - [ ] **Phase 3: Voice/Video Calls** - Real-time P2P communication with WebRTC
 - [ ] **Phase 4: UI Polish & Production Readiness** - UX refinement and production hardening
 
@@ -50,12 +50,13 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Database schema and WebSocket infrastructure
-- [ ] 02-02-PLAN.md — Frontend crypto library with libsodium.js
-- [ ] 02-03-PLAN.md — Backend key and message services
-- [ ] 02-04-PLAN.md — Frontend messaging stores and WebSocket hook
-- [ ] 02-05-PLAN.md — Messaging UI components
-- [ ] 02-06-PLAN.md — Integration wiring and verification checkpoint
+- [x] 02-01-PLAN.md — Database schema and WebSocket infrastructure
+- [x] 02-02-PLAN.md — Frontend crypto library with libsodium.js
+- [x] 02-03-PLAN.md — Backend key and message services
+- [x] 02-04-PLAN.md — Frontend messaging stores and WebSocket hook
+- [x] 02-05-PLAN.md — Messaging UI components
+- [x] 02-06-PLAN.md — User discovery and ContactsPage
+- [x] 02-07-PLAN.md — Integration, verification, and password-derived keys
 
 ### Phase 3: Voice/Video Calls
 **Goal**: Users can start peer-to-peer voice calls with reliable connectivity
@@ -94,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Deployment | 5/5 | ✓ Complete | 2026-01-27 |
-| 2. E2E Encrypted Messaging | 0/6 | Planning complete | - |
+| 2. E2E Encrypted Messaging | 7/7 | ✓ Complete | 2026-01-28 |
 | 3. Voice/Video Calls | 0/TBD | Not started | - |
 | 4. UI Polish & Production Readiness | 0/TBD | Not started | - |
 

@@ -8,21 +8,31 @@ import { router } from '@/routes'
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const user = useAuthStore((state) => state.user)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const isCryptoInitialized = useCryptoStore((state) => state.isInitialized)
   const initializeKeys = useCryptoStore((state) => state.initializeKeys)
 
   useEffect(() => {
     checkAuth()
   }, [checkAuth])
 
-  // Initialize encryption keys after successful authentication
+  // Recover crypto keys on page refresh using sessionStorage
   useEffect(() => {
-    if (isAuthenticated && user) {
-      initializeKeys(String(user.id)).catch((e) => {
-        console.error('Failed to initialize encryption keys:', e)
-      })
+    if (isAuthInitialized && isAuthenticated && !isCryptoInitialized) {
+      const stored = sessionStorage.getItem('_ec')
+      if (stored) {
+        try {
+          const { e, p } = JSON.parse(atob(stored))
+          initializeKeys(e, p).catch((err) => {
+            console.error('Failed to recover crypto keys:', err)
+          })
+        } catch {
+          // Invalid stored data, user will need to re-login
+          console.warn('Could not recover encryption keys - please re-login')
+        }
+      }
     }
-  }, [isAuthenticated, user, initializeKeys])
+  }, [isAuthInitialized, isAuthenticated, isCryptoInitialized, initializeKeys])
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

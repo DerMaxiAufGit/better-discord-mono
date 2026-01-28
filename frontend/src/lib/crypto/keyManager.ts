@@ -8,37 +8,40 @@ export interface KeyPair {
   privateKey: string; // base64 encoded X25519 private key
 }
 
-const DB_NAME = 'crypto-keys';
-const DB_VERSION = 1;
-const STORE_NAME = 'keypairs';
-
 /**
- * Open the IndexedDB key store
- */
-async function openKeyStore(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
-  });
-}
-
-/**
- * Generate a new X25519 key pair for key exchange (crypto_kx)
+ * Derive a deterministic X25519 key pair from email + password
+ * Uses Argon2id (via crypto_pwhash) with email as salt
+ * This ensures the same credentials always produce the same keys
+ * @param email - User's email (used as salt)
+ * @param password - User's password
  * @returns Base64-encoded public and private keys
  */
-export async function generateKeyPair(): Promise<KeyPair> {
+export async function deriveKeyPairFromCredentials(email: string, password: string): Promise<KeyPair> {
   const s = await initSodium();
-  // Use crypto_kx_keypair for compatibility with crypto_kx_*_session_keys
-  const keyPair = s.crypto_kx_keypair();
+
+  // Use email as salt - hash to required length (16 bytes for crypto_pwhash)
+  // crypto_pwhash_SALTBYTES = 16 for Argon2id
+  const SALT_BYTES = 16;
+  const emailBytes = s.from_string(email.toLowerCase());
+  const salt = s.crypto_generichash(SALT_BYTES, emailBytes, null);
+
+  // Derive a 32-byte seed from password using Argon2id
+  // Using MODERATE settings for balance of security and performance
+  // Constants: SEEDBYTES=32, OPSLIMIT_MODERATE=3, MEMLIMIT_MODERATE=268435456, ALG_ARGON2ID13=2
+  const seed = s.crypto_pwhash(
+    32, // crypto_kx_SEEDBYTES
+    password,
+    salt,
+    3,  // crypto_pwhash_OPSLIMIT_MODERATE
+    268435456, // crypto_pwhash_MEMLIMIT_MODERATE (256 MB)
+    2   // crypto_pwhash_ALG_ARGON2ID13
+  );
+
+  // Generate deterministic keypair from seed
+  const keyPair = s.crypto_kx_seed_keypair(seed);
+
+  // Clear sensitive data from memory
+  s.memzero(seed);
 
   return {
     publicKey: s.to_base64(keyPair.publicKey),
@@ -46,71 +49,3 @@ export async function generateKeyPair(): Promise<KeyPair> {
   };
 }
 
-/**
- * Store a key pair in IndexedDB
- * @param userId - User ID to associate with the key pair
- * @param keyPair - The key pair to store
- */
-export async function storeKeyPair(userId: string, keyPair: KeyPair): Promise<void> {
-  const db = await openKeyStore();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(keyPair, userId);
-
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-
-    transaction.oncomplete = () => db.close();
-  });
-}
-
-/**
- * Retrieve a key pair from IndexedDB
- * @param userId - User ID to look up
- * @returns The key pair if found, null otherwise
- */
-export async function getKeyPair(userId: string): Promise<KeyPair | null> {
-  const db = await openKeyStore();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(userId);
-
-    request.onsuccess = () => resolve(request.result || null);
-    request.onerror = () => reject(request.error);
-
-    transaction.oncomplete = () => db.close();
-  });
-}
-
-/**
- * Check if keys exist for a user
- * @param userId - User ID to check
- * @returns true if keys exist, false otherwise
- */
-export async function hasStoredKeys(userId: string): Promise<boolean> {
-  const keyPair = await getKeyPair(userId);
-  return keyPair !== null;
-}
-
-/**
- * Delete a key pair from IndexedDB (for logout/reset)
- * @param userId - User ID whose keys to delete
- */
-export async function deleteKeyPair(userId: string): Promise<void> {
-  const db = await openKeyStore();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(userId);
-
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-
-    transaction.oncomplete = () => db.close();
-  });
-}
