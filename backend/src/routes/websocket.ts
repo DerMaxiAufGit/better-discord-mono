@@ -4,15 +4,30 @@ import { wsAuthHook } from '../middleware/wsAuth.js';
 import { messageService } from '../services/messageService.js';
 import { friendService } from '../services/friendService.js';
 
+// WebRTC ICE candidate type (browser built-in, define for Node)
+interface RTCIceCandidateInit {
+  candidate?: string;
+  sdpMid?: string | null;
+  sdpMLineIndex?: number | null;
+  usernameFragment?: string | null;
+}
+
 // Store active WebSocket connections by userId
 // Exported so message service can access it for message delivery
 export const activeConnections = new Map<string, WebSocket>();
 
 // Message types for WebSocket communication
 interface IncomingMessage {
-  type: 'message' | 'typing' | 'read';
+  type: 'message' | 'typing' | 'read' |
+        'call-offer' | 'call-answer' | 'call-ice-candidate' |
+        'call-accept' | 'call-reject' | 'call-hangup';
   recipientId?: string;
   encryptedContent?: string;
+
+  // Call signaling fields
+  callId?: string;
+  sdp?: string;                              // SDP offer/answer as string
+  candidate?: RTCIceCandidateInit;           // ICE candidate
 }
 
 interface OutgoingMessage {
@@ -142,6 +157,141 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
               readerId: userId,
             }));
           }
+        }
+        // ===== CALL SIGNALING HANDLERS =====
+        else if (msg.type === 'call-offer') {
+          // Forward SDP offer to recipient
+          if (!msg.recipientId || !msg.callId || !msg.sdp) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'call-offer requires recipientId, callId, and sdp',
+            } as ErrorMessage));
+            return;
+          }
+
+          const recipientSocket = activeConnections.get(msg.recipientId);
+          if (recipientSocket && recipientSocket.readyState === 1) {
+            recipientSocket.send(JSON.stringify({
+              type: 'call-offer',
+              senderId: userId,
+              callId: msg.callId,
+              sdp: msg.sdp,
+            }));
+          } else {
+            // Recipient offline - caller should handle timeout
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: 'recipient_offline',
+            }));
+          }
+        } else if (msg.type === 'call-answer') {
+          // Forward SDP answer to caller
+          if (!msg.recipientId || !msg.callId || !msg.sdp) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'call-answer requires recipientId, callId, and sdp',
+            } as ErrorMessage));
+            return;
+          }
+
+          const recipientSocket = activeConnections.get(msg.recipientId);
+          if (recipientSocket && recipientSocket.readyState === 1) {
+            recipientSocket.send(JSON.stringify({
+              type: 'call-answer',
+              senderId: userId,
+              callId: msg.callId,
+              sdp: msg.sdp,
+            }));
+          } else {
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: 'recipient_offline',
+            }));
+          }
+        } else if (msg.type === 'call-ice-candidate') {
+          // Forward ICE candidate to peer
+          if (!msg.recipientId || !msg.callId || !msg.candidate) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'call-ice-candidate requires recipientId, callId, and candidate',
+            } as ErrorMessage));
+            return;
+          }
+
+          const recipientSocket = activeConnections.get(msg.recipientId);
+          if (recipientSocket && recipientSocket.readyState === 1) {
+            recipientSocket.send(JSON.stringify({
+              type: 'call-ice-candidate',
+              senderId: userId,
+              callId: msg.callId,
+              candidate: msg.candidate,
+            }));
+          }
+          // ICE candidates can be dropped silently if recipient offline
+        } else if (msg.type === 'call-accept') {
+          // Forward call acceptance to caller
+          if (!msg.recipientId || !msg.callId) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'call-accept requires recipientId and callId',
+            } as ErrorMessage));
+            return;
+          }
+
+          const recipientSocket = activeConnections.get(msg.recipientId);
+          if (recipientSocket && recipientSocket.readyState === 1) {
+            recipientSocket.send(JSON.stringify({
+              type: 'call-accept',
+              senderId: userId,
+              callId: msg.callId,
+            }));
+          } else {
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: 'recipient_offline',
+            }));
+          }
+        } else if (msg.type === 'call-reject') {
+          // Forward call rejection to caller
+          if (!msg.recipientId || !msg.callId) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'call-reject requires recipientId and callId',
+            } as ErrorMessage));
+            return;
+          }
+
+          const recipientSocket = activeConnections.get(msg.recipientId);
+          if (recipientSocket && recipientSocket.readyState === 1) {
+            recipientSocket.send(JSON.stringify({
+              type: 'call-reject',
+              senderId: userId,
+              callId: msg.callId,
+            }));
+          }
+          // If caller offline, rejection doesn't matter
+        } else if (msg.type === 'call-hangup') {
+          // Forward hangup to peer
+          if (!msg.recipientId || !msg.callId) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'call-hangup requires recipientId and callId',
+            } as ErrorMessage));
+            return;
+          }
+
+          const recipientSocket = activeConnections.get(msg.recipientId);
+          if (recipientSocket && recipientSocket.readyState === 1) {
+            recipientSocket.send(JSON.stringify({
+              type: 'call-hangup',
+              senderId: userId,
+              callId: msg.callId,
+            }));
+          }
+          // If peer offline, hangup doesn't matter
         }
       } catch (err) {
         fastify.log.error(err, 'WebSocket message handling error');
