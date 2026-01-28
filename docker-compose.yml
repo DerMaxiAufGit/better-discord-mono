@@ -50,5 +50,30 @@ services:
       interval: 30s
       timeout: 3s
 
+  coturn:
+    image: coturn/coturn:4.6.3
+    command:
+      - --no-cli
+      - --no-tls
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET}
+      - --realm=${TURN_REALM}
+      - --listening-port=3478
+      - --min-port=49152
+      - --max-port=49200
+      - --log-file=stdout
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "5349:5349/udp"
+      - "5349:5349/tcp"
+      - "49152-49200:49152-49200/udp"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 3478 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
 volumes:
   postgres_data:
