@@ -15,7 +15,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation & Deployment** - Docker infrastructure, authentication, and basic UI
 - [x] **Phase 2: E2E Encrypted Messaging** - Core value prop: private 1:1 messaging
 - [x] **Phase 3: Voice/Video Calls** - Real-time P2P communication with WebRTC
-- [ ] **Phase 4: UI Polish & Production Readiness** - UX refinement and production hardening
+- [x] **Phase 4: UI Polish & Production Readiness** - UX refinement and production hardening (v1.0.0)
+- [ ] **Phase 5: Enhanced Communication** - Video calls, group messaging, file sharing (v1.1.0)
+- [ ] **Phase 6: Social Features** - Profiles, friend requests, presence, search (v1.2.0)
+- [ ] **Phase 7: Advanced Features** - Group calls, screen sharing, native apps (v2.0.0)
 
 ## Phase Details
 
@@ -79,7 +82,7 @@ Plans:
 - [x] 03-06-PLAN.md — Audio settings in SettingsPage
 - [x] 03-07-PLAN.md — Integration and end-to-end verification
 
-### Phase 4: UI Polish & Production Readiness
+### Phase 4: UI Polish & Production Readiness (v1.0.0)
 **Goal**: Application provides polished, production-ready experience across devices
 **Depends on**: Phase 3 (core features complete)
 **Requirements**: UI-02, UI-03
@@ -91,13 +94,49 @@ Plans:
 **Plans**: 7 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Install dependencies and create foundation hooks
-- [ ] 04-02-PLAN.md — Skeleton loading components and toast setup
-- [ ] 04-03-PLAN.md — Mobile bottom navigation and responsive AppShell
-- [ ] 04-04-PLAN.md — Mobile conversation view with back navigation
-- [ ] 04-05-PLAN.md — Connection banners and error toast integration
-- [ ] 04-06-PLAN.md — Session expired modal and auth recovery
-- [ ] 04-07-PLAN.md — Pull-to-refresh, mobile call UI, and verification
+- [x] 04-01-PLAN.md — Install dependencies and create foundation hooks
+- [x] 04-02-PLAN.md — Skeleton loading components and toast setup
+- [x] 04-03-PLAN.md — Mobile bottom navigation and responsive AppShell
+- [x] 04-04-PLAN.md — Mobile conversation view with back navigation
+- [x] 04-05-PLAN.md — Connection banners and error toast integration
+- [x] 04-06-PLAN.md — Session expired modal and auth recovery
+- [x] 04-07-PLAN.md — Pull-to-refresh, mobile call UI, and verification
+
+### Phase 5: Enhanced Communication (v1.1.0)
+**Goal**: Expand communication capabilities with video, groups, and media sharing
+**Depends on**: Phase 4 (stable v1.0.0 foundation)
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. User can make video calls with camera feed
+  2. User can create group conversations with multiple participants
+  3. User can share files and images in conversations
+  4. User can react to messages with emoji
+  5. User sees typing indicators when contact is composing
+**Plans**: TBD
+
+### Phase 6: Social Features (v1.2.0)
+**Goal**: Add social networking features for better user connections
+**Depends on**: Phase 5
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. User can upload and display profile avatar
+  2. User can send/accept/decline friend requests
+  3. User can see online/offline status of contacts
+  4. User can block other users
+  5. User can search through message history
+**Plans**: TBD
+
+### Phase 7: Advanced Features (v2.0.0)
+**Goal**: Enterprise-grade features and native platform support
+**Depends on**: Phase 6
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. User can join voice channels for group calls
+  2. User can share screen during calls
+  3. User receives push notifications on mobile
+  4. User can use native desktop app (Electron)
+  5. User can use native mobile app (React Native)
+**Plans**: TBD
 
 ## Progress
 
