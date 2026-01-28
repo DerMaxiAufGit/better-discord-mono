@@ -2,8 +2,10 @@ import { ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { useCallStore } from '@/stores/callStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useMessageStore } from '@/stores/messageStore'
 import { IncomingCallBanner } from '@/components/call/IncomingCallBanner'
 import { ActiveCallWindow } from '@/components/call/ActiveCallWindow'
+import { ConnectionBanner } from '@/components/error/ConnectionBanner'
 import { useCall } from '@/lib/webrtc/useCall'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { BottomNav } from '@/components/mobile/BottomNav'
@@ -17,6 +19,7 @@ export function AppShell({ children }: AppShellProps) {
   const { isMobile } = useBreakpoint()
   const { status, remoteUsername } = useCallStore()
   const { ringTimeout } = useSettingsStore()
+  const connectionStatus = useMessageStore((s) => s.connectionStatus)
   const {
     isMuted,
     quality,
@@ -40,6 +43,9 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <>
+      {/* Connection banner at very top */}
+      <ConnectionBanner status={connectionStatus} />
+
       {/* Global incoming call banner */}
       {showIncomingCall && (
         <IncomingCallBanner
