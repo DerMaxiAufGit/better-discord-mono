@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Deployment** - Docker infrastructure, authentication, and basic UI
 - [x] **Phase 2: E2E Encrypted Messaging** - Core value prop: private 1:1 messaging
-- [ ] **Phase 3: Voice/Video Calls** - Real-time P2P communication with WebRTC
+- [x] **Phase 3: Voice/Video Calls** - Real-time P2P communication with WebRTC
 - [ ] **Phase 4: UI Polish & Production Readiness** - UX refinement and production hardening
 
 ## Phase Details
@@ -71,13 +71,13 @@ Plans:
 **Plans**: 7 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Coturn Docker setup and TURN credentials endpoint
-- [ ] 03-02-PLAN.md — Call and settings Zustand stores
-- [ ] 03-03-PLAN.md — WebSocket call signaling and PeerConnection manager
-- [ ] 03-04-PLAN.md — Audio device management hooks
-- [ ] 03-05-PLAN.md — Call UI components and useCall orchestration
-- [ ] 03-06-PLAN.md — Audio settings in SettingsPage
-- [ ] 03-07-PLAN.md — Integration and end-to-end verification
+- [x] 03-01-PLAN.md — Coturn Docker setup and TURN credentials endpoint
+- [x] 03-02-PLAN.md — Call and settings Zustand stores
+- [x] 03-03-PLAN.md — WebSocket call signaling and PeerConnection manager
+- [x] 03-04-PLAN.md — Audio device management hooks
+- [x] 03-05-PLAN.md — Call UI components and useCall orchestration
+- [x] 03-06-PLAN.md — Audio settings in SettingsPage
+- [x] 03-07-PLAN.md — Integration and end-to-end verification
 
 ### Phase 4: UI Polish & Production Readiness
 **Goal**: Application provides polished, production-ready experience across devices
@@ -88,10 +88,16 @@ Plans:
   2. App shows loading states during long operations
   3. App handles network errors gracefully with user-friendly messages
   4. User can recover from common error scenarios without refreshing
-**Plans**: TBD
+**Plans**: 7 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 04-01-PLAN.md — Install dependencies and create foundation hooks
+- [ ] 04-02-PLAN.md — Skeleton loading components and toast setup
+- [ ] 04-03-PLAN.md — Mobile bottom navigation and responsive AppShell
+- [ ] 04-04-PLAN.md — Mobile conversation view with back navigation
+- [ ] 04-05-PLAN.md — Connection banners and error toast integration
+- [ ] 04-06-PLAN.md — Session expired modal and auth recovery
+- [ ] 04-07-PLAN.md — Pull-to-refresh, mobile call UI, and verification
 
 ## Progress
 
@@ -102,9 +108,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Deployment | 5/5 | ✓ Complete | 2026-01-27 |
 | 2. E2E Encrypted Messaging | 7/7 | ✓ Complete | 2026-01-28 |
-| 3. Voice/Video Calls | 0/7 | Not started | - |
-| 4. UI Polish & Production Readiness | 0/TBD | Not started | - |
+| 3. Voice/Video Calls | 7/7 | ✓ Complete | 2026-01-28 |
+| 4. UI Polish & Production Readiness | 0/7 | Ready for execution | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Last updated: 2026-01-28 after Phase 3 planning*
+*Last updated: 2026-01-28 after Phase 4 planning*
