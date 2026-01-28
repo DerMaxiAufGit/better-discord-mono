@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 4 of 4 (UI Polish & Production Readiness)
-Plan: 4 of 5 (04-04 complete)
-Status: **In progress**
-Last activity: 2026-01-28 — Completed 04-04-PLAN.md (Mobile-friendly messaging)
+Plan: 5 of 5 (04-05 complete)
+Status: **Phase complete**
+Last activity: 2026-01-28 — Completed 04-05-PLAN.md (Connection state feedback & error toasts)
 
-Progress: [████████████████████] ~99% (23 plans complete, Phase 4 in progress)
+Progress: [████████████████████] 100% (24 plans complete, all phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
-- Average duration: 4.0 minutes
-- Total execution time: 1.5 hours
+- Total plans completed: 24
+- Average duration: 4.1 minutes
+- Total execution time: 1.6 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [████████████████████] ~99% (2
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
-| 04-ui-polish-production-readiness | 4 | 17 min | 4.3 min |
+| 04-ui-polish-production-readiness | 5 | 23 min | 4.6 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-07 (0 min), 04-01 (3 min), 04-02 (5 min), 04-03 (4 min), 04-04 (5 min)
-- Trend: Consistent 4-5 minute execution in Phase 4
+- Last 5 plans: 04-01 (3 min), 04-02 (5 min), 04-03 (4 min), 04-04 (5 min), 04-05 (6 min)
+- Trend: Consistent 4-6 minute execution in Phase 4
 
 *Updated after each plan completion*
 
@@ -47,6 +47,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | showApiError for non-401 errors | 401 has dedicated auth flow (from 04-05) | Prevents duplicate error feedback, all errors visible to user |
+| 2026-01-28 | Toast only on reconnection success | Not on initial connect (from 04-05) | Reduces toast fatigue, initial connect is expected |
+| 2026-01-28 | Connection status in messageStore | Not separate store (from 04-05) | WebSocket already in useMessaging, logical coupling |
+| 2026-01-28 | Banner for connection state | Not modal/toast (from 04-05) | Persistent indicator, non-blocking, users can view cached content |
 | 2026-01-28 | 120px max-height for auto-growing textarea | ~4 lines of text before scrolling (from 04-04) | Prevents input from dominating screen on mobile |
 | 2026-01-28 | Optional onBack prop for mobile navigation | Back button only needed on mobile, not desktop (from 04-04) | Clean API, platform-specific UI |
 | 2026-01-28 | Full-screen conversation on mobile | Mobile screens too small for side-by-side layout (from 04-04) | Native app feel, better mobile UX |
@@ -146,13 +150,14 @@ None yet.
 - 03-06: Audio settings UI complete (AudioSettings component in SettingsPage)
 - 03-07: Integration verified with ringtone feature added
 
-**Phase 4 Progress:**
+**Phase 4 Complete:**
 - 04-RESEARCH: Research complete (accessibility, performance, error handling patterns)
 - 04-01: Foundation utilities complete (useBreakpoint, retry utilities)
 - 04-02: Skeleton loading & toast notifications complete
 - 04-03: Mobile bottom navigation complete
 - 04-04: Mobile-friendly messaging complete
-- Next: 04-05 (Error boundaries and error handling)
+- 04-05: Connection state feedback & error toasts complete
+- All Phase 4 success criteria verified
 
 **All Phase 3 success criteria verified:**
 1. ✓ User can initiate voice call with online contact
@@ -186,5 +191,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 04-04-PLAN.md (mobile-friendly messaging)
-Resume file: None (ready for 04-05-PLAN.md)
+Stopped at: Completed 04-05-PLAN.md (connection state feedback & error toasts)
+Resume file: None (all phases complete)
