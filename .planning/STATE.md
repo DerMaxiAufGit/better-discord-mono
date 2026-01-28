@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 3 of 4 (Voice & Video Calls)
-Plan: 02 of 7 (03-01 TURN Server + 03-02 Call Stores complete)
+Plan: 03 of 7 (03-01 TURN Server + 03-02 Call Stores + 03-03 Signaling complete)
 Status: **In progress**
-Last activity: 2026-01-28 — Completed 03-01-PLAN.md with coturn and TURN credentials API
+Last activity: 2026-01-28 — Completed 03-03-PLAN.md with WebSocket signaling + PeerConnection
 
-Progress: [██████████████░░░░░░] ~70% (14 plans complete, Phase 3 in progress)
+Progress: [███████████████░░░░░] ~75% (15 plans complete, Phase 3 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 4.6 minutes
-- Total execution time: 1.08 hours
+- Total plans completed: 15
+- Average duration: 4.5 minutes
+- Total execution time: 1.12 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [██████████████░░░░░░] ~70% (1
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
-| 03-voice-video-calls | 2 | 6 min | 3.0 min |
+| 03-voice-video-calls | 3 | 8 min | 2.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-06 (4 min), 02-07 (TBD), 03-02 (2 min), 03-01 (4 min)
-- Trend: Fast execution for infrastructure and store plans
+- Last 5 plans: 02-07 (TBD), 03-01 (4 min), 03-02 (2 min), 03-03 (2 min)
+- Trend: Fast execution for infrastructure and signaling plans
 
 *Updated after each plan completion*
 
@@ -46,6 +46,9 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | Google STUN as fallback | Additional ICE server alongside self-hosted TURN (from 03-03) | Better initial connectivity |
+| 2026-01-28 | Implicit SDP via setLocalDescription() | Parameter-less call creates offer/answer (from 03-03) | Cleaner Perfect Negotiation code |
+| 2026-01-28 | ICE candidates silently dropped if offline | Unlike offers, candidates not critical (from 03-03) | Reduced error noise |
 | 2026-01-28 | coturn:4.6.3 with limited port range | 49152-49200 instead of full range (from 03-01) | Docker performance, sufficient for dev |
 | 2026-01-28 | HMAC-SHA1 time-limited credentials | RFC-compliant TURN authentication (from 03-01) | Prevents credential abuse |
 | 2026-01-28 | 24-hour TTL for TURN credentials | Credentials outlast any reasonable call (from 03-01) | Balance security and UX |
@@ -118,7 +121,8 @@ None yet.
 - 03-RESEARCH: Research complete (WebRTC P2P, Perfect Negotiation, ICE candidates)
 - 03-01: TURN server setup complete (coturn Docker, turnService, credentials API)
 - 03-02: Call and settings stores complete (callStore, settingsStore with persistence)
-- Next: 03-03 (WebRTC signaling service)
+- 03-03: WebSocket signaling + PeerConnectionManager complete
+- Next: 03-04 (Call service integration)
 
 **General:** Phase 3 has 7 plans (03-01 through 03-07).
 
@@ -140,5 +144,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 03-01-PLAN.md (TURN/STUN Server Setup)
-Resume file: None (ready for 03-03-PLAN.md)
+Stopped at: Completed 03-03-PLAN.md (WebSocket signaling + PeerConnection)
+Resume file: None (ready for 03-04-PLAN.md)
