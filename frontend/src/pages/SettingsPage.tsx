@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/stores/auth';
+import { AudioSettings } from '@/components/settings/AudioSettings';
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -116,6 +117,12 @@ export function SettingsPage() {
               System
             </Button>
           </div>
+        </section>
+
+        {/* Audio Section */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">Audio</h2>
+          <AudioSettings />
         </section>
       </div>
     </div>
