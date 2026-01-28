@@ -10,6 +10,7 @@ import { useCall } from '@/lib/webrtc/useCall'
 import { useMessaging } from '@/lib/websocket/useMessaging'
 import { IncomingCallBanner } from '@/components/call/IncomingCallBanner'
 import { ActiveCallWindow } from '@/components/call/ActiveCallWindow'
+import { SessionExpiredModal } from '@/components/auth/SessionExpiredModal'
 import { router } from '@/routes'
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const isCryptoInitialized = useCryptoStore((state) => state.isInitialized)
+  const sessionExpired = useAuthStore((state) => state.sessionExpired)
   const initializeKeys = useCryptoStore((state) => state.initializeKeys)
 
   useEffect(() => {
@@ -78,6 +80,9 @@ function App() {
         closeButton
         toastOptions={{ duration: 4000 }}
       />
+      {/* Session expired modal - renders above everything */}
+      {sessionExpired && <SessionExpiredModal />}
+
 
       {/* Global incoming call banner */}
       {showIncomingCall && (

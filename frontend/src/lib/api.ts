@@ -1,4 +1,5 @@
 import { showApiError } from '@/lib/toast'
+import { useAuthStore } from '@/stores/auth'
 
 // API client with automatic token refresh
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
@@ -80,6 +81,10 @@ export async function apiRequest<T>(
         headers,
         credentials: 'include',
       })
+    } else {
+      // Refresh failed - show session expired modal
+      useAuthStore.getState().setSessionExpired(true)
+      throw new Error('Session expired')
     }
   }
 
