@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 3 of 4 (Voice & Video Calls)
-Plan: 03 of 7 (03-01 TURN Server + 03-02 Call Stores + 03-03 Signaling complete)
+Plan: 04 of 7 (03-01 TURN + 03-02 Stores + 03-03 Signaling + 03-04 Audio Hooks complete)
 Status: **In progress**
-Last activity: 2026-01-28 — Completed 03-03-PLAN.md with WebSocket signaling + PeerConnection
+Last activity: 2026-01-28 — Completed 03-04-PLAN.md with audio device management hooks
 
-Progress: [███████████████░░░░░] ~75% (15 plans complete, Phase 3 in progress)
+Progress: [████████████████░░░░] ~80% (16 plans complete, Phase 3 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: 4.5 minutes
-- Total execution time: 1.12 hours
+- Total plans completed: 16
+- Average duration: 4.4 minutes
+- Total execution time: 1.15 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [███████████████░░░░░] ~75% (1
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
-| 03-voice-video-calls | 3 | 8 min | 2.7 min |
+| 03-voice-video-calls | 4 | 10 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-07 (TBD), 03-01 (4 min), 03-02 (2 min), 03-03 (2 min)
-- Trend: Fast execution for infrastructure and signaling plans
+- Last 5 plans: 03-01 (4 min), 03-02 (2 min), 03-03 (2 min), 03-04 (2 min)
+- Trend: Fast execution for infrastructure and hook plans
 
 *Updated after each plan completion*
 
@@ -46,6 +46,9 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | 15 threshold for isActive audio level | Speaking detection threshold (from 03-04) | Reasonable default for voice activity |
+| 2026-01-28 | 30fps audio level updates | Throttle requestAnimationFrame (from 03-04) | Smooth without excessive re-renders |
+| 2026-01-28 | FFT size 256 for audio analysis | Fast analysis with adequate resolution (from 03-04) | Real-time level detection |
 | 2026-01-28 | Google STUN as fallback | Additional ICE server alongside self-hosted TURN (from 03-03) | Better initial connectivity |
 | 2026-01-28 | Implicit SDP via setLocalDescription() | Parameter-less call creates offer/answer (from 03-03) | Cleaner Perfect Negotiation code |
 | 2026-01-28 | ICE candidates silently dropped if offline | Unlike offers, candidates not critical (from 03-03) | Reduced error noise |
@@ -122,7 +125,8 @@ None yet.
 - 03-01: TURN server setup complete (coturn Docker, turnService, credentials API)
 - 03-02: Call and settings stores complete (callStore, settingsStore with persistence)
 - 03-03: WebSocket signaling + PeerConnectionManager complete
-- Next: 03-04 (Call service integration)
+- 03-04: Audio device hooks complete (useAudioDevices, useAudioLevel)
+- Next: 03-05 (Call UI or signaling integration)
 
 **General:** Phase 3 has 7 plans (03-01 through 03-07).
 
@@ -144,5 +148,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 03-03-PLAN.md (WebSocket signaling + PeerConnection)
-Resume file: None (ready for 03-04-PLAN.md)
+Stopped at: Completed 03-04-PLAN.md (Audio device management hooks)
+Resume file: None (ready for 03-05-PLAN.md)
