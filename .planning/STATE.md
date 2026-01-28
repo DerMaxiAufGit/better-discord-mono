@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
 Version: 1.1.0 target
 Status: **Executing Phase 5**
-Last activity: 2026-01-29 — Completed 05-12-PLAN.md (file upload & preview UI)
+Last activity: 2026-01-29 — Completed 05-14-PLAN.md (typing & reply UI components)
 
-Progress: [████████████████████░░░] 83% (35 of 42 plans complete)
+Progress: [████████████████████░░░] 86% (36 of 42 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 35
+- Total plans completed: 36
 - Average duration: 4.6 minutes
-- Total execution time: 2.7 hours
+- Total execution time: 2.9 hours
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [████████████████████░░░
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
-| 05-enhanced-communication | 11 | 92 min | 8.4 min |
+| 05-enhanced-communication | 12 | 104 min | 8.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-12 (9 min), 05-08 (12 min), 05-10 (7 min), 05-06 (12 min), 05-04 (16 min)
+- Last 5 plans: 05-14 (12 min), 05-12 (9 min), 05-08 (12 min), 05-10 (7 min), 05-06 (12 min)
 - Trend: Phase 5 plans averaging longer due to encryption complexity
 
 *Updated after each plan completion*
@@ -49,6 +49,9 @@ Recent decisions affecting current work:
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
 | 2026-01-29 | FileUploader shows real-time progress | Display upload status/percentage from fileStore (from 05-12) | Visual feedback for encrypted file uploads |
+| 2026-01-29 | Staggered animation delays for typing dots | 0ms, 150ms, 300ms via inline styles (from 05-14) | Smooth wave animation without custom keyframes |
+| 2026-01-29 | Truncate reply content at different lengths | 100 chars for MessageReply, 60 for ReplyPreview (from 05-14) | Balances readability with space constraints |
+| 2026-01-29 | Three typing indicator variants | Base, Inline, Compact for different contexts (from 05-14) | Flexible UI integration across conversation views |
 | 2026-01-29 | FilePreview adapts to MIME type | Images/videos inline, generic files as cards (from 05-12) | Optimized display based on file type |
 | 2026-01-29 | Lightbox with zoom/pan | yet-another-react-lightbox with zoom plugin (from 05-12) | Fullscreen image viewing with gesture support |
 | 2026-01-29 | 64KB chunk size for SecretStream | Balance memory and performance (from 05-08) | Efficient streaming encryption for files up to 100MB |
@@ -103,7 +106,8 @@ None yet.
 - 05-08: File encryption and upload utilities complete (SecretStream, progress tracking)
 - 05-10: Video UI components complete (VideoPreview, VideoControls, VideoSettings)
 - 05-12: File upload and preview UI complete (FileUploader, FilePreview, Lightbox)
-- Next: Continue Phase 5 remaining plans (09, 11, 13-16)
+- 05-14: Typing indicator and message reply UI components complete
+- Next: Continue Phase 5 remaining plans (09, 11, 13, 15, 16)
 
 **Previous phases complete:**
 - Phase 1: Foundation and deployment ✓
@@ -129,5 +133,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-29
-Stopped at: Completed 05-12-PLAN.md (file upload & preview UI)
+Stopped at: Completed 05-14-PLAN.md (typing & reply UI components)
 Resume file: None
