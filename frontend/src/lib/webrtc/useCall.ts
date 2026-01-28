@@ -1,0 +1,725 @@
+import { useRef, useCallback, useEffect } from 'react'
+import { useCallStore, CallStatus } from '@/stores/callStore'
+import { useSettingsStore } from '@/stores/settingsStore'
+import { useAuthStore } from '@/stores/auth'
+import { PeerConnectionManager, createPeerConnection, SignalingChannel } from './PeerConnection'
+
+/**
+ * Return type for useCall hook
+ */
+interface UseCallReturn {
+  // State (from callStore)
+  status: CallStatus
+  remoteUsername: string | null
+  isMuted: boolean
+  quality: 1 | 2 | 3 | 4
+  latency: number | null
+  isMinimized: boolean
+  startTime: Date | null
+
+  // Actions
+  startCall: (userId: string, username: string) => Promise<void>
+  acceptCall: () => Promise<void>
+  rejectCall: () => void
+  hangup: () => void
+  toggleMute: () => void
+  toggleMinimized: () => void
+}
+
+/**
+ * Call signaling message types
+ */
+interface CallOfferMessage {
+  type: 'call-offer'
+  callId: string
+  senderId: string
+  senderUsername: string
+  sdp?: string
+}
+
+interface CallAcceptMessage {
+  type: 'call-accept'
+  callId: string
+  senderId: string
+}
+
+interface CallAnswerMessage {
+  type: 'call-answer'
+  callId: string
+  senderId: string
+  sdp: string
+}
+
+interface CallIceCandidateMessage {
+  type: 'call-ice-candidate'
+  callId: string
+  senderId: string
+  candidate: RTCIceCandidateInit
+}
+
+interface CallRejectMessage {
+  type: 'call-reject'
+  callId: string
+  senderId: string
+}
+
+interface CallHangupMessage {
+  type: 'call-hangup'
+  callId: string
+  senderId: string
+}
+
+type CallSignalingMessage =
+  | CallOfferMessage
+  | CallAcceptMessage
+  | CallAnswerMessage
+  | CallIceCandidateMessage
+  | CallRejectMessage
+  | CallHangupMessage
+
+// Custom event name for call signaling messages
+export const CALL_SIGNALING_EVENT = 'call-signaling'
+
+/**
+ * Dispatch a call signaling event to be handled by useCall
+ */
+export function dispatchCallSignaling(message: CallSignalingMessage): void {
+  window.dispatchEvent(new CustomEvent(CALL_SIGNALING_EVENT, { detail: message }))
+}
+
+/**
+ * Main call orchestration hook.
+ * Coordinates WebRTC, signaling, and call store state.
+ *
+ * Usage:
+ * 1. Call startCall(userId, username) to initiate outgoing call
+ * 2. Listen for incoming calls via CALL_SIGNALING_EVENT
+ * 3. Accept with acceptCall() or decline with rejectCall()
+ * 4. During call: toggleMute(), toggleMinimized(), hangup()
+ *
+ * The hook handles:
+ * - PeerConnection lifecycle
+ * - Quality monitoring
+ * - Mute/unmute via track enable
+ * - Cleanup on hangup
+ */
+export function useCall(): UseCallReturn {
+  // Access stores
+  const {
+    status,
+    callId,
+    remoteUserId,
+    remoteUsername,
+    isPolite,
+    isMuted,
+    quality,
+    latency,
+    isMinimized,
+    startTime,
+    startOutgoingCall,
+    receiveIncomingCall,
+    acceptCall: storeAcceptCall,
+    rejectCall: storeRejectCall,
+    setConnecting,
+    setConnected,
+    setReconnecting,
+    endCall,
+    toggleMute: storeToggleMute,
+    toggleMinimized,
+    updateQuality,
+    reset,
+  } = useCallStore()
+
+  const { selectedMicId, ringTimeout } = useSettingsStore()
+  const { user, accessToken } = useAuthStore()
+
+  // Refs for WebRTC resources
+  const peerConnectionRef = useRef<PeerConnectionManager | null>(null)
+  const localStreamRef = useRef<MediaStream | null>(null)
+  const remoteStreamRef = useRef<MediaStream | null>(null)
+  const qualityIntervalRef = useRef<number | null>(null)
+  const ringTimeoutRef = useRef<number | null>(null)
+  const audioElementRef = useRef<HTMLAudioElement | null>(null)
+  const pendingSdpRef = useRef<string | null>(null)
+  const wsRef = useRef<WebSocket | null>(null)
+
+  // Use ref to access current state in callbacks without stale closures
+  const stateRef = useRef({
+    callId,
+    remoteUserId,
+    isPolite,
+    status,
+    user,
+    accessToken,
+    selectedMicId,
+    ringTimeout,
+  })
+  stateRef.current = { callId, remoteUserId, isPolite, status, user, accessToken, selectedMicId, ringTimeout }
+
+  /**
+   * Create WebSocket signaling channel
+   */
+  const createSignalingChannel = useCallback((): SignalingChannel => {
+    // Determine WebSocket URL (same host, /api/ws path)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const wsUrl = `${protocol}//${window.location.host}/api/ws?token=${stateRef.current.accessToken}`
+
+    // Reuse existing WebSocket if connected
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      return {
+        send: (msg) => wsRef.current?.send(JSON.stringify(msg)),
+      }
+    }
+
+    // Create new WebSocket for call signaling
+    const ws = new WebSocket(wsUrl)
+    wsRef.current = ws
+
+    ws.onopen = () => {
+      console.log('[useCall] WebSocket connected for signaling')
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        // Dispatch call signaling messages
+        if (data.type?.startsWith('call-')) {
+          dispatchCallSignaling(data as CallSignalingMessage)
+        }
+      } catch (e) {
+        console.error('[useCall] Failed to parse WebSocket message:', e)
+      }
+    }
+
+    ws.onclose = () => {
+      console.log('[useCall] WebSocket disconnected')
+      wsRef.current = null
+    }
+
+    return {
+      send: (msg) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(msg))
+        } else {
+          // Queue message until connected
+          ws.addEventListener('open', () => ws.send(JSON.stringify(msg)), { once: true })
+        }
+      },
+    }
+  }, [])
+
+  /**
+   * Get local audio stream
+   */
+  const getLocalAudioStream = useCallback(async (): Promise<MediaStream> => {
+    const { selectedMicId } = stateRef.current
+    const constraints: MediaStreamConstraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        ...(selectedMicId ? { deviceId: { exact: selectedMicId } } : {}),
+      },
+      video: false,
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints)
+    localStreamRef.current = stream
+    return stream
+  }, [])
+
+  /**
+   * Start quality monitoring via getStats()
+   */
+  const startQualityMonitoring = useCallback(() => {
+    if (qualityIntervalRef.current) {
+      clearInterval(qualityIntervalRef.current)
+    }
+
+    qualityIntervalRef.current = window.setInterval(async () => {
+      const pc = peerConnectionRef.current
+      if (!pc || !pc.isConnected()) return
+
+      try {
+        const stats = await pc.getStats()
+        if (!stats) return
+
+        let packetLossPercent = 0
+        let rtt: number | null = null
+
+        stats.forEach((report) => {
+          if (report.type === 'inbound-rtp' && report.kind === 'audio') {
+            const packetsLost = report.packetsLost || 0
+            const packetsReceived = report.packetsReceived || 0
+            const totalPackets = packetsLost + packetsReceived
+            if (totalPackets > 0) {
+              packetLossPercent = (packetsLost / totalPackets) * 100
+            }
+          }
+          if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+            rtt = report.currentRoundTripTime ? Math.round(report.currentRoundTripTime * 1000) : null
+          }
+        })
+
+        // Calculate quality level (1-4 bars)
+        let calculatedQuality: 1 | 2 | 3 | 4 = 4
+        if (packetLossPercent > 10 || (rtt && rtt > 500)) {
+          calculatedQuality = 1
+        } else if (packetLossPercent > 5 || (rtt && rtt > 300)) {
+          calculatedQuality = 2
+        } else if (packetLossPercent > 2 || (rtt && rtt > 150)) {
+          calculatedQuality = 3
+        }
+
+        updateQuality(calculatedQuality, rtt)
+      } catch (e) {
+        console.error('[useCall] Quality monitoring error:', e)
+      }
+    }, 1000)
+  }, [updateQuality])
+
+  /**
+   * Stop quality monitoring
+   */
+  const stopQualityMonitoring = useCallback(() => {
+    if (qualityIntervalRef.current) {
+      clearInterval(qualityIntervalRef.current)
+      qualityIntervalRef.current = null
+    }
+  }, [])
+
+  /**
+   * Cleanup all call resources
+   */
+  const cleanup = useCallback(() => {
+    // Stop quality monitoring
+    stopQualityMonitoring()
+
+    // Clear ring timeout
+    if (ringTimeoutRef.current) {
+      clearTimeout(ringTimeoutRef.current)
+      ringTimeoutRef.current = null
+    }
+
+    // Stop local audio tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop())
+      localStreamRef.current = null
+    }
+
+    // Stop remote audio
+    if (audioElementRef.current) {
+      audioElementRef.current.pause()
+      audioElementRef.current.srcObject = null
+    }
+    remoteStreamRef.current = null
+
+    // Close peer connection
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close()
+      peerConnectionRef.current = null
+    }
+
+    // Clear pending SDP
+    pendingSdpRef.current = null
+  }, [stopQualityMonitoring])
+
+  /**
+   * Handle ICE connection state changes
+   */
+  const handleIceConnectionStateChange = useCallback(
+    (state: RTCIceConnectionState) => {
+      console.log('[useCall] ICE connection state:', state)
+
+      switch (state) {
+        case 'connected':
+        case 'completed':
+          setConnected()
+          startQualityMonitoring()
+          break
+        case 'disconnected':
+          setReconnecting()
+          break
+        case 'failed':
+          // Try ICE restart
+          peerConnectionRef.current?.restartIce()
+          break
+        case 'closed':
+          cleanup()
+          endCall()
+          break
+      }
+    },
+    [setConnected, setReconnecting, startQualityMonitoring, cleanup, endCall]
+  )
+
+  /**
+   * Handle remote track received
+   */
+  const handleRemoteTrack = useCallback((stream: MediaStream) => {
+    console.log('[useCall] Remote track received')
+    remoteStreamRef.current = stream
+
+    // Create audio element if needed
+    if (!audioElementRef.current) {
+      audioElementRef.current = new Audio()
+      audioElementRef.current.autoplay = true
+    }
+
+    audioElementRef.current.srcObject = stream
+    audioElementRef.current.play().catch((e) => console.error('[useCall] Audio play error:', e))
+  }, [])
+
+  /**
+   * Create and setup PeerConnection
+   */
+  const setupPeerConnection = useCallback(
+    async (callIdToUse: string, remoteUserIdToUse: string, isPoliteToUse: boolean): Promise<PeerConnectionManager> => {
+      const signaling = createSignalingChannel()
+
+      const pc = await createPeerConnection({
+        isPolite: isPoliteToUse,
+        callId: callIdToUse,
+        remoteUserId: remoteUserIdToUse,
+        signaling,
+        onTrack: handleRemoteTrack,
+        onIceConnectionStateChange: handleIceConnectionStateChange,
+      })
+
+      peerConnectionRef.current = pc
+      return pc
+    },
+    [createSignalingChannel, handleRemoteTrack, handleIceConnectionStateChange]
+  )
+
+  /**
+   * Start an outgoing call
+   */
+  const startCall = useCallback(
+    async (userId: string, username: string): Promise<void> => {
+      const { user } = stateRef.current
+      if (!user) throw new Error('Not authenticated')
+
+      // Generate call ID
+      const newCallId = `call-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+
+      // Determine polite role via lexicographic comparison
+      // Lower user ID is polite (consistent with key exchange)
+      const isPoliteRole = String(user.id) < userId
+
+      console.log('[useCall] Starting call:', { callId: newCallId, userId, isPolite: isPoliteRole })
+
+      // Update store state
+      startOutgoingCall(newCallId, userId, username, isPoliteRole)
+
+      try {
+        // Get local audio stream
+        const stream = await getLocalAudioStream()
+
+        // Setup peer connection
+        const pc = await setupPeerConnection(newCallId, userId, isPoliteRole)
+
+        // Add local stream (triggers negotiation)
+        await pc.addLocalStream(stream)
+
+        // Send call-offer signaling message
+        const signaling = createSignalingChannel()
+        signaling.send({
+          type: 'call-offer',
+          recipientId: userId,
+          callId: newCallId,
+          senderUsername: user.username || 'Unknown',
+        })
+
+        // Set ring timeout
+        const { ringTimeout } = stateRef.current
+        ringTimeoutRef.current = window.setTimeout(() => {
+          console.log('[useCall] Ring timeout reached')
+          const currentState = useCallStore.getState()
+          if (currentState.status === 'outgoing') {
+            // Auto-hangup if still ringing
+            signaling.send({
+              type: 'call-hangup',
+              recipientId: userId,
+              callId: newCallId,
+            })
+            cleanup()
+            endCall()
+          }
+        }, ringTimeout * 1000)
+      } catch (error) {
+        console.error('[useCall] Start call error:', error)
+        cleanup()
+        endCall()
+        throw error
+      }
+    },
+    [
+      startOutgoingCall,
+      getLocalAudioStream,
+      setupPeerConnection,
+      createSignalingChannel,
+      cleanup,
+      endCall,
+    ]
+  )
+
+  /**
+   * Accept an incoming call
+   */
+  const acceptCall = useCallback(async (): Promise<void> => {
+    const { callId: currentCallId, remoteUserId: currentRemoteUserId, isPolite: currentIsPolite } = stateRef.current
+    if (!currentCallId || !currentRemoteUserId) {
+      throw new Error('No incoming call to accept')
+    }
+
+    console.log('[useCall] Accepting call:', currentCallId)
+
+    // Update store
+    storeAcceptCall()
+    setConnecting()
+
+    try {
+      // Get local audio stream
+      const stream = await getLocalAudioStream()
+
+      // Setup peer connection
+      const pc = await setupPeerConnection(currentCallId, currentRemoteUserId, currentIsPolite)
+
+      // Add local stream
+      await pc.addLocalStream(stream)
+
+      // Handle pending SDP offer if received
+      if (pendingSdpRef.current) {
+        await pc.handleRemoteDescription({ type: 'offer', sdp: pendingSdpRef.current })
+        pendingSdpRef.current = null
+      }
+
+      // Send call-accept
+      const signaling = createSignalingChannel()
+      signaling.send({
+        type: 'call-accept',
+        recipientId: currentRemoteUserId,
+        callId: currentCallId,
+      })
+    } catch (error) {
+      console.error('[useCall] Accept call error:', error)
+      cleanup()
+      endCall()
+      throw error
+    }
+  }, [
+    storeAcceptCall,
+    setConnecting,
+    getLocalAudioStream,
+    setupPeerConnection,
+    createSignalingChannel,
+    cleanup,
+    endCall,
+  ])
+
+  /**
+   * Reject an incoming call
+   */
+  const rejectCall = useCallback((): void => {
+    const { callId: currentCallId, remoteUserId: currentRemoteUserId } = stateRef.current
+    if (!currentCallId || !currentRemoteUserId) return
+
+    console.log('[useCall] Rejecting call:', currentCallId)
+
+    // Send call-reject
+    const signaling = createSignalingChannel()
+    signaling.send({
+      type: 'call-reject',
+      recipientId: currentRemoteUserId,
+      callId: currentCallId,
+    })
+
+    // Update store
+    storeRejectCall()
+    cleanup()
+  }, [storeRejectCall, createSignalingChannel, cleanup])
+
+  /**
+   * Hangup current call
+   */
+  const hangup = useCallback((): void => {
+    const { callId: currentCallId, remoteUserId: currentRemoteUserId, status: currentStatus } = stateRef.current
+    if (currentStatus === 'idle' || !currentCallId) return
+
+    console.log('[useCall] Hanging up:', currentCallId)
+
+    // Send call-hangup if we have a remote user
+    if (currentRemoteUserId) {
+      const signaling = createSignalingChannel()
+      signaling.send({
+        type: 'call-hangup',
+        recipientId: currentRemoteUserId,
+        callId: currentCallId,
+      })
+    }
+
+    cleanup()
+    endCall()
+  }, [createSignalingChannel, cleanup, endCall])
+
+  /**
+   * Toggle mute state
+   */
+  const toggleMute = useCallback((): void => {
+    const newMuted = storeToggleMute()
+
+    // Update audio track enabled state
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.setAudioEnabled(!newMuted)
+    }
+
+    // Also update local stream tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = !newMuted
+      })
+    }
+  }, [storeToggleMute])
+
+  /**
+   * Handle incoming signaling messages
+   */
+  useEffect(() => {
+    const handleSignaling = async (event: Event) => {
+      const message = (event as CustomEvent<CallSignalingMessage>).detail
+      const { callId: currentCallId, user, status: currentStatus } = stateRef.current
+
+      console.log('[useCall] Signaling message:', message.type, message)
+
+      switch (message.type) {
+        case 'call-offer': {
+          // Incoming call
+          if (currentStatus !== 'idle') {
+            // Already in a call, reject this one
+            const signaling = createSignalingChannel()
+            signaling.send({
+              type: 'call-reject',
+              recipientId: message.senderId,
+              callId: message.callId,
+            })
+            return
+          }
+
+          // Determine polite role (caller's lower ID is polite)
+          const isPoliteRole = String(user?.id) < message.senderId
+
+          // Store SDP for later if provided
+          if (message.sdp) {
+            pendingSdpRef.current = message.sdp
+          }
+
+          // Update store with incoming call
+          receiveIncomingCall(message.callId, message.senderId, message.senderUsername, isPoliteRole)
+
+          // Set auto-reject timeout
+          const { ringTimeout } = stateRef.current
+          ringTimeoutRef.current = window.setTimeout(() => {
+            console.log('[useCall] Auto-rejecting (ring timeout)')
+            const currentState = useCallStore.getState()
+            if (currentState.status === 'incoming') {
+              const signaling = createSignalingChannel()
+              signaling.send({
+                type: 'call-reject',
+                recipientId: message.senderId,
+                callId: message.callId,
+              })
+              reset()
+            }
+          }, ringTimeout * 1000)
+          break
+        }
+
+        case 'call-accept': {
+          // Remote accepted our call
+          if (message.callId !== currentCallId) return
+          console.log('[useCall] Call accepted by remote')
+          setConnecting()
+          break
+        }
+
+        case 'call-answer': {
+          // Remote sent SDP answer
+          if (message.callId !== currentCallId) return
+          if (peerConnectionRef.current) {
+            await peerConnectionRef.current.handleRemoteDescription({
+              type: 'answer',
+              sdp: message.sdp,
+            })
+          }
+          break
+        }
+
+        case 'call-ice-candidate': {
+          // Remote sent ICE candidate
+          if (message.callId !== currentCallId) return
+          if (peerConnectionRef.current) {
+            await peerConnectionRef.current.handleIceCandidate(message.candidate)
+          }
+          break
+        }
+
+        case 'call-reject': {
+          // Remote rejected our call
+          if (message.callId !== currentCallId) return
+          console.log('[useCall] Call rejected by remote')
+          cleanup()
+          endCall()
+          break
+        }
+
+        case 'call-hangup': {
+          // Remote hung up
+          if (message.callId !== currentCallId) return
+          console.log('[useCall] Remote hung up')
+          cleanup()
+          endCall()
+          break
+        }
+      }
+    }
+
+    window.addEventListener(CALL_SIGNALING_EVENT, handleSignaling)
+    return () => {
+      window.removeEventListener(CALL_SIGNALING_EVENT, handleSignaling)
+    }
+  }, [
+    createSignalingChannel,
+    receiveIncomingCall,
+    setConnecting,
+    cleanup,
+    endCall,
+    reset,
+  ])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanup()
+    }
+  }, [cleanup])
+
+  return {
+    // State
+    status,
+    remoteUsername,
+    isMuted,
+    quality,
+    latency,
+    isMinimized,
+    startTime,
+
+    // Actions
+    startCall,
+    acceptCall,
+    rejectCall,
+    hangup,
+    toggleMute,
+    toggleMinimized,
+  }
+}
