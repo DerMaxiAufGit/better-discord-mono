@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { isBlurSupported } from '@/lib/video/backgroundBlur'
 import type { VideoQuality } from '@/lib/video/videoConstraints'
