@@ -8,10 +8,12 @@ import { useCryptoStore } from '@/stores/cryptoStore';
 import { useMessaging } from '@/lib/websocket/useMessaging';
 import { decryptMessage } from '@/lib/crypto/messageEncryption';
 import { usersApi, messageApi } from '@/lib/api';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 export function MessagesPage() {
   const { contactId } = useParams<{ contactId?: string }>();
   const navigate = useNavigate();
+  const { isMobile } = useBreakpoint();
 
   const { user } = useAuthStore();
   const { conversations, loadHistory, isLoadingHistory } = useMessageStore();
@@ -159,6 +161,50 @@ export function MessagesPage() {
 
   const activeContact = contactId ? contacts.get(contactId) : null;
 
+  // Mobile: show full-screen conversation or list
+  if (isMobile) {
+    if (contactId && activeContact && user) {
+      return (
+        <div className="h-full">
+          <ConversationView
+            contactId={contactId}
+            contactUsername={activeContact.username}
+            currentUserId={String(user.id)}
+            messages={activeMessages}
+            onSendMessage={handleSendMessage}
+            isConnected={isConnected}
+            isLoading={isLoadingHistory}
+            onBack={() => navigate('/messages')}
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="h-full flex flex-col">
+        <div className="h-[73px] px-4 border-b flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => navigate('/')}
+            className="p-1 hover:bg-muted rounded"
+            title="Back to menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+          </button>
+          <h2 className="font-semibold">Messages</h2>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <ConversationList
+            conversations={conversationList}
+            activeId={contactId || null}
+            onSelect={handleSelectConversation}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop: side-by-side layout
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Conversation list sidebar */}
