@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
-Version: 1.1.0 target  
+Version: 1.1.0 target
 Status: **Executing Phase 5**
-Last activity: 2026-01-29 — Completed 05-07-PLAN.md (group store & encryption)
+Last activity: 2026-01-29 — Completed 05-09-PLAN.md (reaction store & typing indicator)
 
-Progress: [████████████████████░░░] 76% (32 of 42 plans complete)
+Progress: [████████████████████░░░] 81% (34 of 42 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 32
-- Average duration: 4.5 minutes
-- Total execution time: 2.5 hours
+- Total plans completed: 34
+- Average duration: 4.6 minutes
+- Total execution time: 2.6 hours
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [████████████████████░░░
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
-| 05-enhanced-communication | 8 | 60 min | 7.5 min |
+| 05-enhanced-communication | 10 | 83 min | 8.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-10 (7 min), 05-06 (12 min), 05-04 (16 min), 05-03 (5 min), 05-02 (5 min)
-- Trend: Phase 5 plans averaging longer due to complexity
+- Last 5 plans: 05-08 (12 min), 05-10 (7 min), 05-06 (12 min), 05-04 (16 min), 05-03 (5 min)
+- Trend: Phase 5 plans averaging longer due to encryption complexity
 
 *Updated after each plan completion*
 
@@ -48,6 +48,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-29 | 64KB chunk size for SecretStream | Balance memory and performance (from 05-08) | Efficient streaming encryption for files up to 100MB |
+| 2026-01-29 | Encryption header as base64 form field | Send to server for BYTEA storage (from 05-08) | Enables server to store decryption metadata |
+| 2026-01-29 | Progress tracking with 7 states | pending → encrypting → uploading → complete/error (from 05-08) | Detailed UI feedback for file operations |
+| 2026-01-29 | Defer file key management | Upload complete, download awaits per-recipient encryption (from 05-08) | Postpone key distribution until message integration |
 | 2026-01-29 | Pairwise group encryption | Reuse X25519 session keys, no shared group key (from 05-07) | Simpler, more secure for groups up to 200 members |
 | 2026-01-29 | Skip members without public keys | Gracefully skip during encryption (from 05-07) | Allows partial encryption, prevents blocking operation |
 | 2026-01-29 | Map-based member caching | Map<string, GroupMember[]> by groupId (from 05-07) | Efficient member lookup and updates |
@@ -90,8 +94,9 @@ None yet.
 - 05-05: Backend file storage service complete
 - 05-06: Backend reaction service complete
 - 05-07: Group store and pairwise encryption complete
+- 05-08: File encryption and upload utilities complete (SecretStream, progress tracking)
 - 05-10: Video UI components complete (VideoPreview, VideoControls, VideoSettings)
-- Next: Continue Phase 5 remaining plans (08-09, 11-16)
+- Next: Continue Phase 5 remaining plans (09, 11-16)
 
 **Previous phases complete:**
 - Phase 1: Foundation and deployment ✓
