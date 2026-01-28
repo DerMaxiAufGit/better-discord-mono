@@ -15,6 +15,7 @@ interface AuthState {
   isAuthenticated: boolean
   isInitialized: boolean
   error: string | null
+  sessionExpired: boolean
 
   // Actions
   signup: (email: string, password: string) => Promise<void>
@@ -23,6 +24,8 @@ interface AuthState {
   checkAuth: () => Promise<void>
   setUsername: (username: string) => Promise<void>
   clearError: () => void
+  setSessionExpired: (expired: boolean) => void
+  relogin: (email: string, password: string) => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -31,6 +34,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isInitialized: false,
   error: null,
+  sessionExpired: false,
 
   signup: async (email: string, password: string) => {
     try {
@@ -147,4 +151,33 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  setSessionExpired: (expired: boolean) => set({ sessionExpired: expired }),
+
+  relogin: async (email: string, password: string) => {
+    try {
+      set({ error: null })
+      const response = await authApi.login(email, password)
+
+      // Store access token and set authenticated state
+      localStorage.setItem('accessToken', response.accessToken)
+      set({
+        user: response.user,
+        accessToken: response.accessToken,
+        isAuthenticated: true,
+        sessionExpired: false, // This closes the modal
+        error: null,
+      })
+
+      // Reinitialize crypto keys with provided credentials
+      await useCryptoStore.getState().initializeKeys(email, password)
+
+      // Update stored credentials in sessionStorage
+      sessionStorage.setItem('_ec', btoa(JSON.stringify({ e: email, p: password })))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Login failed'
+      set({ error: message })
+      throw error
+    }
+  },
 }))
