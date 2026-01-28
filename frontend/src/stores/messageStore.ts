@@ -14,6 +14,7 @@ interface MessageState {
   // Messages keyed by contact ID
   conversations: Map<string, Message[]>
   isLoadingHistory: boolean
+  connectionStatus: 'connected' | 'connecting' | 'disconnected'
 
   // Actions
   addMessage: (contactId: string, message: Message) => void
@@ -22,11 +23,13 @@ interface MessageState {
   markAllAsRead: (contactId: string, currentUserId: string) => void
   loadHistory: (contactId: string, decrypt: (encrypted: string, senderId: string) => Promise<string | null>) => Promise<void>
   clearMessages: () => void
+  setConnectionStatus: (status: 'connected' | 'connecting' | 'disconnected') => void
 }
 
 export const useMessageStore = create<MessageState>((set) => ({
   conversations: new Map(),
   isLoadingHistory: false,
+  connectionStatus: 'connecting',
 
   addMessage: (contactId: string, message: Message) => {
     set((state) => {
@@ -121,5 +124,9 @@ export const useMessageStore = create<MessageState>((set) => ({
 
   clearMessages: () => {
     set({ conversations: new Map() })
+  },
+
+  setConnectionStatus: (status) => {
+    set({ connectionStatus: status })
   },
 }))
