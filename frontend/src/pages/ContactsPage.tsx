@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router';
-import { Search, MessageCircle, ArrowLeft, UserPlus, Check, X, Clock, Users } from 'lucide-react';
+import { Search, MessageCircle, ArrowLeft, UserPlus, Check, X, Clock, Users, Phone } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usersApi, friendsApi } from '@/lib/api';
 import { useContactStore } from '@/stores/contactStore';
+import { useCall } from '@/lib/webrtc/useCall';
 
 interface User {
   id: string;
@@ -34,6 +35,7 @@ export function ContactsPage() {
   const [sendingRequest, setSendingRequest] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const { addContact } = useContactStore();
+  const { startCall, status: callStatus } = useCall();
 
   // Load friends and pending requests on mount
   React.useEffect(() => {
@@ -252,14 +254,25 @@ export function ContactsPage() {
                   <div className="flex-1">
                     <p className="font-medium">{friend.username}</p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => startConversation(friend.oderId, friend.username)}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Message
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => startCall(friend.oderId, friend.username)}
+                      disabled={callStatus !== 'idle'}
+                      title="Start voice call"
+                    >
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startConversation(friend.oderId, friend.username)}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

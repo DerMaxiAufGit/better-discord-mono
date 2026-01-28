@@ -1,7 +1,9 @@
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { Avatar } from '@/components/ui/avatar';
-import { Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Lock, Phone } from 'lucide-react';
+import { useCall } from '@/lib/webrtc/useCall';
 
 interface Message {
   id: number;
@@ -22,7 +24,7 @@ interface ConversationViewProps {
 }
 
 export function ConversationView({
-  contactId: _contactId, // Reserved for future use (e.g., fetching more messages)
+  contactId,
   contactUsername,
   currentUserId,
   messages,
@@ -30,6 +32,12 @@ export function ConversationView({
   isConnected,
   isLoading,
 }: ConversationViewProps) {
+  const { startCall, status: callStatus } = useCall();
+
+  const handleStartCall = () => {
+    startCall(contactId, contactUsername);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header - fixed at top */}
@@ -42,6 +50,15 @@ export function ConversationView({
             <span>End-to-end encrypted</span>
           </div>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleStartCall}
+          disabled={callStatus !== 'idle' || !isConnected}
+          title="Start voice call"
+        >
+          <Phone className="h-5 w-5" />
+        </Button>
         {!isConnected && (
           <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
             Reconnecting...
