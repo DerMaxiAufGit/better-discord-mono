@@ -7,6 +7,7 @@ import { encryptMessage, decryptMessage } from '@/lib/crypto/messageEncryption'
 import { usersApi } from '@/lib/api'
 import { dispatchCallSignaling } from '@/lib/webrtc/useCall'
 import { setSharedWebSocket } from './sharedWebSocket'
+import { toast } from '@/lib/toast'
 
 interface UseMessagingOptions {
   onError?: (error: Error) => void
@@ -44,6 +45,15 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       console.log('WebSocket connected')
       setIsConnected(true)
       setSharedWebSocket(ws)  // Share for call signaling
+
+      // Update connection status in messageStore
+      const wasDisconnected = useMessageStore.getState().connectionStatus === 'disconnected'
+      useMessageStore.getState().setConnectionStatus('connected')
+
+      // Toast only on reconnection (not initial connect)
+      if (wasDisconnected) {
+        toast.success('Connected')
+      }
     }
 
     ws.onmessage = async (event) => {
@@ -146,8 +156,13 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       wsRef.current = null
       setSharedWebSocket(null)  // Clear shared reference
 
+      // Update connection status to disconnected
+      useMessageStore.getState().setConnectionStatus('disconnected')
+
       // Reconnect after delay
       reconnectTimeoutRef.current = window.setTimeout(() => {
+        // Set connecting status before reconnect attempt
+        useMessageStore.getState().setConnectionStatus('connecting')
         setReconnectTrigger(t => t + 1)
       }, 3000)
     }

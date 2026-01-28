@@ -1,3 +1,5 @@
+import { showApiError } from '@/lib/toast'
+
 // API client with automatic token refresh
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
@@ -83,7 +85,14 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }))
-    throw new Error(error.error || error.message || `HTTP ${response.status}`)
+    const message = error.error || error.message || `HTTP ${response.status}`
+
+    // Don't toast 401s (handled by auth flow)
+    if (response.status !== 401) {
+      showApiError(message)
+    }
+
+    throw new Error(message)
   }
 
   return response.json()
