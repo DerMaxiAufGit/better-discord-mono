@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 3 of 4 (Voice & Video Calls)
-Plan: 05 of 7 (03-01 through 03-05 complete)
+Plan: 06 of 7 (03-01 through 03-06 complete)
 Status: **In progress**
-Last activity: 2026-01-28 — Completed 03-05-PLAN.md with useCall hook and call UI components
+Last activity: 2026-01-28 — Completed 03-06-PLAN.md with audio settings UI
 
-Progress: [█████████████████░░░] ~85% (17 plans complete, Phase 3 in progress)
+Progress: [██████████████████░░] ~90% (18 plans complete, Phase 3 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
-- Average duration: 4.3 minutes
-- Total execution time: 1.21 hours
+- Total plans completed: 18
+- Average duration: 4.2 minutes
+- Total execution time: 1.25 hours
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [█████████████████░░░] ~85% (1
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
-| 03-voice-video-calls | 5 | 14 min | 2.8 min |
+| 03-voice-video-calls | 6 | 16 min | 2.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (2 min), 03-03 (2 min), 03-04 (2 min), 03-05 (4 min)
+- Last 5 plans: 03-03 (2 min), 03-04 (2 min), 03-05 (4 min), 03-06 (2 min)
 - Trend: Consistent fast execution in Phase 3
 
 *Updated after each plan completion*
@@ -46,6 +46,8 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | Inline Switch/Select components | Built simple components in AudioSettings (from 03-06) | Consistent styling without external deps |
+| 2026-01-28 | Permission request in settings | Request mic permission in settings flow (from 03-06) | No surprise prompts during call |
 | 2026-01-28 | Custom events for call signaling | Window CustomEvent dispatch (from 03-05) | Decouples call signaling from useMessaging |
 | 2026-01-28 | Space/Escape keyboard shortcuts | Standard call app shortcuts (from 03-05) | Familiar UX for mute/hangup |
 | 2026-01-28 | Draggable minimized window | Mouse event position tracking (from 03-05) | Simple drag without external library |
@@ -130,7 +132,8 @@ None yet.
 - 03-03: WebSocket signaling + PeerConnectionManager complete
 - 03-04: Audio device hooks complete (useAudioDevices, useAudioLevel)
 - 03-05: Call hook and UI complete (useCall, CallControls, IncomingCallBanner, ActiveCallWindow)
-- Next: 03-06 (Call integration into app)
+- 03-06: Audio settings UI complete (AudioSettings component in SettingsPage)
+- Next: 03-07 (Full call integration into app)
 
 **General:** Phase 3 has 7 plans (03-01 through 03-07).
 
@@ -152,5 +155,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 03-05-PLAN.md (useCall hook and call UI components)
-Resume file: None (ready for 03-06-PLAN.md)
+Stopped at: Completed 03-06-PLAN.md (audio settings UI)
+Resume file: None (ready for 03-07-PLAN.md)
