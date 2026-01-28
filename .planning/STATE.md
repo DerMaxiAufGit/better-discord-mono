@@ -12,14 +12,14 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
 Version: 1.1.0 target
 Status: **Executing Phase 5**
-Last activity: 2026-01-28 — Completed 05-06-PLAN.md (backend reaction service)
+Last activity: 2026-01-28 — Completed 05-04-PLAN.md (backend group service)
 
-Progress: [████████████████████░░░] 91% (30 of 33 plans complete)
+Progress: [████████████████████░░░] 91% (31 of 33 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 30
+- Total plans completed: 31
 - Average duration: 4.3 minutes
 - Total execution time: 2.3 hours
 
@@ -31,10 +31,10 @@ Progress: [████████████████████░░░
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
-| 05-enhanced-communication | 5 | 36 min | 7.2 min |
+| 05-enhanced-communication | 6 | 52 min | 8.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-06 (9 min), 05-02 (5 min), 05-03 (5 min), 05-01 (9 min), 05-06 (12 min)
+- Last 5 plans: 05-02 (5 min), 05-03 (5 min), 05-01 (9 min), 05-06 (12 min), 05-04 (16 min)
 - Trend: Phase 5 plans averaging longer due to complexity
 
 *Updated after each plan completion*
@@ -47,6 +47,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
+| 2026-01-28 | Permission system hasPermission check | Role-based access with owner/admin/moderator/member (from 05-04) | Centralized permission logic, easy to audit |
+| 2026-01-28 | Invite codes use base64url encoding | crypto.randomBytes(8).toString('base64url') (from 05-04) | URL-safe invite links without escaping |
+| 2026-01-28 | Banned users auto-unban on re-add | addMember() removes ban automatically (from 05-04) | Simplifies re-inviting previously banned users |
+| 2026-01-28 | JWT user extraction via cast pattern | (request.user as { userId: string }).userId (from 05-04) | Matches actual JWT payload structure from auth service |
 |------|----------|---------|--------|
 | 2026-01-28 | Toggle endpoint for reactions | Single POST adds or removes (from 05-06) | Cleaner than separate add/remove endpoints |
 | 2026-01-28 | 50 unique emoji limit per message | Prevents emoji spam (from 05-06) | Applies to distinct emoji, not total count |
