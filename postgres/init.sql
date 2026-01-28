@@ -103,3 +103,40 @@ CREATE TABLE IF NOT EXISTS group_bans (
     banned_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(group_id, user_id)
 );
+
+-- Files table for encrypted file attachments
+-- Note: filename and content are encrypted client-side
+CREATE TABLE IF NOT EXISTS files (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID,
+    message_id INTEGER REFERENCES messages(id) ON DELETE SET NULL,
+    uploader_id UUID NOT NULL REFERENCES users(id),
+    filename VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(127) NOT NULL,
+    size_bytes BIGINT NOT NULL,
+    storage_path TEXT NOT NULL,
+    encryption_header BYTEA NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for file queries
+CREATE INDEX IF NOT EXISTS idx_files_message_id ON files(message_id);
+CREATE INDEX IF NOT EXISTS idx_files_uploader_id ON files(uploader_id);
+
+-- Reactions table for message reactions
+CREATE TABLE IF NOT EXISTS reactions (
+    id SERIAL PRIMARY KEY,
+    message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    emoji VARCHAR(32) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(message_id, user_id, emoji)
+);
+
+-- Index for reaction queries
+CREATE INDEX IF NOT EXISTS idx_reactions_message_id ON reactions(message_id);
+
+-- Add group support to messages table
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS group_id UUID REFERENCES groups(id) ON DELETE CASCADE;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER REFERENCES messages(id) ON DELETE SET NULL;
+ALTER TABLE messages ALTER COLUMN recipient_id DROP NOT NULL;
