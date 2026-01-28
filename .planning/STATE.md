@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 4 of 4 (UI Polish & Production Readiness)
-Plan: 3 of 5 (04-03 complete)
+Plan: 4 of 5 (04-04 complete)
 Status: **In progress**
-Last activity: 2026-01-28 — Completed 04-03-PLAN.md (Mobile bottom navigation)
+Last activity: 2026-01-28 — Completed 04-04-PLAN.md (Mobile-friendly messaging)
 
-Progress: [████████████████████] ~98% (22 plans complete, Phase 4 in progress)
+Progress: [████████████████████] ~99% (23 plans complete, Phase 4 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
+- Total plans completed: 23
 - Average duration: 4.0 minutes
 - Total execution time: 1.5 hours
 
@@ -30,11 +30,11 @@ Progress: [████████████████████] ~98% (2
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
-| 04-ui-polish-production-readiness | 3 | 12 min | 4.0 min |
+| 04-ui-polish-production-readiness | 4 | 17 min | 4.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-06 (2 min), 03-07 (0 min), 04-01 (3 min), 04-02 (5 min), 04-03 (4 min)
-- Trend: Consistent 4-minute execution in Phase 4
+- Last 5 plans: 03-07 (0 min), 04-01 (3 min), 04-02 (5 min), 04-03 (4 min), 04-04 (5 min)
+- Trend: Consistent 4-5 minute execution in Phase 4
 
 *Updated after each plan completion*
 
@@ -47,6 +47,9 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | 120px max-height for auto-growing textarea | ~4 lines of text before scrolling (from 04-04) | Prevents input from dominating screen on mobile |
+| 2026-01-28 | Optional onBack prop for mobile navigation | Back button only needed on mobile, not desktop (from 04-04) | Clean API, platform-specific UI |
+| 2026-01-28 | Full-screen conversation on mobile | Mobile screens too small for side-by-side layout (from 04-04) | Native app feel, better mobile UX |
 | 2026-01-28 | Mobile navigation excludes logout | Users access logout via Settings page on mobile (from 04-03) | Focused bottom nav with primary navigation only |
 | 2026-01-28 | pb-16 padding on mobile | Main content has bottom padding for fixed nav (from 04-03) | Prevents content being hidden under bottom nav |
 | 2026-01-28 | md breakpoint for navigation switch | 768px threshold for Sidebar/BottomNav (from 04-03) | Mobile shows BottomNav, tablet+ shows Sidebar |
@@ -148,7 +151,8 @@ None yet.
 - 04-01: Foundation utilities complete (useBreakpoint, retry utilities)
 - 04-02: Skeleton loading & toast notifications complete
 - 04-03: Mobile bottom navigation complete
-- Next: 04-04 (Error boundaries and error handling)
+- 04-04: Mobile-friendly messaging complete
+- Next: 04-05 (Error boundaries and error handling)
 
 **All Phase 3 success criteria verified:**
 1. ✓ User can initiate voice call with online contact
@@ -161,7 +165,8 @@ None yet.
 - 04-01: Foundation utilities complete (useBreakpoint, retry utilities)
 - 04-02: Skeleton loading & toast notifications complete
 - 04-03: Mobile bottom navigation complete
-- Next: 04-04 (Error boundaries and error handling)
+- 04-04: Mobile-friendly messaging complete
+- Next: 04-05 (Error boundaries and error handling)
 
 ## Development Infrastructure
 
@@ -181,5 +186,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 04-03-PLAN.md (mobile bottom navigation)
-Resume file: None (ready for 04-04-PLAN.md)
+Stopped at: Completed 04-04-PLAN.md (mobile-friendly messaging)
+Resume file: None (ready for 04-05-PLAN.md)
