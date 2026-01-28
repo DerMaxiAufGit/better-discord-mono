@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
 Version: 1.1.0 target
 Status: **Executing Phase 5**
-Last activity: 2026-01-28 — Completed 05-03-PLAN.md (video helper library)
+Last activity: 2026-01-28 — Completed 05-01-PLAN.md (database schema for enhanced communication)
 
-Progress: [████████████████████░░░] 85% (28 of 33 plans complete)
+Progress: [████████████████████░░░] 88% (29 of 33 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 28
+- Total plans completed: 29
 - Average duration: 4.2 minutes
-- Total execution time: 2.0 hours
+- Total execution time: 2.1 hours
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [████████████████████░░░
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
-| 05-enhanced-communication | 3 | 15 min | 5.0 min |
+| 05-enhanced-communication | 4 | 24 min | 6.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-04 (5 min), 04-05 (6 min), 04-06 (9 min), 05-02 (5 min), 05-03 (5 min)
+- Last 5 plans: 04-05 (6 min), 04-06 (9 min), 05-02 (5 min), 05-03 (5 min), 05-01 (9 min)
 - Trend: Consistent execution time across new phase
 
 *Updated after each plan completion*
@@ -48,6 +48,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | Four-tier group role system | owner, admin, moderator, member (from 05-01) | Provides granular permissions without excessive complexity |
+| 2026-01-28 | Optional invite expiry and usage limits | Nullable expires_at and max_uses columns (from 05-01) | Supports both permanent and temporary invite links |
+| 2026-01-28 | Nullable recipient_id for group messages | ALTER COLUMN recipient_id DROP NOT NULL (from 05-01) | Group messages use group_id instead of recipient_id |
+| 2026-01-28 | Store libsodium header as BYTEA | encryption_header BYTEA NOT NULL (from 05-01) | Required for client-side decryption of chunked file streams |
 | 2026-01-28 | 20fps throttle for background blur | Balance smoothness and CPU usage (from 05-03) | Prevents CPU overload while maintaining acceptable visual quality |
 | 2026-01-28 | MediaPipe landscape model for blur | Model 1 faster than general model 0 (from 05-03) | Better real-time performance for video calls |
 | 2026-01-28 | Chromium + OffscreenCanvas for blur support | MediaPipe reliable only in Chromium (from 05-03) | Clear browser compatibility detection, graceful degradation |
@@ -171,7 +175,7 @@ None yet.
 
 **Phase 5 In Progress:**
 - 05-RESEARCH: Research complete (typing indicators, read receipts, video processing)
-- 05-01: Backend typing indicator service complete
+- 05-01: Database schema for enhanced communication complete (groups, files, reactions)
 - 05-02: Frontend typing indicator integration complete
 - 05-03: Video helper library complete (videoConstraints, backgroundBlur, useCamera)
 - Next: 05-04 (Screen sharing support)
@@ -202,5 +206,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 05-03-PLAN.md (video helper library)
+Stopped at: Completed 05-01-PLAN.md (database schema for enhanced communication)
 Resume file: None
