@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
 Version: 1.1.0 target  
 Status: **Executing Phase 5**
-Last activity: 2026-01-28 — Completed 05-10-PLAN.md (video UI components)
+Last activity: 2026-01-29 — Completed 05-07-PLAN.md (group store & encryption)
 
 Progress: [████████████████████░░░] 76% (32 of 42 plans complete)
 
@@ -48,6 +48,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-29 | Pairwise group encryption | Reuse X25519 session keys, no shared group key (from 05-07) | Simpler, more secure for groups up to 200 members |
+| 2026-01-29 | Skip members without public keys | Gracefully skip during encryption (from 05-07) | Allows partial encryption, prevents blocking operation |
+| 2026-01-29 | Map-based member caching | Map<string, GroupMember[]> by groupId (from 05-07) | Efficient member lookup and updates |
+| 2026-01-29 | PATCH via apiRequest | Direct method use, no wrapper (from 05-07) | Follows existing pattern, RequestInit supports all methods |
 | 2026-01-28 | VideoPreview mirrors camera by default | Natural self-view UX (from 05-10) | Users see themselves as in a mirror |
 | 2026-01-28 | Video settings persist to localStorage | video-device, video-quality, video-blur keys (from 05-10) | Settings remembered across sessions |
 | 2026-01-28 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
@@ -85,8 +89,9 @@ None yet.
 - 05-04: Backend group service complete
 - 05-05: Backend file storage service complete
 - 05-06: Backend reaction service complete
+- 05-07: Group store and pairwise encryption complete
 - 05-10: Video UI components complete (VideoPreview, VideoControls, VideoSettings)
-- Next: Continue Phase 5 remaining plans (07-09, 11-16)
+- Next: Continue Phase 5 remaining plans (08-09, 11-16)
 
 **Previous phases complete:**
 - Phase 1: Foundation and deployment ✓
@@ -111,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-28
-Stopped at: Completed 05-10-PLAN.md (video UI components)
+Last session: 2026-01-29
+Stopped at: Completed 05-07-PLAN.md (group store & encryption)
 Resume file: None
