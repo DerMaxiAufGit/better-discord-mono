@@ -68,10 +68,16 @@ Plans:
   3. User can mute/unmute microphone during active call
   4. Calls establish successfully even behind NAT/firewall (TURN relay)
   5. User sees connection quality indicators during call
-**Plans**: TBD
+**Plans**: 7 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 03-01-PLAN.md — Coturn Docker setup and TURN credentials endpoint
+- [ ] 03-02-PLAN.md — Call and settings Zustand stores
+- [ ] 03-03-PLAN.md — WebSocket call signaling and PeerConnection manager
+- [ ] 03-04-PLAN.md — Audio device management hooks
+- [ ] 03-05-PLAN.md — Call UI components and useCall orchestration
+- [ ] 03-06-PLAN.md — Audio settings in SettingsPage
+- [ ] 03-07-PLAN.md — Integration and end-to-end verification
 
 ### Phase 4: UI Polish & Production Readiness
 **Goal**: Application provides polished, production-ready experience across devices
@@ -96,9 +102,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Deployment | 5/5 | ✓ Complete | 2026-01-27 |
 | 2. E2E Encrypted Messaging | 7/7 | ✓ Complete | 2026-01-28 |
-| 3. Voice/Video Calls | 0/TBD | Not started | - |
+| 3. Voice/Video Calls | 0/7 | Not started | - |
 | 4. UI Polish & Production Readiness | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Last updated: 2026-01-27 after Phase 2 planning*
+*Last updated: 2026-01-28 after Phase 3 planning*
