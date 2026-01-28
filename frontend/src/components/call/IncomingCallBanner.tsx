@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { Phone, PhoneOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
@@ -25,6 +26,7 @@ export function IncomingCallBanner({
   className = '',
 }: IncomingCallBannerProps) {
   const [countdown, setCountdown] = useState(ringTimeout)
+  const { isMobile } = useBreakpoint()
 
   // Countdown timer
   useEffect(() => {
@@ -44,6 +46,38 @@ export function IncomingCallBanner({
     return () => clearInterval(interval)
   }, [ringTimeout])
 
+  // Full-screen on mobile, banner on desktop
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center">
+        <div className="text-center">
+          <Avatar fallback={callerUsername} className="h-24 w-24 mx-auto" />
+          <h2 className="text-2xl mt-4 font-semibold">{callerUsername}</h2>
+          <p className="text-muted-foreground mt-2">Incoming call...</p>
+          <p className="text-sm text-muted-foreground mt-1 font-mono">({countdown}s)</p>
+        </div>
+        <div className="flex gap-8 mt-12">
+          <Button 
+            onClick={onReject} 
+            variant="destructive" 
+            size="lg" 
+            className="rounded-full h-16 w-16"
+          >
+            <PhoneOff className="h-6 w-6" />
+          </Button>
+          <Button 
+            onClick={onAccept} 
+            size="lg" 
+            className="rounded-full h-16 w-16 bg-green-500 hover:bg-green-600"
+          >
+            <Phone className="h-6 w-6" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop: banner at top
   return (
     <div
       className={cn(

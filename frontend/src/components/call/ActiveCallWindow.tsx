@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { Minimize2, Maximize2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
@@ -45,6 +46,7 @@ export function ActiveCallWindow({
   const isDraggingRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
   const floatingRef = useRef<HTMLDivElement>(null)
+  const { isMobile } = useBreakpoint()
 
   // Get status display text
   const getStatusText = (): string => {
@@ -190,6 +192,7 @@ export function ActiveCallWindow({
         <div className="flex items-center gap-2">
           <CallQualityIndicator quality={quality} latency={latency} />
         </div>
+        {!isMobile && (
         <Button
           variant="ghost"
           size="icon"
@@ -198,6 +201,7 @@ export function ActiveCallWindow({
         >
           <Minimize2 className="h-4 w-4" />
         </Button>
+        )}
       </div>
 
       {/* Center content */}
