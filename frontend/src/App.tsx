@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { RouterProvider } from 'react-router'
 import { ThemeProvider } from 'next-themes'
+import { Toaster } from 'sonner'
 import { useAuthStore } from '@/stores/auth'
 import { useCryptoStore } from '@/stores/cryptoStore'
 import { useCallStore } from '@/stores/callStore'
@@ -71,6 +72,13 @@ function App() {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <Toaster
+        position="top-center"
+        visibleToasts={3}
+        closeButton
+        toastOptions={{ duration: 4000 }}
+      />
+
       {/* Global incoming call banner */}
       {showIncomingCall && (
         <IncomingCallBanner
