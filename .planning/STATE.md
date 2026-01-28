@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 3 of 4 (Voice & Video Calls)
-Plan: 02 of TBD (Call & Settings Stores complete)
+Plan: 02 of 7 (03-01 TURN Server + 03-02 Call Stores complete)
 Status: **In progress**
-Last activity: 2026-01-28 — Completed 03-02-PLAN.md with call and settings stores
+Last activity: 2026-01-28 — Completed 03-01-PLAN.md with coturn and TURN credentials API
 
-Progress: [██████████████░░░░░░] ~70% (12 plans complete, Phase 3 started)
+Progress: [██████████████░░░░░░] ~70% (14 plans complete, Phase 3 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: 4.7 minutes
-- Total execution time: 1.01 hours
+- Total plans completed: 14
+- Average duration: 4.6 minutes
+- Total execution time: 1.08 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [██████████████░░░░░░] ~70% (1
 |-------|-------|-------|----------|
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
-| 03-voice-video-calls | 1 | 2 min | 2.0 min |
+| 03-voice-video-calls | 2 | 6 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-05 (7 min), 02-06 (4 min), 02-07 (TBD), 03-01 (research), 03-02 (2 min)
-- Trend: Fast execution for store-only plans
+- Last 5 plans: 02-06 (4 min), 02-07 (TBD), 03-02 (2 min), 03-01 (4 min)
+- Trend: Fast execution for infrastructure and store plans
 
 *Updated after each plan completion*
 
@@ -46,6 +46,9 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-28 | coturn:4.6.3 with limited port range | 49152-49200 instead of full range (from 03-01) | Docker performance, sufficient for dev |
+| 2026-01-28 | HMAC-SHA1 time-limited credentials | RFC-compliant TURN authentication (from 03-01) | Prevents credential abuse |
+| 2026-01-28 | 24-hour TTL for TURN credentials | Credentials outlast any reasonable call (from 03-01) | Balance security and UX |
 | 2026-01-28 | Quality uses 1-4 scale | Signal bar UI display for call quality (from 03-02) | Matches common call UI patterns |
 | 2026-01-28 | isPolite boolean for Perfect Negotiation | Role tracking for WebRTC SDP exchange (from 03-02) | Deterministic collision resolution |
 | 2026-01-28 | Audio settings use 'audio-settings' localStorage key | Zustand persist middleware storage (from 03-02) | Settings survive page refresh |
@@ -112,11 +115,12 @@ None yet.
 - 02-07: Integration and verification complete with password-derived keys
 
 **Phase 3 Progress:**
-- 03-01: Research complete (WebRTC P2P, Perfect Negotiation, ICE candidates)
+- 03-RESEARCH: Research complete (WebRTC P2P, Perfect Negotiation, ICE candidates)
+- 03-01: TURN server setup complete (coturn Docker, turnService, credentials API)
 - 03-02: Call and settings stores complete (callStore, settingsStore with persistence)
-- Next: 03-03 (Signal server for WebRTC signaling)
+- Next: 03-03 (WebRTC signaling service)
 
-**General:** Phase 3 plan count TBD — will be refined during plan-phase execution.
+**General:** Phase 3 has 7 plans (03-01 through 03-07).
 
 ## Development Infrastructure
 
@@ -136,5 +140,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 03-02-PLAN.md (Call & Settings Stores)
+Stopped at: Completed 03-01-PLAN.md (TURN/STUN Server Setup)
 Resume file: None (ready for 03-03-PLAN.md)
