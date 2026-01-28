@@ -1,52 +1,248 @@
 # Project State
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 ## Project Reference
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 See: .planning/PROJECT.md (updated 2026-01-27)
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 **Core value:** Own your communication — your server, your data, your rules. Privacy through self-hosting and E2E encryption.
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 **Current focus:** v1.0.0 Complete - All phases finished
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 ## Current Position
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 Version: 1.1.0 target
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 Status: **Executing Phase 5**
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 Last activity: 2026-01-28 — Completed 05-04-PLAN.md (backend group service)
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 Progress: [████████████████████░░░] 91% (31 of 33 plans complete)
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 ## Performance Metrics
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 **Velocity:**
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 - Total plans completed: 31
-- Average duration: 4.3 minutes
-- Total execution time: 2.3 hours
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
+- Average duration: 4.4 minutes
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
+- Total execution time: 2.4 hours
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 **By Phase:**
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 | Phase | Plans | Total | Avg/Plan |
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 |-------|-------|-------|----------|
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 | 01-foundation-deployment | 5 | 21 min | 4.2 min |
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 | 03-voice-video-calls | 7 | 16 min | 2.3 min |
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 | 05-enhanced-communication | 6 | 52 min | 8.7 min |
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 **Recent Trend:**
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 - Last 5 plans: 05-02 (5 min), 05-03 (5 min), 05-01 (9 min), 05-06 (12 min), 05-04 (16 min)
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 - Trend: Phase 5 plans averaging longer due to complexity
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 *Updated after each plan completion*
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 ## Accumulated Context
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 ### Decisions
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 Decisions are logged in PROJECT.md Key Decisions table.
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 Recent decisions affecting current work:
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 | Date | Decision | Context | Impact |
+| 2026-01-29 | 100MB maximum file size | Balance usability with server constraints (from 05-05) | Prevents resource exhaustion while supporting most use cases |
+| 2026-01-29 | Year/month/day storage hierarchy | Chronological file organization (from 05-05) | Easier backup/archival management, prevents single directory bloat |
+| 2026-01-29 | Multi-level file authorization | Uploader, message participants, group members (from 05-05) | Ensures conversation participants can access shared files |
+| 2026-01-29 | Encryption header as database BYTEA | Store with file metadata (from 05-05) | Enables E2E encrypted file sharing with decryption metadata |
 | 2026-01-28 | Permission system hasPermission check | Role-based access with owner/admin/moderator/member (from 05-04) | Centralized permission logic, easy to audit |
 | 2026-01-28 | Invite codes use base64url encoding | crypto.randomBytes(8).toString('base64url') (from 05-04) | URL-safe invite links without escaping |
 | 2026-01-28 | Banned users auto-unban on re-add | addMember() removes ban automatically (from 05-04) | Simplifies re-inviting previously banned users |
@@ -186,6 +382,7 @@ None yet.
 - 05-01: Database schema for enhanced communication complete (groups, files, reactions)
 - 05-02: Frontend typing indicator integration complete
 - 05-03: Video helper library complete (videoConstraints, backgroundBlur, useCamera)
+- 05-05: Backend file storage service complete (fileService, file routes, multipart upload)
 - 05-06: Backend reaction service complete (toggle, get, delete endpoints)
 - Next: Continue Phase 5 Wave 2
 
@@ -214,6 +411,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-28
-Stopped at: Completed 05-06-PLAN.md (backend reaction service)
+Last session: 2026-01-29
+Stopped at: Completed 05-05-PLAN.md (backend file storage service)
 Resume file: None
