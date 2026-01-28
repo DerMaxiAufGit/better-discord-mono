@@ -5,6 +5,7 @@ import { useMessageStore } from '@/stores/messageStore'
 import { useContactStore } from '@/stores/contactStore'
 import { encryptMessage, decryptMessage } from '@/lib/crypto/messageEncryption'
 import { usersApi } from '@/lib/api'
+import { dispatchCallSignaling } from '@/lib/webrtc/useCall'
 
 interface UseMessagingOptions {
   onError?: (error: Error) => void
@@ -126,6 +127,11 @@ export function useMessaging(options: UseMessagingOptions = {}) {
         } else if (data.type === 'error') {
           console.error('WebSocket error:', data.message)
           options.onError?.(new Error(data.message))
+        } else if (data.type?.startsWith('call-')) {
+          // Call signaling messages - dispatch to useCall hook
+          console.log('Call signaling message received:', data.type)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          dispatchCallSignaling(data as any)
         }
       } catch (e) {
         console.error('Failed to process WebSocket message:', e)
@@ -209,9 +215,27 @@ export function useMessaging(options: UseMessagingOptions = {}) {
     }))
   }, [])
 
+  // Send call signaling message
+  const sendCallSignal = useCallback((type: string, recipientId: string, data: Record<string, unknown> = {}) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.warn('WebSocket not connected, cannot send call signal:', type)
+      return
+    }
+    wsRef.current.send(JSON.stringify({
+      type,
+      recipientId,
+      ...data,
+    }))
+  }, [])
+
+  // Get WebSocket reference for call signaling
+  const getWebSocket = useCallback(() => wsRef.current, [])
+
   return {
     isConnected,
     sendMessage,
     markAsRead,
+    sendCallSignal,
+    getWebSocket,
   }
 }
