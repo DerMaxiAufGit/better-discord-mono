@@ -1,16 +1,18 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, Info } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/stores/auth';
+import { LogOut } from 'lucide-react';
 import { AudioSettings } from '@/components/settings/AudioSettings';
+import { APP_VERSION } from '@/config/version';
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { user, setUsername } = useAuthStore();
+  const { user, setUsername, logout } = useAuthStore();
 
   const [newUsername, setNewUsername] = React.useState(user?.username || '');
   const [isUpdating, setIsUpdating] = React.useState(false);
@@ -123,6 +125,35 @@ export function SettingsPage() {
         <section className="space-y-4">
           <h2 className="text-lg font-semibold">Audio</h2>
           <AudioSettings />
+        </section>
+
+        {/* Info Section */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">About</h2>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/info')}
+            className="w-full justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              App Info & Roadmap
+            </span>
+            <span className="text-muted-foreground text-sm">v{APP_VERSION}</span>
+          </Button>
+        </section>
+
+        {/* Account Section */}
+        <section className="space-y-4 pt-4 border-t">
+          <h2 className="text-lg font-semibold">Account</h2>
+          <Button
+            variant="destructive"
+            onClick={logout}
+            className="w-full sm:w-auto"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Log out
+          </Button>
         </section>
       </div>
     </div>

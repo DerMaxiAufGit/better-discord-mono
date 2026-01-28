@@ -1,34 +1,27 @@
-import { WifiOff, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useMessageStore } from '@/stores/messageStore'
 
 interface ConnectionBannerProps {
-  status: 'connected' | 'connecting' | 'disconnected'
   className?: string
 }
 
-export function ConnectionBanner({ status, className }: ConnectionBannerProps) {
-  if (status === 'connected') return null
+export function ConnectionBanner({ className }: ConnectionBannerProps) {
+  const showBanner = useMessageStore((s) => s.showConnectionBanner)
+  const isConnected = useMessageStore((s) => s.isConnected)
+
+  // Don't show if connected or if we haven't failed first retry yet
+  if (isConnected || !showBanner) return null
 
   return (
     <div
       className={cn(
-        'flex items-center justify-center gap-2 py-2 px-4 text-sm',
-        status === 'connecting' && 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
-        status === 'disconnected' && 'bg-red-500/10 text-red-600 dark:text-red-400',
+        'flex items-center justify-center gap-2 py-2 px-4 text-sm flex-shrink-0 bg-yellow-500 text-white',
         className
       )}
     >
-      {status === 'connecting' ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Reconnecting...</span>
-        </>
-      ) : (
-        <>
-          <WifiOff className="h-4 w-4" />
-          <span>Connection lost. Trying to reconnect...</span>
-        </>
-      )}
+      <Loader2 className="h-4 w-4 animate-spin" />
+      <span>Reconnecting...</span>
     </div>
   )
 }

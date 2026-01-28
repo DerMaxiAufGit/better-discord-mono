@@ -19,7 +19,6 @@ interface ConversationViewProps {
   currentUserId: string;
   messages: Message[];
   onSendMessage: (content: string) => void;
-  isConnected: boolean;
   isLoading?: boolean;
   onBack?: () => void;  // Called when back button clicked (mobile)
 }
@@ -30,7 +29,6 @@ export function ConversationView({
   currentUserId,
   messages,
   onSendMessage,
-  isConnected,
   isLoading,
   onBack,
 }: ConversationViewProps) {
@@ -61,16 +59,11 @@ export function ConversationView({
           variant="ghost"
           size="icon"
           onClick={handleStartCall}
-          disabled={callStatus !== 'idle' || !isConnected}
+          disabled={callStatus !== 'idle'}
           title="Start voice call"
         >
           <Phone className="h-5 w-5" />
         </Button>
-        {!isConnected && (
-          <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-            Reconnecting...
-          </span>
-        )}
       </div>
 
       {/* Messages - scrollable area */}
@@ -88,12 +81,11 @@ export function ConversationView({
         </div>
       )}
 
-      {/* Input - fixed at bottom */}
+      {/* Input - fixed at bottom, always enabled (messages queue if offline) */}
       <div className="flex-shrink-0">
         <MessageInput
           onSend={onSendMessage}
-          disabled={!isConnected}
-          placeholder={isConnected ? 'Type a message...' : 'Connecting...'}
+          placeholder="Type a message..."
         />
       </div>
     </div>

@@ -9,11 +9,13 @@ import { useMessaging } from '@/lib/websocket/useMessaging';
 import { decryptMessage } from '@/lib/crypto/messageEncryption';
 import { usersApi, messageApi } from '@/lib/api';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { useVisualViewport } from '@/hooks/useVisualViewport';
 
 export function MessagesPage() {
   const { contactId } = useParams<{ contactId?: string }>();
   const navigate = useNavigate();
   const { isMobile } = useBreakpoint();
+  const viewportHeight = useVisualViewport();
 
   const { user } = useAuthStore();
   const { conversations, loadHistory, isLoadingHistory } = useMessageStore();
@@ -21,8 +23,9 @@ export function MessagesPage() {
   const { getOrDeriveSessionKeys, isInitialized: cryptoReady } = useCryptoStore();
   const { isConnected, sendMessage, markAsRead } = useMessaging();
 
-  // Load conversations function (extracted for reuse in refresh)
-  const loadConversations = React.useCallback(async () => {
+  // Load conversations on mount
+  React.useEffect(() => {
+    const loadConversations = async () => {
       try {
         const { conversations: convos } = await messageApi.getConversations();
         // Fetch username for each contact
@@ -41,17 +44,9 @@ export function MessagesPage() {
       } catch (e) {
         console.error('Failed to load conversations:', e);
       }
-  }, [addContact]);
-
-  // Load conversations on mount
-  React.useEffect(() => {
+    };
     loadConversations();
-  }, [loadConversations]);
-
-  // Handle pull-to-refresh
-  const handleRefresh = React.useCallback(async () => {
-    await loadConversations();
-  }, [loadConversations]);
+  }, [addContact]);
 
   // Set active contact when route changes
   React.useEffect(() => {
@@ -172,14 +167,13 @@ export function MessagesPage() {
   if (isMobile) {
     if (contactId && activeContact && user) {
       return (
-        <div className="h-full">
+        <div className="overflow-hidden" style={{ height: viewportHeight }}>
           <ConversationView
             contactId={contactId}
             contactUsername={activeContact.username}
             currentUserId={String(user.id)}
             messages={activeMessages}
             onSendMessage={handleSendMessage}
-            isConnected={isConnected}
             isLoading={isLoadingHistory}
             onBack={() => navigate('/messages')}
           />
@@ -205,7 +199,6 @@ export function MessagesPage() {
             conversations={conversationList}
             activeId={contactId || null}
             onSelect={handleSelectConversation}
-            onRefresh={handleRefresh}
           />
         </div>
       </div>
@@ -234,7 +227,6 @@ export function MessagesPage() {
             conversations={conversationList}
             activeId={contactId || null}
             onSelect={handleSelectConversation}
-            onRefresh={handleRefresh}
           />
         </div>
       </div>
@@ -248,7 +240,6 @@ export function MessagesPage() {
             currentUserId={String(user.id)}
             messages={activeMessages}
             onSendMessage={handleSendMessage}
-            isConnected={isConnected}
             isLoading={isLoadingHistory}
           />
         ) : (

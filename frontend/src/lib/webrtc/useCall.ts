@@ -2,8 +2,11 @@ import { useRef, useCallback, useEffect } from 'react'
 import { useCallStore, CallStatus } from '@/stores/callStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/auth'
+import { useMessageStore } from '@/stores/messageStore'
 import { PeerConnectionManager, createPeerConnection, SignalingChannel } from './PeerConnection'
 import { sendViaSharedWebSocket } from '@/lib/websocket/sharedWebSocket'
+import { playRingtone, playRingback, resumeAudioContext, stopCurrentTone } from './ringtone'
+import { toast } from '@/lib/toast'
 
 /**
  * Return type for useCall hook
@@ -131,7 +134,7 @@ export function useCall(): UseCallReturn {
     reset,
   } = useCallStore()
 
-  const { selectedMicId, ringTimeout } = useSettingsStore()
+  const { selectedMicId, ringTimeout, ringtoneEnabled } = useSettingsStore()
   const { user, accessToken } = useAuthStore()
 
   // Refs for WebRTC resources
@@ -153,8 +156,9 @@ export function useCall(): UseCallReturn {
     accessToken,
     selectedMicId,
     ringTimeout,
+    ringtoneEnabled,
   })
-  stateRef.current = { callId, remoteUserId, isPolite, status, user, accessToken, selectedMicId, ringTimeout }
+  stateRef.current = { callId, remoteUserId, isPolite, status, user, accessToken, selectedMicId, ringTimeout, ringtoneEnabled }
 
   /**
    * Get signaling channel using shared WebSocket from useMessaging
@@ -248,11 +252,23 @@ export function useCall(): UseCallReturn {
   }, [])
 
   /**
+   * Stop any playing ringtone
+   */
+  const stopTone = useCallback(() => {
+    console.log('[useCall] stopTone called')
+    stopCurrentTone()
+  }, [])
+
+  /**
    * Cleanup all call resources
    */
   const cleanup = useCallback(() => {
+    console.log('[useCall] cleanup called')
     // Stop quality monitoring
     stopQualityMonitoring()
+
+    // Stop ringtone
+    stopTone()
 
     // Clear ring timeout
     if (ringTimeoutRef.current) {
@@ -281,7 +297,7 @@ export function useCall(): UseCallReturn {
 
     // Clear pending SDP
     pendingSdpRef.current = null
-  }, [stopQualityMonitoring])
+  }, [stopQualityMonitoring, stopTone])
 
   /**
    * Handle ICE connection state changes
@@ -359,6 +375,12 @@ export function useCall(): UseCallReturn {
       const { user } = stateRef.current
       if (!user) throw new Error('Not authenticated')
 
+      // Check if connected - calls require active connection
+      if (!useMessageStore.getState().isConnected) {
+        toast.error('Cannot start call: Not connected to server')
+        return
+      }
+
       // Generate call ID
       const newCallId = `call-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 
@@ -370,6 +392,15 @@ export function useCall(): UseCallReturn {
 
       // Update store state
       startOutgoingCall(newCallId, userId, username, isPoliteRole)
+
+      // Play ringback tone (what caller hears while waiting)
+      const { ringtoneEnabled } = stateRef.current
+      console.log('[useCall] ringtoneEnabled:', ringtoneEnabled)
+      if (ringtoneEnabled) {
+        await resumeAudioContext()
+        playRingback()
+        console.log('[useCall] Started ringback tone')
+      }
 
       try {
         // Get local audio stream
@@ -433,6 +464,10 @@ export function useCall(): UseCallReturn {
     }
 
     console.log('[useCall] Accepting call:', currentCallId)
+
+    // Stop ringtone using singleton
+    console.log('[useCall] Calling stopCurrentTone from acceptCall')
+    stopCurrentTone()
 
     // Update store
     storeAcceptCall()
@@ -503,6 +538,9 @@ export function useCall(): UseCallReturn {
 
     console.log('[useCall] Rejecting call:', currentCallId)
 
+    // Stop ringtone immediately using singleton
+    stopCurrentTone()
+
     // Send call-reject
     const signaling = getSignalingChannel()
     signaling.send({
@@ -524,6 +562,9 @@ export function useCall(): UseCallReturn {
     if (currentStatus === 'idle' || !currentCallId) return
 
     console.log('[useCall] Hanging up:', currentCallId)
+
+    // Stop ringtone immediately using singleton
+    stopCurrentTone()
 
     // Send call-hangup if we have a remote user
     if (currentRemoteUserId) {
@@ -608,6 +649,18 @@ export function useCall(): UseCallReturn {
           receiveIncomingCall(message.callId, message.senderId, message.senderUsername, isPoliteRole)
           console.log('[useCall] After receiveIncomingCall, store state:', useCallStore.getState())
 
+          // Play ringtone for incoming call
+          const { ringtoneEnabled } = stateRef.current
+          if (ringtoneEnabled) {
+            resumeAudioContext().then(() => {
+              // Check we're still in incoming state
+              if (useCallStore.getState().status === 'incoming') {
+                playRingtone()
+                console.log('[useCall] Started incoming ringtone')
+              }
+            })
+          }
+
           // Set auto-reject timeout
           const { ringTimeout } = stateRef.current
           ringTimeoutRef.current = window.setTimeout(() => {
@@ -630,6 +683,8 @@ export function useCall(): UseCallReturn {
           // Remote accepted our call
           if (message.callId !== currentCallId) return
           console.log('[useCall] Call accepted by remote')
+          // Stop ringback tone using singleton
+          stopCurrentTone()
           setConnecting()
           break
         }

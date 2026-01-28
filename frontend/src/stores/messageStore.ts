@@ -10,11 +10,24 @@ interface Message {
   status: 'sending' | 'sent' | 'delivered' | 'read'
 }
 
+interface QueuedMessage {
+  recipientId: string
+  plaintext: string
+  tempId: number
+}
+
 interface MessageState {
   // Messages keyed by contact ID
   conversations: Map<string, Message[]>
   isLoadingHistory: boolean
-  connectionStatus: 'connected' | 'connecting' | 'disconnected'
+  // Internal connection state (true state of WebSocket)
+  isConnected: boolean
+  // Retry count for current disconnect
+  retryCount: number
+  // Whether to show connection banner (only after first retry fails)
+  showConnectionBanner: boolean
+  // Queued messages to send when reconnected
+  messageQueue: QueuedMessage[]
 
   // Actions
   addMessage: (contactId: string, message: Message) => void
@@ -23,12 +36,24 @@ interface MessageState {
   markAllAsRead: (contactId: string, currentUserId: string) => void
   loadHistory: (contactId: string, decrypt: (encrypted: string, senderId: string) => Promise<string | null>) => Promise<void>
   clearMessages: () => void
+  setConnected: (connected: boolean) => void
+  incrementRetry: () => void
+  resetRetry: () => void
+  queueMessage: (msg: QueuedMessage) => void
+  dequeueMessages: () => QueuedMessage[]
+
+  // Legacy compatibility
+  connectionStatus: 'connected' | 'connecting' | 'disconnected'
   setConnectionStatus: (status: 'connected' | 'connecting' | 'disconnected') => void
 }
 
-export const useMessageStore = create<MessageState>((set) => ({
+export const useMessageStore = create<MessageState>((set, get) => ({
   conversations: new Map(),
   isLoadingHistory: false,
+  isConnected: false,
+  retryCount: 0,
+  showConnectionBanner: false,
+  messageQueue: [],
   connectionStatus: 'connecting',
 
   addMessage: (contactId: string, message: Message) => {
@@ -126,6 +151,47 @@ export const useMessageStore = create<MessageState>((set) => ({
     set({ conversations: new Map() })
   },
 
+  setConnected: (connected: boolean) => {
+    if (connected) {
+      set({
+        isConnected: true,
+        retryCount: 0,
+        showConnectionBanner: false,
+        connectionStatus: 'connected'
+      })
+    } else {
+      set({ isConnected: false })
+    }
+  },
+
+  incrementRetry: () => {
+    const { retryCount } = get()
+    const newCount = retryCount + 1
+    // Show banner only after first retry fails (retryCount >= 1)
+    set({
+      retryCount: newCount,
+      showConnectionBanner: newCount >= 1,
+      connectionStatus: newCount >= 1 ? 'disconnected' : 'connecting'
+    })
+  },
+
+  resetRetry: () => {
+    set({ retryCount: 0, showConnectionBanner: false })
+  },
+
+  queueMessage: (msg: QueuedMessage) => {
+    set((state) => ({
+      messageQueue: [...state.messageQueue, msg]
+    }))
+  },
+
+  dequeueMessages: () => {
+    const queue = get().messageQueue
+    set({ messageQueue: [] })
+    return queue
+  },
+
+  // Legacy - still used by some components
   setConnectionStatus: (status) => {
     set({ connectionStatus: status })
   },

@@ -2,7 +2,7 @@ import { ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { useCallStore } from '@/stores/callStore'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { useMessageStore } from '@/stores/messageStore'
+// messageStore import removed - ConnectionBanner gets state directly
 import { IncomingCallBanner } from '@/components/call/IncomingCallBanner'
 import { ActiveCallWindow } from '@/components/call/ActiveCallWindow'
 import { ConnectionBanner } from '@/components/error/ConnectionBanner'
@@ -19,7 +19,6 @@ export function AppShell({ children }: AppShellProps) {
   const { isMobile } = useBreakpoint()
   const { status, remoteUsername } = useCallStore()
   const { ringTimeout } = useSettingsStore()
-  const connectionStatus = useMessageStore((s) => s.connectionStatus)
   const {
     isMuted,
     quality,
@@ -43,9 +42,6 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <>
-      {/* Connection banner at very top */}
-      <ConnectionBanner status={connectionStatus} />
-
       {/* Global incoming call banner */}
       {showIncomingCall && (
         <IncomingCallBanner
@@ -72,17 +68,22 @@ export function AppShell({ children }: AppShellProps) {
         />
       )}
 
-      <div className="flex h-screen overflow-hidden">
-        {/* Sidebar only on desktop/tablet */}
-        {!isMobile && <Sidebar />}
+      <div className="flex flex-col h-screen overflow-hidden">
+        {/* Connection banner - pushes content down when visible */}
+        <ConnectionBanner />
 
-        {/* Main content with bottom padding on mobile for nav */}
-        <main className={cn(
-          "flex-1 overflow-auto bg-background",
-          isMobile && "pb-16"
-        )}>
-          {children}
-        </main>
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar only on desktop/tablet */}
+          {!isMobile && <Sidebar />}
+
+          {/* Main content with bottom padding on mobile for nav */}
+          <main className={cn(
+            "flex-1 overflow-hidden bg-background",
+            isMobile && "pb-16"
+          )}>
+            {children}
+          </main>
+        </div>
       </div>
 
       {/* Bottom nav only on mobile */}

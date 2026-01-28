@@ -16,6 +16,7 @@ interface UseMessagingOptions {
 export function useMessaging(options: UseMessagingOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<number | null>(null)
+  const isCleaningUpRef = useRef(false) // Track intentional cleanup vs unexpected close
   const [isConnected, setIsConnected] = useState(false)
 
   const { accessToken, user } = useAuthStore()
@@ -30,38 +31,92 @@ export function useMessaging(options: UseMessagingOptions = {}) {
   // Reconnect trigger state
   const [reconnectTrigger, setReconnectTrigger] = useState(0)
 
+  // Helper to send a single message via WebSocket
+  const sendMessageViaWs = useCallback(async (ws: WebSocket, recipientId: string, plaintext: string) => {
+    const { getOrDeriveSessionKeys, fetchContactPublicKey } = storeRefs.current
+    const currentUser = storeRefs.current.user
+    if (!currentUser) return
+
+    const publicKey = await fetchContactPublicKey(recipientId)
+    if (!publicKey) {
+      console.error('Cannot send queued message: no public key for', recipientId)
+      return
+    }
+
+    const sessionKeys = await getOrDeriveSessionKeys(String(currentUser.id), recipientId, publicKey)
+    const encryptedContent = await encryptMessage(plaintext, sessionKeys.tx)
+
+    ws.send(JSON.stringify({
+      type: 'message',
+      recipientId,
+      encryptedContent,
+    }))
+  }, [])
+
   // Connect on mount and when auth state changes
   useEffect(() => {
     if (!accessToken || !cryptoReady || !user) return
+
+    // Clear any pending reconnect from previous connection
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+    isCleaningUpRef.current = false
 
     // Determine WebSocket URL (same host, /api/ws path)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const wsUrl = `${protocol}//${window.location.host}/api/ws?token=${accessToken}`
 
+    console.log('[WS] Creating new WebSocket connection...')
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
-    ws.onopen = () => {
-      console.log('WebSocket connected')
+    // Connection timeout - if not connected within 10s, treat as failed
+    const connectionTimeout = window.setTimeout(() => {
+      if (ws.readyState !== WebSocket.OPEN) {
+        console.log('[WS] Connection timeout, closing...')
+        ws.close()
+      }
+    }, 10000)
+
+    ws.onopen = async () => {
+      clearTimeout(connectionTimeout)
+      console.log('[WS] Connected successfully')
       setIsConnected(true)
       setSharedWebSocket(ws)  // Share for call signaling
 
       // Update connection status in messageStore
-      const wasDisconnected = useMessageStore.getState().connectionStatus === 'disconnected'
-      useMessageStore.getState().setConnectionStatus('connected')
+      const store = useMessageStore.getState()
+      const wasShowingBanner = store.showConnectionBanner
+      store.setConnected(true)
 
-      // Toast only on reconnection (not initial connect)
-      if (wasDisconnected) {
+      // Toast only if we were showing the banner (user was aware of disconnect)
+      if (wasShowingBanner) {
         toast.success('Connected')
+      }
+
+      // Send any queued messages
+      const queuedMessages = store.dequeueMessages()
+      if (queuedMessages.length > 0) {
+        console.log(`[WS] Sending ${queuedMessages.length} queued messages`)
+        for (const msg of queuedMessages) {
+          try {
+            await sendMessageViaWs(ws, msg.recipientId, msg.plaintext)
+          } catch (e) {
+            console.error('[WS] Failed to send queued message:', e)
+          }
+        }
       }
     }
 
     ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data)
+        // Always get fresh refs to avoid stale closures
         const { getOrDeriveSessionKeys, addMessage, fetchContactPublicKey, options, user: currentUser } = storeRefs.current
 
-        console.log('WebSocket message received:', data.type)
+        console.log('[WS] Message received:', data.type)
 
         if (data.type === 'message') {
           // Incoming message from another user
@@ -150,45 +205,73 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       }
     }
 
-    ws.onclose = () => {
-      console.log('WebSocket disconnected, reconnecting in 3s...')
+    ws.onclose = (event) => {
+      console.log('[WS] Disconnected, code:', event.code, 'reason:', event.reason, 'wasCleanup:', isCleaningUpRef.current)
       setIsConnected(false)
       wsRef.current = null
       setSharedWebSocket(null)  // Clear shared reference
 
-      // Update connection status to disconnected
-      useMessageStore.getState().setConnectionStatus('disconnected')
+      // Don't reconnect if this was an intentional cleanup
+      if (isCleaningUpRef.current) {
+        console.log('[WS] Intentional close, not reconnecting')
+        return
+      }
+
+      useMessageStore.getState().setConnected(false)
 
       // Reconnect after delay
       reconnectTimeoutRef.current = window.setTimeout(() => {
-        // Set connecting status before reconnect attempt
-        useMessageStore.getState().setConnectionStatus('connecting')
+        console.log('[WS] Attempting reconnect...')
+        // Increment retry count - banner only shows after first retry
+        useMessageStore.getState().incrementRetry()
         setReconnectTrigger(t => t + 1)
       }, 3000)
     }
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
+      console.error('[WS] Error:', error)
+      clearTimeout(connectionTimeout)
+      // The onclose handler will trigger reconnect and update status
     }
 
     return () => {
+      console.log('[WS] Cleanup - closing WebSocket')
+      isCleaningUpRef.current = true
+      clearTimeout(connectionTimeout)
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
-      ws.close()
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close()
+      }
       wsRef.current = null
     }
   }, [accessToken, cryptoReady, user?.id, reconnectTrigger]) // reconnectTrigger forces reconnect
 
-  // Send encrypted message
+  // Send encrypted message (queues if disconnected)
   const sendMessage = useCallback(async (recipientId: string, plaintext: string) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      throw new Error('WebSocket not connected')
-    }
     if (!user) throw new Error('Not authenticated')
 
     const { getOrDeriveSessionKeys, addMessage, fetchContactPublicKey } = storeRefs.current
+
+    // Add optimistic message to store immediately
+    const tempId = -Date.now() // Temporary negative ID
+    addMessage(recipientId, {
+      id: tempId,
+      senderId: String(user.id),
+      recipientId,
+      content: plaintext,
+      timestamp: new Date(),
+      status: 'sending',
+    })
+
+    // If not connected, queue the message for later
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.log('WebSocket not connected, queueing message')
+      useMessageStore.getState().queueMessage({ recipientId, plaintext, tempId })
+      return
+    }
 
     // Get recipient's public key
     const publicKey = await fetchContactPublicKey(recipientId)
@@ -202,17 +285,6 @@ export function useMessaging(options: UseMessagingOptions = {}) {
 
     // Encrypt message
     const encryptedContent = await encryptMessage(plaintext, sessionKeys.tx)
-
-    // Add optimistic message to store
-    const tempId = -Date.now() // Temporary negative ID
-    addMessage(recipientId, {
-      id: tempId,
-      senderId: String(user.id),
-      recipientId,
-      content: plaintext,
-      timestamp: new Date(),
-      status: 'sending',
-    })
 
     // Send via WebSocket
     wsRef.current.send(JSON.stringify({

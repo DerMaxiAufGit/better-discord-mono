@@ -57,21 +57,18 @@ export function IncomingCallBanner({
           <p className="text-sm text-muted-foreground mt-1 font-mono">({countdown}s)</p>
         </div>
         <div className="flex gap-8 mt-12">
-          <Button 
-            onClick={onReject} 
-            variant="destructive" 
-            size="lg" 
-            className="rounded-full h-16 w-16"
+          <button
+            onClick={onReject}
+            className="rounded-full h-16 w-16 bg-red-500 hover:bg-red-600 flex items-center justify-center text-white"
           >
             <PhoneOff className="h-6 w-6" />
-          </Button>
-          <Button 
-            onClick={onAccept} 
-            size="lg" 
-            className="rounded-full h-16 w-16 bg-green-500 hover:bg-green-600"
+          </button>
+          <button
+            onClick={onAccept}
+            className="rounded-full h-16 w-16 bg-green-500 hover:bg-green-600 flex items-center justify-center text-white"
           >
             <Phone className="h-6 w-6" />
-          </Button>
+          </button>
         </div>
       </div>
     );

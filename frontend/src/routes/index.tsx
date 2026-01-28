@@ -6,6 +6,7 @@ import { DashboardPage } from "@/pages/DashboardPage"
 import { ContactsPage } from "@/pages/ContactsPage"
 import { MessagesPage } from "@/pages/MessagesPage"
 import { SettingsPage } from "@/pages/SettingsPage"
+import { InfoPage } from "@/pages/InfoPage"
 import { ProtectedRoute } from "./ProtectedRoute"
 
 export const router = createBrowserRouter([
@@ -54,6 +55,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <SettingsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/info",
+    element: (
+      <ProtectedRoute>
+        <InfoPage />
       </ProtectedRoute>
     ),
   },
