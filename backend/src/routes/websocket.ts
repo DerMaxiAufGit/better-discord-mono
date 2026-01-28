@@ -3,6 +3,7 @@ import type { WebSocket } from '@fastify/websocket';
 import { wsAuthHook } from '../middleware/wsAuth.js';
 import { messageService } from '../services/messageService.js';
 import { friendService } from '../services/friendService.js';
+import { handleTypingEvent } from '../services/typingService.js';
 
 // WebRTC ICE candidate type (browser built-in, define for Node)
 interface RTCIceCandidateInit {
@@ -23,6 +24,10 @@ interface IncomingMessage {
         'call-accept' | 'call-reject' | 'call-hangup';
   recipientId?: string;
   encryptedContent?: string;
+
+  // Typing indicator fields
+  conversationId?: string;
+  isTyping?: boolean;
 
   // Call signaling fields
   callId?: string;
@@ -48,6 +53,8 @@ interface MessageAck {
 interface TypingIndicator {
   type: 'typing';
   senderId: string;
+  conversationId: string;
+  isTyping: boolean;
 }
 
 interface ErrorMessage {
@@ -133,15 +140,22 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             }));
           }
         } else if (msg.type === 'typing') {
-          // Forward typing indicator to recipient
-          if (!msg.recipientId) {
+          // Handle typing indicator with service
+          if (!msg.recipientId || msg.conversationId === undefined || msg.isTyping === undefined) {
             return;
           }
+
+          // Track typing state in service
+          handleTypingEvent(msg.conversationId, userId, msg.isTyping);
+
+          // Broadcast to recipient (for 1:1 conversations)
           const recipientSocket = activeConnections.get(msg.recipientId);
           if (recipientSocket && recipientSocket.readyState === 1) {
             recipientSocket.send(JSON.stringify({
               type: 'typing',
               senderId: userId,
+              conversationId: msg.conversationId,
+              isTyping: msg.isTyping,
             } as TypingIndicator));
           }
         } else if (msg.type === 'read') {
