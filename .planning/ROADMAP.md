@@ -112,7 +112,25 @@ Plans:
   3. User can share files and images in conversations
   4. User can react to messages with emoji
   5. User sees typing indicators when contact is composing
-**Plans**: TBD
+**Plans**: 16 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Database schema for groups, files, reactions
+- [ ] 05-02-PLAN.md — Frontend dependencies and typing indicator backend
+- [ ] 05-03-PLAN.md — Video helper library (constraints, preview, blur)
+- [ ] 05-04-PLAN.md — Backend group service and REST routes
+- [ ] 05-05-PLAN.md — Backend file service with encrypted storage
+- [ ] 05-06-PLAN.md — Backend reaction service
+- [ ] 05-07-PLAN.md — Frontend group store and pairwise encryption
+- [ ] 05-08-PLAN.md — Frontend file encryption and upload/download
+- [ ] 05-09-PLAN.md — Frontend reaction store and typing indicator hook
+- [ ] 05-10-PLAN.md — Video UI components (preview, controls, settings)
+- [ ] 05-11-PLAN.md — Group UI components (creator, members, settings)
+- [ ] 05-12-PLAN.md — File UI components (uploader, preview, lightbox)
+- [ ] 05-13-PLAN.md — Reaction UI components (picker, quick bar, list)
+- [ ] 05-14-PLAN.md — Typing indicator UI and message replies
+- [ ] 05-15-PLAN.md — Video integration into call flow
+- [ ] 05-16-PLAN.md — Integration and verification checkpoint
 
 ### Phase 6: Social Features (v1.2.0)
 **Goal**: Add social networking features for better user connections
