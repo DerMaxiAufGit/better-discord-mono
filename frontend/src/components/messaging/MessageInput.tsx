@@ -38,7 +38,7 @@ export function MessageInput({ onSend, disabled, placeholder = 'Type a message..
     setMessage(e.target.value);
     const target = e.target;
     target.style.height = 'auto';
-    target.style.height = Math.min(target.scrollHeight, 150) + 'px';
+    target.style.height = Math.min(target.scrollHeight, 120) + 'px';
   };
 
   return (
@@ -56,7 +56,7 @@ export function MessageInput({ onSend, disabled, placeholder = 'Type a message..
           'text-sm ring-offset-background placeholder:text-muted-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          'min-h-[40px] max-h-[150px]'
+          'min-h-[40px] max-h-[120px]'
         )}
       />
       <Button
