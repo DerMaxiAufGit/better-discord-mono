@@ -1,3 +1,4 @@
+import PullToRefresh from 'react-simple-pull-to-refresh';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,6 +15,7 @@ interface ConversationListProps {
   conversations: Conversation[];
   activeId: string | null;
   onSelect: (contactId: string) => void;
+  onRefresh?: () => Promise<void>;
 }
 
 function formatRelativeTime(date: Date): string {
@@ -30,8 +32,12 @@ function formatRelativeTime(date: Date): string {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-export function ConversationList({ conversations, activeId, onSelect }: ConversationListProps) {
-  return (
+export function ConversationList({ conversations, activeId, onSelect, onRefresh }: ConversationListProps) {
+  const handleRefresh = async () => {
+    if (onRefresh) await onRefresh();
+  };
+
+  const content = (
     <ScrollArea className="h-full">
       <div className="space-y-1 p-2">
         {conversations.length === 0 ? (
@@ -77,5 +83,18 @@ export function ConversationList({ conversations, activeId, onSelect }: Conversa
         )}
       </div>
     </ScrollArea>
+  );
+
+  // Only wrap with pull-to-refresh if onRefresh provided
+  if (!onRefresh) return content;
+
+  return (
+    <PullToRefresh
+      onRefresh={handleRefresh}
+      pullingContent={<div className="text-center py-4 text-muted-foreground">Pull to refresh</div>}
+      refreshingContent={<div className="text-center py-4 text-muted-foreground">Refreshing...</div>}
+    >
+      {content}
+    </PullToRefresh>
   );
 }

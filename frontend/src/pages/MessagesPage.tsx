@@ -21,9 +21,8 @@ export function MessagesPage() {
   const { getOrDeriveSessionKeys, isInitialized: cryptoReady } = useCryptoStore();
   const { isConnected, sendMessage, markAsRead } = useMessaging();
 
-  // Load conversations on mount
-  React.useEffect(() => {
-    const loadConversations = async () => {
+  // Load conversations function (extracted for reuse in refresh)
+  const loadConversations = React.useCallback(async () => {
       try {
         const { conversations: convos } = await messageApi.getConversations();
         // Fetch username for each contact
@@ -42,9 +41,17 @@ export function MessagesPage() {
       } catch (e) {
         console.error('Failed to load conversations:', e);
       }
-    };
-    loadConversations();
   }, [addContact]);
+
+  // Load conversations on mount
+  React.useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
+
+  // Handle pull-to-refresh
+  const handleRefresh = React.useCallback(async () => {
+    await loadConversations();
+  }, [loadConversations]);
 
   // Set active contact when route changes
   React.useEffect(() => {
@@ -198,6 +205,7 @@ export function MessagesPage() {
             conversations={conversationList}
             activeId={contactId || null}
             onSelect={handleSelectConversation}
+            onRefresh={handleRefresh}
           />
         </div>
       </div>
@@ -226,6 +234,7 @@ export function MessagesPage() {
             conversations={conversationList}
             activeId={contactId || null}
             onSelect={handleSelectConversation}
+            onRefresh={handleRefresh}
           />
         </div>
       </div>
