@@ -6,6 +6,9 @@ import { Avatar } from '@/components/ui/avatar'
 import { CallControls } from './CallControls'
 import { CallQualityIndicator } from './CallQualityIndicator'
 import { CallTimer } from './CallTimer'
+import { VideoPreview, SelfView } from '@/components/video/VideoPreview'
+import { VideoControlBar } from '@/components/video/VideoControls'
+import { useSettingsStore } from '@/stores/settingsStore'
 import { cn } from '@/lib/utils'
 import type { CallStatus } from '@/stores/callStore'
 
@@ -21,6 +24,11 @@ interface ActiveCallWindowProps {
   onHangup: () => void
   onToggleMinimized: () => void
   micLevel?: number
+  // Video props
+  isVideoEnabled?: boolean
+  localVideoStream?: MediaStream | null
+  remoteVideoStream?: MediaStream | null
+  onToggleVideo?: () => void
 }
 
 /**
@@ -40,6 +48,10 @@ export function ActiveCallWindow({
   onHangup,
   onToggleMinimized,
   micLevel = 0,
+  isVideoEnabled = false,
+  localVideoStream = null,
+  remoteVideoStream = null,
+  onToggleVideo,
 }: ActiveCallWindowProps) {
   // Draggable state for minimized view
   const [position, setPosition] = useState({ x: 16, y: 16 })
@@ -47,6 +59,13 @@ export function ActiveCallWindow({
   const dragStartRef = useRef({ x: 0, y: 0 })
   const floatingRef = useRef<HTMLDivElement>(null)
   const { isMobile } = useBreakpoint()
+
+  // Video settings from store
+  const { selfViewPosition, selfViewHidden, blurEnabled, setBlurEnabled, setSelfViewHidden } = useSettingsStore()
+
+  // Check if remote has active video
+  const hasRemoteVideo = remoteVideoStream && remoteVideoStream.getVideoTracks().length > 0 &&
+    remoteVideoStream.getVideoTracks().some(track => track.enabled && !track.muted)
 
   // Get status display text
   const getStatusText = (): string => {
@@ -204,43 +223,79 @@ export function ActiveCallWindow({
         )}
       </div>
 
-      {/* Center content */}
-      <div className="h-full flex flex-col items-center justify-center gap-6">
-        {/* Avatar */}
-        <div className="relative">
-          {/* Speaking indicator ring */}
-          {status === 'connected' && !isMuted && micLevel > 15 && (
-            <div className="absolute -inset-2 rounded-full animate-pulse bg-green-500/20" />
-          )}
-          <Avatar
-            fallback={remoteUsername}
-            className="h-32 w-32 text-4xl"
+      {/* Center content - video or avatar */}
+      <div className="relative h-full flex flex-col items-center justify-center">
+        {hasRemoteVideo ? (
+          // Remote video view
+          <VideoPreview
+            stream={remoteVideoStream}
+            isActive={true}
+            isMirrored={false}
+            className="w-full h-full"
           />
-        </div>
+        ) : (
+          // Avatar fallback when no remote video
+          <div className="flex flex-col items-center justify-center gap-6">
+            {/* Avatar */}
+            <div className="relative">
+              {/* Speaking indicator ring */}
+              {status === 'connected' && !isMuted && micLevel > 15 && (
+                <div className="absolute -inset-2 rounded-full animate-pulse bg-green-500/20" />
+              )}
+              <Avatar
+                fallback={remoteUsername}
+                className="h-32 w-32 text-4xl"
+              />
+            </div>
 
-        {/* Name */}
-        <h1 className="text-2xl font-semibold">{remoteUsername}</h1>
+            {/* Name */}
+            <h1 className="text-2xl font-semibold">{remoteUsername}</h1>
 
-        {/* Status / Timer */}
-        <div className="flex items-center gap-2 text-muted-foreground">
-          {isConnecting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>{getStatusText()}</span>
-            </>
-          ) : (
-            <CallTimer startTime={startTime} className="text-lg" />
-          )}
-        </div>
+            {/* Status / Timer */}
+            <div className="flex items-center gap-2 text-muted-foreground">
+              {isConnecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>{getStatusText()}</span>
+                </>
+              ) : (
+                <CallTimer startTime={startTime} className="text-lg" />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Self view (picture-in-picture) */}
+        {!selfViewHidden && isVideoEnabled && localVideoStream && (
+          <SelfView
+            stream={localVideoStream}
+            isActive={isVideoEnabled}
+            position={selfViewPosition}
+            size="small"
+            onHide={() => setSelfViewHidden(true)}
+          />
+        )}
+
+        {/* Video control bar overlay */}
+        {onToggleVideo && (
+          <VideoControlBar
+            isCameraOn={isVideoEnabled}
+            isBlurOn={blurEnabled}
+            onToggleCamera={onToggleVideo}
+            onToggleBlur={() => setBlurEnabled(!blurEnabled)}
+          />
+        )}
       </div>
 
-      {/* Bottom controls */}
+      {/* Bottom controls - audio controls and hangup */}
       <div className="absolute bottom-0 left-0 right-0 p-8 flex justify-center">
         <CallControls
           isMuted={isMuted}
           onToggleMute={onToggleMute}
           onHangup={onHangup}
           micLevel={micLevel}
+          isVideoEnabled={isVideoEnabled}
+          onToggleVideo={onToggleVideo}
         />
       </div>
     </div>

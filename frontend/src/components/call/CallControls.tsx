@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react'
-import { Mic, MicOff, PhoneOff } from 'lucide-react'
+import { Mic, MicOff, PhoneOff, Video, VideoOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -9,6 +9,9 @@ interface CallControlsProps {
   onHangup: () => void
   micLevel?: number // 0-100 for activity indicator
   className?: string
+  // Video props
+  isVideoEnabled?: boolean
+  onToggleVideo?: () => void
 }
 
 /**
@@ -22,6 +25,8 @@ export function CallControls({
   onHangup,
   micLevel = 0,
   className = '',
+  isVideoEnabled = false,
+  onToggleVideo,
 }: CallControlsProps) {
   // Activity threshold for pulse animation
   const isActive = !isMuted && micLevel > 15
@@ -78,6 +83,23 @@ export function CallControls({
           )}
         </Button>
       </div>
+
+      {/* Video toggle button */}
+      {onToggleVideo && (
+        <Button
+          variant={isVideoEnabled ? 'secondary' : 'destructive'}
+          size="icon"
+          onClick={onToggleVideo}
+          className="h-12 w-12 rounded-full transition-all"
+          aria-label={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
+        >
+          {isVideoEnabled ? (
+            <Video className="h-5 w-5" />
+          ) : (
+            <VideoOff className="h-5 w-5" />
+          )}
+        </Button>
+      )}
 
       {/* End call button */}
       <Button
