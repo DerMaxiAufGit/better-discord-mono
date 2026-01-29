@@ -12,15 +12,15 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 Phase: 5 of 7 (Enhanced Communication) - IN PROGRESS
 Version: 1.1.0 target
 Status: **Executing Phase 5**
-Last activity: 2026-01-29 — Completed 05-14-PLAN.md (typing & reply UI components)
+Last activity: 2026-01-29 — Completed 05-15-PLAN.md (video call integration)
 
-Progress: [████████████████████░░░] 86% (36 of 42 plans complete)
+Progress: [████████████████████░░░] 88% (37 of 42 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 36
-- Average duration: 4.6 minutes
+- Total plans completed: 37
+- Average duration: 4.5 minutes
 - Total execution time: 2.9 hours
 
 **By Phase:**
@@ -31,10 +31,10 @@ Progress: [████████████████████░░░
 | 02-e2e-encrypted-messaging | 7 | 38 min | 5.4 min |
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
-| 05-enhanced-communication | 12 | 104 min | 8.7 min |
+| 05-enhanced-communication | 13 | 108 min | 8.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-14 (12 min), 05-12 (9 min), 05-08 (12 min), 05-10 (7 min), 05-06 (12 min)
+- Last 5 plans: 05-15 (4 min), 05-14 (12 min), 05-12 (9 min), 05-08 (12 min), 05-10 (7 min)
 - Trend: Phase 5 plans averaging longer due to encryption complexity
 
 *Updated after each plan completion*
@@ -48,6 +48,9 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-29 | useCall hook wraps callStore with video | Video track management separate from state (from 05-15) | Clean separation of concerns for call logic |
+| 2026-01-29 | Video toggle in VideoControlBar and CallControls | Multiple entry points for camera toggle (from 05-15) | Better UX during video calls |
+| 2026-01-29 | Renamed storage to 'call-settings' | Audio and video settings colocated (from 05-15) | Single persist key for all call preferences |
 | 2026-01-29 | FileUploader shows real-time progress | Display upload status/percentage from fileStore (from 05-12) | Visual feedback for encrypted file uploads |
 | 2026-01-29 | Staggered animation delays for typing dots | 0ms, 150ms, 300ms via inline styles (from 05-14) | Smooth wave animation without custom keyframes |
 | 2026-01-29 | Truncate reply content at different lengths | 100 chars for MessageReply, 60 for ReplyPreview (from 05-14) | Balances readability with space constraints |
@@ -107,7 +110,8 @@ None yet.
 - 05-10: Video UI components complete (VideoPreview, VideoControls, VideoSettings)
 - 05-12: File upload and preview UI complete (FileUploader, FilePreview, Lightbox)
 - 05-14: Typing indicator and message reply UI components complete
-- Next: Continue Phase 5 remaining plans (09, 11, 13, 15, 16)
+- 05-15: Video call integration complete (useCall hook, ActiveCallWindow video)
+- Next: Continue Phase 5 remaining plans (09, 11, 13, 16)
 
 **Previous phases complete:**
 - Phase 1: Foundation and deployment ✓
@@ -133,5 +137,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-29
-Stopped at: Completed 05-14-PLAN.md (typing & reply UI components)
+Stopped at: Completed 05-15-PLAN.md (video call integration)
 Resume file: None
