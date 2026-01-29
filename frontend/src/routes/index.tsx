@@ -7,6 +7,7 @@ import { ContactsPage } from "@/pages/ContactsPage"
 import { MessagesPage } from "@/pages/MessagesPage"
 import { SettingsPage } from "@/pages/SettingsPage"
 import { InfoPage } from "@/pages/InfoPage"
+import { JoinGroupPage } from "@/pages/JoinGroupPage"
 import { ProtectedRoute } from "./ProtectedRoute"
 
 export const router = createBrowserRouter([
@@ -81,6 +82,10 @@ export const router = createBrowserRouter([
         <MessagesPage />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: "/join/:code",
+    element: <JoinGroupPage />,
   },
   {
     path: "*",

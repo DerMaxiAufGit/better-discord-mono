@@ -3,8 +3,10 @@ import { useAuthStore } from '@/stores/auth'
 import { useCryptoStore } from '@/stores/cryptoStore'
 import { useMessageStore } from '@/stores/messageStore'
 import { useContactStore } from '@/stores/contactStore'
+import { useReactionStore } from '@/stores/reactionStore'
+import { useGroupStore } from '@/stores/groupStore'
 import { encryptMessage, decryptMessage } from '@/lib/crypto/messageEncryption'
-import { usersApi } from '@/lib/api'
+import { usersApi, refreshAccessToken } from '@/lib/api'
 import { dispatchCallSignaling } from '@/lib/webrtc/useCall'
 import { setSharedWebSocket } from './sharedWebSocket'
 import { toast } from '@/lib/toast'
@@ -17,6 +19,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<number | null>(null)
   const isCleaningUpRef = useRef(false) // Track intentional cleanup vs unexpected close
+  const disconnectedAtRef = useRef<number | null>(null) // Track when disconnect happened
   const [isConnected, setIsConnected] = useState(false)
 
   const { accessToken, user } = useAuthStore()
@@ -91,8 +94,14 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       const wasShowingBanner = store.showConnectionBanner
       store.setConnected(true)
 
-      // Toast only if we were showing the banner (user was aware of disconnect)
-      if (wasShowingBanner) {
+      // Toast only if we were showing the banner AND disconnect lasted > 2 seconds
+      // This prevents toast spam on brief connection blips
+      const disconnectDuration = disconnectedAtRef.current
+        ? Date.now() - disconnectedAtRef.current
+        : 0
+      disconnectedAtRef.current = null
+
+      if (wasShowingBanner && disconnectDuration > 2000) {
         toast.success('Connected')
       }
 
@@ -204,6 +213,40 @@ export function useMessaging(options: UseMessagingOptions = {}) {
               isTyping: data.isTyping
             }
           }))
+        } else if (data.type === 'reaction') {
+          // Live reaction update
+          const { messageId, emoji, userId, userEmail, added } = data
+          const reactionStore = useReactionStore.getState()
+          if (added) {
+            reactionStore.addReactionOptimistic(messageId, emoji, userId, userEmail)
+          } else {
+            reactionStore.removeReactionOptimistic(messageId, emoji, userId)
+          }
+        } else if (data.type === 'group-message') {
+          // Incoming group message
+          const { id, groupId, senderId, senderEmail, encryptedContent, timestamp } = data
+          // Dispatch event for group message handling
+          window.dispatchEvent(new CustomEvent('group-message', {
+            detail: { id, groupId, senderId, senderEmail, encryptedContent, timestamp }
+          }))
+        } else if (data.type === 'group-message_ack') {
+          // Acknowledgment for sent group message
+          window.dispatchEvent(new CustomEvent('group-message-ack', {
+            detail: { id: data.id, groupId: data.groupId, timestamp: data.timestamp }
+          }))
+        } else if (data.type === 'group-member-joined') {
+          // Someone joined a group - refresh group list so it appears live
+          const { groupId, groupName, userId: joinedUserId, userEmail } = data
+          console.log('[WS] Group member joined:', { groupId, groupName, joinedUserId, userEmail })
+
+          // Refresh groups list to show the new group (for the joiner) or update member count
+          useGroupStore.getState().loadGroups()
+
+          // If we're viewing this group's members, refresh the member list too
+          const currentGroupId = useGroupStore.getState().selectedGroupId
+          if (currentGroupId === groupId) {
+            useGroupStore.getState().loadMembers(groupId)
+          }
         } else if (data.type?.startsWith('call-')) {
           // Call signaling messages - dispatch to useCall hook
           console.log('Call signaling message received:', data.type)
@@ -221,6 +264,11 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       wsRef.current = null
       setSharedWebSocket(null)  // Clear shared reference
 
+      // Track when disconnect happened (for toast debounce)
+      if (!disconnectedAtRef.current) {
+        disconnectedAtRef.current = Date.now()
+      }
+
       // Don't reconnect if this was an intentional cleanup
       if (isCleaningUpRef.current) {
         console.log('[WS] Intentional close, not reconnecting')
@@ -229,12 +277,32 @@ export function useMessaging(options: UseMessagingOptions = {}) {
 
       useMessageStore.getState().setConnected(false)
 
-      // Reconnect after delay
-      reconnectTimeoutRef.current = window.setTimeout(() => {
-        console.log('[WS] Attempting reconnect...')
-        // Increment retry count - banner only shows after first retry
-        useMessageStore.getState().incrementRetry()
-        setReconnectTrigger(t => t + 1)
+      // Reconnect after delay - but first try to refresh the access token
+      reconnectTimeoutRef.current = window.setTimeout(async () => {
+        console.log('[WS] Attempting reconnect, refreshing token first...')
+
+        try {
+          // Try to refresh the access token before reconnecting
+          const newToken = await refreshAccessToken()
+
+          if (newToken) {
+            // Update the stored token
+            localStorage.setItem('accessToken', newToken)
+            // Update auth store
+            useAuthStore.setState({ accessToken: newToken })
+            console.log('[WS] Token refreshed successfully, reconnecting...')
+            // Increment retry count - banner only shows after first retry
+            useMessageStore.getState().incrementRetry()
+            setReconnectTrigger(t => t + 1)
+          } else {
+            // Refresh failed - session expired
+            console.log('[WS] Token refresh failed, session expired')
+            useAuthStore.getState().setSessionExpired(true)
+          }
+        } catch (e) {
+          console.error('[WS] Token refresh error:', e)
+          useAuthStore.getState().setSessionExpired(true)
+        }
       }, 3000)
     }
 
@@ -260,7 +328,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
   }, [accessToken, cryptoReady, user?.id, reconnectTrigger]) // reconnectTrigger forces reconnect
 
   // Send encrypted message (queues if disconnected)
-  const sendMessage = useCallback(async (recipientId: string, plaintext: string) => {
+  const sendMessage = useCallback(async (recipientId: string, plaintext: string, fileIds?: string[]) => {
     if (!user) throw new Error('Not authenticated')
 
     const { getOrDeriveSessionKeys, addMessage, fetchContactPublicKey } = storeRefs.current
@@ -296,11 +364,12 @@ export function useMessaging(options: UseMessagingOptions = {}) {
     // Encrypt message
     const encryptedContent = await encryptMessage(plaintext, sessionKeys.tx)
 
-    // Send via WebSocket
+    // Send via WebSocket (include fileIds if present)
     wsRef.current.send(JSON.stringify({
       type: 'message',
       recipientId,
       encryptedContent,
+      ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
     }))
   }, [user])
 
@@ -344,9 +413,27 @@ export function useMessaging(options: UseMessagingOptions = {}) {
     }))
   }, [])
 
+  // Send group message (plain text for now - group encryption would need shared keys)
+  const sendGroupMessage = useCallback((groupId: string, content: string, fileIds?: string[]) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket not connected')
+      return
+    }
+
+    // For groups, we send plain text for now
+    // Full implementation would use a shared group key
+    wsRef.current.send(JSON.stringify({
+      type: 'group-message',
+      groupId,
+      encryptedContent: content,
+      ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+    }))
+  }, [])
+
   return {
     isConnected,
     sendMessage,
+    sendGroupMessage,
     markAsRead,
     sendCallSignal,
     getWebSocket,

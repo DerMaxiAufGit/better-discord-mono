@@ -1,5 +1,8 @@
 import { FastifyInstance } from 'fastify'
 import * as groupService from '../services/groupService.js'
+import { messageService } from '../services/messageService.js'
+import { broadcastToUsers } from './websocket.js'
+import { pool } from '../db/index.js'
 
 export default async function groupRoutes(fastify: FastifyInstance) {
   // All routes require authentication
@@ -128,8 +131,62 @@ export default async function groupRoutes(fastify: FastifyInstance) {
 
   // Join via invite
   fastify.post<{ Body: { code: string } }>('/groups/join', async (request, reply) => {
-    const result = await groupService.joinViaInvite(request.body.code, (request.user as { userId: string }).userId)
+    const userId = (request.user as { userId: string }).userId
+    const result = await groupService.joinViaInvite(request.body.code, userId)
     if (!result.success) return reply.code(400).send({ error: result.error })
+
+    // Broadcast to all group members (including the new member) that someone joined
+    if (result.groupId && !result.alreadyMember) {
+      try {
+        // Get user info for the broadcast
+        const userResult = await pool.query(
+          `SELECT email FROM users WHERE id = $1`,
+          [userId]
+        )
+        const userEmail = userResult.rows[0]?.email || ''
+
+        // Get group info
+        const groupResult = await pool.query(
+          `SELECT id, name FROM groups WHERE id = $1`,
+          [result.groupId]
+        )
+        const group = groupResult.rows[0]
+
+        // Get all member IDs
+        const memberIds = await messageService.getGroupMemberIds(result.groupId)
+
+        // Broadcast to all members
+        broadcastToUsers(memberIds, {
+          type: 'group-member-joined',
+          groupId: result.groupId,
+          groupName: group?.name,
+          userId,
+          userEmail,
+        })
+      } catch (err) {
+        // Don't fail the join if broadcast fails
+        fastify.log.error(err, 'Failed to broadcast group join')
+      }
+    }
+
     return { groupId: result.groupId }
   })
+
+  // Get group message history
+  fastify.get<{ Params: { groupId: string }; Querystring: { limit?: string; beforeId?: string } }>(
+    '/groups/:groupId/messages',
+    async (request, reply) => {
+      const userId = (request.user as { userId: string }).userId
+      const limit = request.query.limit ? parseInt(request.query.limit) : 50
+      const beforeId = request.query.beforeId ? parseInt(request.query.beforeId) : undefined
+
+      try {
+        const result = await messageService.getGroupHistory(request.params.groupId, userId, limit, beforeId)
+        return result
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to get messages'
+        return reply.code(403).send({ error: message })
+      }
+    }
+  )
 }

@@ -15,7 +15,7 @@ export function hasPermission(role: GroupRole, permission: string): boolean {
   return perms.includes('all') || perms.includes(permission)
 }
 
-export async function createGroup(ownerId: string, name: string, description?: string): Promise<Group> {
+export async function createGroup(ownerId: string, name: string, description?: string): Promise<Group & { role: GroupRole; member_count: number }> {
   const result = await pool.query(
     `INSERT INTO groups (name, description, owner_id) VALUES ($1, $2, $3) RETURNING *`,
     [name, description || null, ownerId]
@@ -28,7 +28,12 @@ export async function createGroup(ownerId: string, name: string, description?: s
     [group.id, ownerId]
   )
 
-  return group
+  // Return with role and member_count for frontend compatibility
+  return {
+    ...group,
+    role: 'owner' as GroupRole,
+    member_count: 1
+  }
 }
 
 export async function getGroup(groupId: string, userId: string): Promise<Group | null> {
@@ -201,7 +206,7 @@ export async function createInvite(groupId: string, userId: string, expiresIn?: 
   return result.rows[0]
 }
 
-export async function joinViaInvite(code: string, userId: string): Promise<{ success: boolean; groupId?: string; error?: string }> {
+export async function joinViaInvite(code: string, userId: string): Promise<{ success: boolean; groupId?: string; alreadyMember?: boolean; error?: string }> {
   const result = await pool.query(
     `SELECT * FROM group_invites WHERE code = $1`,
     [code]
@@ -228,7 +233,7 @@ export async function joinViaInvite(code: string, userId: string): Promise<{ suc
   // Check if already member
   const existing = await getMember(invite.group_id, userId)
   if (existing) {
-    return { success: true, groupId: invite.group_id } // Already member, just return
+    return { success: true, groupId: invite.group_id, alreadyMember: true } // Already member, just return
   }
 
   // Add as member
@@ -240,7 +245,7 @@ export async function joinViaInvite(code: string, userId: string): Promise<{ suc
   // Increment uses
   await pool.query(`UPDATE group_invites SET uses = uses + 1 WHERE id = $1`, [invite.id])
 
-  return { success: true, groupId: invite.group_id }
+  return { success: true, groupId: invite.group_id, alreadyMember: false }
 }
 
 export async function getUserGroups(userId: string): Promise<(Group & { role: GroupRole; member_count: number })[]> {

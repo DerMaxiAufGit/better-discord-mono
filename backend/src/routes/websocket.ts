@@ -17,13 +17,26 @@ interface RTCIceCandidateInit {
 // Exported so message service can access it for message delivery
 export const activeConnections = new Map<string, WebSocket>();
 
+// Broadcast a message to specific users
+export function broadcastToUsers(userIds: string[], message: object) {
+  const msgStr = JSON.stringify(message);
+  for (const userId of userIds) {
+    const socket = activeConnections.get(userId);
+    if (socket && socket.readyState === 1) {
+      socket.send(msgStr);
+    }
+  }
+}
+
 // Message types for WebSocket communication
 interface IncomingMessage {
-  type: 'message' | 'typing' | 'read' |
+  type: 'message' | 'group-message' | 'typing' | 'read' |
         'call-offer' | 'call-answer' | 'call-ice-candidate' |
         'call-accept' | 'call-reject' | 'call-hangup';
   recipientId?: string;
+  groupId?: string;  // For group messages
   encryptedContent?: string;
+  fileIds?: string[];  // Optional file attachment IDs
 
   // Typing indicator fields
   conversationId?: string;
@@ -109,7 +122,8 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
           const saved = await messageService.saveMessage(
             userId,
             msg.recipientId,
-            msg.encryptedContent
+            msg.encryptedContent,
+            msg.fileIds
           );
 
           // Acknowledge to sender (include recipientId so client can match pending message)
@@ -138,6 +152,64 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
               messageId: saved.id,
               recipientId: msg.recipientId,
             }));
+          }
+        } else if (msg.type === 'group-message') {
+          // Group message
+          if (!msg.groupId || !msg.encryptedContent) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'groupId and encryptedContent are required',
+            } as ErrorMessage));
+            return;
+          }
+
+          try {
+            // Save to database
+            const saved = await messageService.saveGroupMessage(
+              userId,
+              msg.groupId,
+              msg.encryptedContent,
+              msg.fileIds
+            );
+
+            // Get sender email for broadcast
+            const userResult = await (await import('../db/index.js')).pool.query(
+              `SELECT email FROM users WHERE id = $1`,
+              [userId]
+            );
+            const senderEmail = userResult.rows[0]?.email || '';
+
+            // Acknowledge to sender
+            socket.send(JSON.stringify({
+              type: 'group-message_ack',
+              id: saved.id,
+              groupId: msg.groupId,
+              timestamp: saved.createdAt.toISOString(),
+            }));
+
+            // Broadcast to all group members (including sender for other devices)
+            const memberIds = await messageService.getGroupMemberIds(msg.groupId);
+            for (const memberId of memberIds) {
+              if (memberId === userId) continue; // Don't send back to sender
+              const memberSocket = activeConnections.get(memberId);
+              if (memberSocket && memberSocket.readyState === 1) {
+                memberSocket.send(JSON.stringify({
+                  type: 'group-message',
+                  id: saved.id,
+                  groupId: msg.groupId,
+                  senderId: userId,
+                  senderEmail,
+                  encryptedContent: saved.encryptedContent,
+                  timestamp: saved.createdAt.toISOString(),
+                }));
+              }
+            }
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : 'Failed to send group message';
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: errMsg,
+            } as ErrorMessage));
           }
         } else if (msg.type === 'typing') {
           // Handle typing indicator with service

@@ -1,7 +1,11 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState, useLayoutEffect } from 'react'
 import EmojiPicker, { EmojiClickData, Theme, EmojiStyle } from 'emoji-picker-react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
+
+const PICKER_WIDTH = 350
+const PICKER_HEIGHT = 400
+const MARGIN = 8
 
 interface ReactionPickerProps {
   onSelect: (emoji: string) => void
@@ -13,11 +17,89 @@ interface ReactionPickerProps {
 export function ReactionPicker({
   onSelect,
   onClose,
-  position = 'top',
-  align = 'left'
+  position: preferredPosition = 'top',
+  align: preferredAlign = 'left'
 }: ReactionPickerProps) {
   const { theme } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
+  const [style, setStyle] = useState<React.CSSProperties>({ visibility: 'hidden' })
+
+  // Calculate position based on available viewport space
+  useLayoutEffect(() => {
+    if (!containerRef.current) return
+
+    const parent = containerRef.current.parentElement
+    if (!parent) return
+
+    const parentRect = parent.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    // Determine vertical position
+    const spaceAbove = parentRect.top
+    const spaceBelow = viewportHeight - parentRect.bottom
+
+    let top: number | undefined
+    let bottom: number | undefined
+
+    if (preferredPosition === 'top' && spaceAbove >= PICKER_HEIGHT + MARGIN) {
+      // Enough space above - position above
+      bottom = parent.offsetHeight + MARGIN
+    } else if (spaceBelow >= PICKER_HEIGHT + MARGIN) {
+      // Position below
+      top = parent.offsetHeight + MARGIN
+    } else if (spaceAbove > spaceBelow) {
+      // More space above, but not enough - position at top of viewport
+      bottom = parentRect.top - MARGIN
+    } else {
+      // Position below, constrained
+      top = parent.offsetHeight + MARGIN
+    }
+
+    // Determine horizontal position
+    let left: number | undefined
+    let right: number | undefined
+
+    if (preferredAlign === 'left') {
+      // Try to align left edge with parent
+      const leftEdge = parentRect.left
+      if (leftEdge + PICKER_WIDTH <= viewportWidth - MARGIN) {
+        left = 0
+      } else {
+        // Would overflow right - align to right edge instead
+        right = 0
+      }
+    } else if (preferredAlign === 'right') {
+      // Try to align right edge with parent
+      const rightEdge = viewportWidth - parentRect.right
+      if (rightEdge + PICKER_WIDTH <= viewportWidth - MARGIN) {
+        right = 0
+      } else {
+        // Would overflow left - align to left edge instead
+        left = 0
+      }
+    } else {
+      // Center alignment
+      const centerOffset = (parentRect.width - PICKER_WIDTH) / 2
+      const leftEdge = parentRect.left + centerOffset
+      if (leftEdge >= MARGIN && leftEdge + PICKER_WIDTH <= viewportWidth - MARGIN) {
+        left = centerOffset
+      } else if (leftEdge < MARGIN) {
+        left = -parentRect.left + MARGIN
+      } else {
+        right = -(viewportWidth - parentRect.right) + MARGIN
+      }
+    }
+
+    setStyle({
+      position: 'absolute',
+      zIndex: 50,
+      ...(top !== undefined ? { top } : {}),
+      ...(bottom !== undefined ? { bottom } : {}),
+      ...(left !== undefined ? { left } : {}),
+      ...(right !== undefined ? { right } : {}),
+    })
+  }, [preferredPosition, preferredAlign])
 
   // Close on click outside
   useEffect(() => {
@@ -48,32 +130,14 @@ export function ReactionPicker({
     onClose()
   }
 
-  const positionClasses = {
-    top: 'bottom-full mb-2',
-    bottom: 'top-full mt-2'
-  }
-
-  const alignClasses = {
-    left: 'left-0',
-    right: 'right-0',
-    center: 'left-1/2 -translate-x-1/2'
-  }
-
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        'absolute z-50',
-        positionClasses[position],
-        alignClasses[align]
-      )}
-    >
+    <div ref={containerRef} style={style}>
       <EmojiPicker
         onEmojiClick={handleEmojiClick}
         theme={theme === 'dark' ? Theme.DARK : Theme.LIGHT}
         emojiStyle={EmojiStyle.TWITTER}
-        width="350px"
-        height="400px"
+        width={`${PICKER_WIDTH}px`}
+        height={`${PICKER_HEIGHT}px`}
         searchPlaceHolder="Search emoji..."
         previewConfig={{ showPreview: false }}
         skinTonesDisabled

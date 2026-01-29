@@ -2,19 +2,10 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar } from '@/components/ui/avatar';
-import { InlineReactions } from '@/components/reactions/ReactionList';
 import { QuickReactions } from '@/components/reactions/QuickReactions';
-import { MessageReply, ReplyButton } from '@/components/messaging/MessageReply';
-import { FilePreview } from '@/components/files/FilePreview';
+import { InlineReactions } from '@/components/reactions/ReactionList';
+import { ReplyButton, MessageReply } from '@/components/messaging/MessageReply';
 import { useReactionStore } from '@/stores/reactionStore';
-
-interface FileAttachment {
-  id: string;
-  filename: string;
-  mimeType: string;
-  sizeBytes: number;
-  previewUrl?: string;
-}
 
 interface ReplyTo {
   id: number;
@@ -29,58 +20,111 @@ interface Message {
   timestamp: Date;
   status: 'sending' | 'sent' | 'delivered' | 'read';
   replyTo?: ReplyTo;
-  files?: FileAttachment[];
 }
 
 interface MessageListProps {
   messages: Message[];
   currentUserId: string;
   contactUsername?: string;
-  onReply?: (message: { id: number; content: string; senderEmail: string }) => void;
-  onOpenLightbox?: (file: FileAttachment) => void;
+  onReply?: (message: Message) => void;
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function formatTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatDate(date: Date): string {
+function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  if (date.toDateString() === today.toDateString()) {
+  if (d.toDateString() === today.toDateString()) {
     return 'Today';
-  } else if (date.toDateString() === yesterday.toDateString()) {
+  } else if (d.toDateString() === yesterday.toDateString()) {
     return 'Yesterday';
   } else {
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
 }
 
-export function MessageList({ messages, currentUserId, contactUsername, onReply, onOpenLightbox }: MessageListProps) {
+export function MessageList({ messages, currentUserId, contactUsername, onReply }: MessageListProps) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const endRef = React.useRef<HTMLDivElement>(null);
   const [hoveredMessageId, setHoveredMessageId] = React.useState<number | null>(null);
+  const [lockedMessageId, setLockedMessageId] = React.useState<number | null>(null);
+  const hoverTimeoutRef = React.useRef<number | null>(null);
 
-  // Get reactions from store
-  const reactions = useReactionStore((s) => s.reactions);
-  const toggleReaction = useReactionStore((s) => s.toggleReaction);
+  // Reaction store
+  const { reactions, loadReactions, toggleReaction } = useReactionStore();
 
-  // Scroll to a specific message (for reply click)
-  const scrollToMessage = React.useCallback((messageId: number) => {
-    const element = document.getElementById(`message-${messageId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      element.classList.add('bg-yellow-500/20');
-      setTimeout(() => element.classList.remove('bg-yellow-500/20'), 2000);
-    }
-  }, []);
+  // Load reactions for visible messages
+  React.useEffect(() => {
+    messages.forEach((msg) => {
+      if (msg.id > 0 && !reactions.has(msg.id)) {
+        loadReactions(msg.id);
+      }
+    });
+  }, [messages, loadReactions, reactions]);
 
   // Scroll to bottom on new messages
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  const handleReact = async (messageId: number, emoji: string) => {
+    await toggleReaction(messageId, emoji);
+  };
+
+  // Clear timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleMouseEnter = (messageId: number) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredMessageId(messageId);
+  };
+
+  const handleMouseLeave = () => {
+    // Don't hide if picker is open (locked)
+    if (lockedMessageId !== null) return;
+
+    // Small delay to allow moving mouse to the reaction bar
+    hoverTimeoutRef.current = window.setTimeout(() => {
+      setHoveredMessageId(null);
+    }, 150);
+  };
+
+  const handlePickerOpen = (messageId: number) => {
+    setLockedMessageId(messageId);
+  };
+
+  const handlePickerClose = () => {
+    setLockedMessageId(null);
+    setHoveredMessageId(null);
+  };
+
+  const handleReplyClick = (message: Message) => {
+    onReply?.(message);
+  };
+
+  const scrollToMessage = (messageId: number) => {
+    const element = document.getElementById(`message-${messageId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('bg-blue-500/20');
+      setTimeout(() => element.classList.remove('bg-blue-500/20'), 2000);
+    }
+  };
 
   // Group messages by date
   const groupedMessages = React.useMemo(() => {
@@ -114,16 +158,15 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply,
               {group.messages.map((message) => {
                 const isOwn = message.senderId === currentUserId;
                 const messageReactions = reactions.get(message.id) || [];
+                const isHovered = hoveredMessageId === message.id;
                 return (
                   <div
                     key={message.id}
                     id={`message-${message.id}`}
                     className={cn(
-                      'flex gap-2 relative group transition-colors',
+                      'flex gap-2 group relative transition-colors duration-300',
                       isOwn ? 'justify-end' : 'justify-start'
                     )}
-                    onMouseEnter={() => setHoveredMessageId(message.id)}
-                    onMouseLeave={() => setHoveredMessageId(null)}
                   >
                     {!isOwn && (
                       <Avatar
@@ -132,41 +175,51 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply,
                       />
                     )}
                     <div className="flex flex-col max-w-[70%]">
-                      {/* Reply quote if this message is a reply */}
+                      {/* Reply preview if this message is a reply */}
                       {message.replyTo && (
                         <MessageReply
                           replyTo={message.replyTo}
                           onClick={() => scrollToMessage(message.replyTo!.id)}
+                          className="mb-1"
                         />
                       )}
-
                       <div
                         className={cn(
-                          'rounded-lg px-3 py-2',
+                          'rounded-lg px-3 py-2 relative',
                           isOwn
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted'
                         )}
+                        onMouseEnter={() => handleMouseEnter(message.id)}
+                        onMouseLeave={handleMouseLeave}
                       >
-                        <p className="text-sm break-words">{message.content}</p>
-
-                        {/* File attachments */}
-                        {message.files && message.files.length > 0 && (
-                          <div className="mt-2 space-y-2">
-                            {message.files.map((file) => (
-                              <FilePreview
-                                key={file.id}
-                                fileId={file.id}
-                                filename={file.filename}
-                                mimeType={file.mimeType}
-                                sizeBytes={file.sizeBytes}
-                                previewUrl={file.previewUrl}
-                                onImageClick={() => onOpenLightbox?.(file)}
+                        {/* Hover actions - reactions and reply */}
+                        {(isHovered || lockedMessageId === message.id) && message.id > 0 && (
+                          <div
+                            className={cn(
+                              'absolute -top-8 flex items-center gap-1 bg-gray-800 rounded-full px-1 py-0.5 shadow-lg z-10',
+                              isOwn ? 'right-0' : 'left-0'
+                            )}
+                            onMouseEnter={() => handleMouseEnter(message.id)}
+                            onMouseLeave={handleMouseLeave}
+                          >
+                            <QuickReactions
+                              messageId={message.id}
+                              onReact={(emoji) => handleReact(message.id, emoji)}
+                              className="!bg-transparent !p-0"
+                              pickerAlign={isOwn ? 'right' : 'left'}
+                              onPickerOpen={() => handlePickerOpen(message.id)}
+                              onPickerClose={handlePickerClose}
+                            />
+                            {onReply && (
+                              <ReplyButton
+                                onClick={() => handleReplyClick(message)}
+                                className="ml-1"
                               />
-                            ))}
+                            )}
                           </div>
                         )}
-
+                        <p className="text-sm break-words">{message.content}</p>
                         <div
                           className={cn(
                             'flex items-center gap-1 mt-1',
@@ -189,36 +242,14 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply,
                           )}
                         </div>
                       </div>
-
-                      {/* Reactions display */}
+                      {/* Display existing reactions */}
                       {messageReactions.length > 0 && (
                         <InlineReactions
                           reactions={messageReactions}
-                          onToggle={(emoji) => toggleReaction(message.id, emoji)}
+                          onToggle={(emoji) => handleReact(message.id, emoji)}
                         />
                       )}
                     </div>
-
-                    {/* Hover actions overlay */}
-                    {hoveredMessageId === message.id && (
-                      <div className={cn(
-                        'absolute top-0 flex items-center gap-1 bg-gray-800 rounded-md p-1 shadow-lg',
-                        isOwn ? 'right-full mr-2' : 'left-full ml-2'
-                      )}>
-                        <ReplyButton
-                          onClick={() => onReply?.({
-                            id: message.id,
-                            content: message.content,
-                            senderEmail: isOwn ? 'You' : (contactUsername || 'Unknown')
-                          })}
-                        />
-                        <QuickReactions
-                          messageId={message.id}
-                          onReact={(emoji) => toggleReaction(message.id, emoji)}
-                          className="!bg-transparent !p-0"
-                        />
-                      </div>
-                    )}
                   </div>
                 );
               })}

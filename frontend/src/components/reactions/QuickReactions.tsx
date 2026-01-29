@@ -10,16 +10,35 @@ interface QuickReactionsProps {
   messageId: number
   onReact: (emoji: string) => Promise<void>
   className?: string
+  /** Align picker to left (for received messages) or right (for sent messages) */
+  pickerAlign?: 'left' | 'right'
+  /** Called when emoji picker opens */
+  onPickerOpen?: () => void
+  /** Called when emoji picker closes */
+  onPickerClose?: () => void
 }
 
 export function QuickReactions({
   messageId,
   onReact,
-  className
+  className,
+  pickerAlign = 'right',
+  onPickerOpen,
+  onPickerClose
 }: QuickReactionsProps) {
   const [showPicker, setShowPicker] = useState(false)
   const [isReacting, setIsReacting] = useState(false)
   const reactions = useReactionStore((s) => s.reactions.get(messageId) || [])
+
+  const openPicker = () => {
+    setShowPicker(true)
+    onPickerOpen?.()
+  }
+
+  const closePicker = () => {
+    setShowPicker(false)
+    onPickerClose?.()
+  }
 
   // Load quick reactions from localStorage or use defaults
   const quickReactions = (() => {
@@ -63,7 +82,7 @@ export function QuickReactions({
 
       {/* More emoji button */}
       <button
-        onClick={() => setShowPicker(true)}
+        onClick={openPicker}
         className="p-1 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-colors"
         title="More reactions"
       >
@@ -75,9 +94,9 @@ export function QuickReactions({
       {showPicker && (
         <ReactionPicker
           onSelect={handleReact}
-          onClose={() => setShowPicker(false)}
+          onClose={closePicker}
           position="top"
-          align="right"
+          align={pickerAlign}
         />
       )}
     </div>
