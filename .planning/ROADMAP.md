@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Voice/Video Calls** - Real-time P2P communication with WebRTC
 - [x] **Phase 4: UI Polish & Production Readiness** - UX refinement and production hardening (v1.0.0)
 - [ ] **Phase 5: Enhanced Communication** - Video calls, group messaging, file sharing (v1.1.0)
-- [ ] **Phase 6: Social Features** - Profiles, friend requests, presence, search (v1.2.0)
+- [x] **Phase 6: Social Features** - Avatars, presence status, blocking, message search (v1.2.0)
 - [ ] **Phase 7: Advanced Features** - Group calls, screen sharing, native apps (v2.0.0)
 
 ## Phase Details
@@ -142,19 +142,20 @@ Plans:
   3. User can see online/offline status of contacts with last-seen
   4. User can block other users (auto-unfriends, hides messages)
   5. User can search through decrypted message history
-**Plans**: 10 plans
+**Plans**: 11 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Database schema for avatars, presence, blocks, settings
-- [ ] 06-02-PLAN.md — Avatar backend service with Sharp multi-size generation
-- [ ] 06-03-PLAN.md — Presence backend service with WebSocket integration
-- [ ] 06-04-PLAN.md — Block service backend with auto-unfriend
-- [ ] 06-05-PLAN.md — Frontend avatar upload with react-easy-crop
-- [ ] 06-06-PLAN.md — Frontend presence store and auto-away tracker
-- [ ] 06-07-PLAN.md — Frontend block store and UI components
-- [ ] 06-08-PLAN.md — Client-side message search with IndexedDB
-- [ ] 06-09-PLAN.md — Avatar and presence UI components (StatusPicker, VisibilityList)
-- [ ] 06-10-PLAN.md — Integration and verification checkpoint
+- [x] 06-01-PLAN.md — Database schema for avatars, presence, blocks, settings
+- [x] 06-02-PLAN.md — Avatar backend service with Sharp multi-size generation
+- [x] 06-03-PLAN.md — Presence backend service with WebSocket integration
+- [x] 06-04-PLAN.md — Block service backend with auto-unfriend
+- [x] 06-05-PLAN.md — Frontend avatar upload with react-easy-crop
+- [x] 06-06-PLAN.md — Frontend presence store and auto-away tracker
+- [x] 06-07-PLAN.md — Frontend block store and UI components
+- [x] 06-08-PLAN.md — Client-side message search with IndexedDB
+- [x] 06-09-PLAN.md — Avatar and presence UI components (StatusPicker, VisibilityList)
+- [x] 06-10-PLAN.md — Integration and verification checkpoint
+- [x] 06-11-PLAN.md — UAT gap closure (avatar display, presence reactivity, blocking UI, search fixes)
 
 ### Phase 7: Advanced Features (v2.0.0)
 **Goal**: Enterprise-grade features and native platform support
@@ -180,8 +181,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Voice/Video Calls | 7/7 | ✓ Complete | 2026-01-28 |
 | 4. UI Polish & Production Readiness | 7/7 | ✓ Complete | 2026-01-28 |
 | 5. Enhanced Communication | 16/16 | Awaiting verification | 2026-01-29 |
-| 6. Social Features | 0/10 | Ready for execution | - |
+| 6. Social Features | 11/11 | ✓ Complete | 2026-01-30 |
 
 ---
 *Roadmap created: 2026-01-27*
-*Last updated: 2026-01-30 after Phase 6 planning*
+*Last updated: 2026-01-30 after Phase 6 completion*
