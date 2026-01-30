@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 ## Current Position
 
-Phase: 5 of 7 (Enhanced Communication) - AWAITING VERIFICATION
-Version: 1.1.0 target
-Status: **All 16 plans executed, awaiting human verification**
-Last activity: 2026-01-29 — Completed 05-16-PLAN.md (integration and verification checkpoint)
+Phase: 6 of 7 (Social Features)
+Version: 1.2.0 target
+Status: **In progress - 1 of 9 plans complete**
+Last activity: 2026-01-30 — Completed 06-01-PLAN.md (database schema for social features)
 
-Progress: [████████████████████████] 100% (42 of 42 plans complete)
+Progress: [█████████████████████████░] 97% (43 of 44 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 42
-- Average duration: 4.8 minutes
-- Total execution time: 3.3 hours
+- Total plans completed: 43
+- Average duration: 4.7 minutes
+- Total execution time: 3.4 hours
 
 **By Phase:**
 
@@ -32,10 +32,11 @@ Progress: [███████████████████████
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
 | 05-enhanced-communication | 16 | 130 min | 8.1 min |
+| 06-social-features | 1 | 3 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-16 (8 min), 05-15 (4 min), 05-14 (12 min), 05-13 (12 min), 05-12 (9 min)
-- Trend: Phase 5 plans averaging longer due to encryption complexity
+- Last 5 plans: 06-01 (3 min), 05-16 (8 min), 05-15 (4 min), 05-14 (12 min), 05-13 (12 min)
+- Trend: Quick database schema changes
 
 *Updated after each plan completion*
 
@@ -48,6 +49,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-30 | Composite primary key for blocking | (blocker_id, blocked_id) prevents duplicate blocks (from 06-01) | Efficient blocking queries with bidirectional indexes |
+| 2026-01-30 | Visibility list for invisible status | User can show status to specific contacts while invisible (from 06-01) | Enables "invisible to all except..." feature |
+| 2026-01-30 | Three avatar sizes for responsive UI | 32x32 tiny, 64x64 small, 256x256 large (from 06-01) | Optimized avatar display across different UI contexts |
+| 2026-01-30 | Privacy-first user settings defaults | show_last_seen and allow_friend_requests default to true (from 06-01) | User can opt out of public information sharing |
 | 2026-01-29 | useCall hook wraps callStore with video | Video track management separate from state (from 05-15) | Clean separation of concerns for call logic |
 | 2026-01-29 | Video toggle in VideoControlBar and CallControls | Multiple entry points for camera toggle (from 05-15) | Better UX during video calls |
 | 2026-01-29 | Renamed storage to 'call-settings' | Audio and video settings colocated (from 05-15) | Single persist key for all call preferences |
@@ -98,23 +103,15 @@ None yet.
 
 ### Blockers/Concerns
 
-**Phase 5 Complete - Awaiting Human Verification:**
-All 16 plans executed successfully. Human verification checkpoint required before marking phase complete.
-
-**Verification Checklist:**
-1. [ ] Video calls - Camera toggle, remote video, blur, quality settings
-2. [ ] Group conversations - Create group, add members, member roles, invite links
-3. [ ] File sharing - Upload with progress, inline preview, lightbox zoom
-4. [ ] Reactions - Quick reactions, full picker, toggle on/off, user list
-5. [ ] Typing indicators - Shows while typing, disappears after 5s
-
-**To test:** `docker compose up`, login with two accounts in separate browsers
+**Phase 6 In Progress:**
+Database schema complete. Ready for backend service implementation (avatar upload, presence tracking, blocking, user settings).
 
 **Previous phases complete:**
 - Phase 1: Foundation and deployment ✓
 - Phase 2: E2E encrypted messaging ✓
 - Phase 3: Voice/video calls ✓
 - Phase 4: UI polish and production readiness ✓
+- Phase 5: Enhanced communication ✓ (awaiting verification)
 
 ## Development Infrastructure
 
@@ -133,7 +130,7 @@ All 16 plans executed successfully. Human verification checkpoint required befor
 
 ## Session Continuity
 
-Last session: 2026-01-29
-Stopped at: All Phase 5 plans complete, awaiting human verification
-Resume with: Type "verified" after testing to complete Phase 5, or describe issues for gap closure
+Last session: 2026-01-30
+Stopped at: Completed 06-01-PLAN.md (database schema for social features)
+Resume with: Continue Phase 6 with 06-02-PLAN.md (avatar upload service)
 Resume file: None
