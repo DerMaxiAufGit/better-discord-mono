@@ -11,17 +11,17 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 Phase: 6 of 7 (Social Features)
 Version: 1.2.0 target
-Status: **In progress - 4 of 9 plans complete**
-Last activity: 2026-01-30 — Completed 06-04-PLAN.md (blocking service with auto-unfriend and message filtering)
+Status: **In progress - 5 of 9 plans complete**
+Last activity: 2026-01-30 — Completed 06-08-PLAN.md (client-side message search with IndexedDB)
 
-Progress: [█████████████████████████░] 98% (46 of 46 plans complete)
+Progress: [█████████████████████████░] 99% (47 of 47 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 45
-- Average duration: 4.5 minutes
-- Total execution time: 3.5 hours
+- Total plans completed: 46
+- Average duration: 4.4 minutes
+- Total execution time: 3.6 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [███████████████████████
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
 | 05-enhanced-communication | 16 | 130 min | 8.1 min |
-| 06-social-features | 4 | 10 min | 2.5 min |
+| 06-social-features | 5 | 13 min | 2.6 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-04 (3 min), 06-03 (3 min), 06-02 (1 min), 06-01 (3 min), 05-16 (8 min)
-- Trend: Fast backend service implementation
+- Last 5 plans: 06-08 (3 min), 06-04 (3 min), 06-03 (3 min), 06-02 (1 min), 06-01 (3 min)
+- Trend: Fast frontend/backend implementation
 
 *Updated after each plan completion*
 
@@ -49,6 +49,11 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-30 | Results grouped by conversation with 5-message preview | Shows up to 5 matches per conversation with "+N more" indicator (from 06-08) | Prevents overwhelming UI with dozens of results from single chat |
+| 2026-01-30 | 300ms input debounce for search | Reduces search computation during rapid typing (from 06-08) | Matches industry standard, reduces CPU usage |
+| 2026-01-30 | LRU eviction at 10K messages for IndexedDB | Prevents unbounded cache growth, oldest messages deleted first (from 06-08) | Maintains performance while caching recent messages |
+| 2026-01-30 | Tokenized search with partial matching | Messages tokenized during indexing, query tokens matched via substring (from 06-08) | Fast search supporting partial word matches |
+| 2026-01-30 | IndexedDB for local message cache | Server cannot search E2E encrypted content (from 06-08) | Enables client-side full-text search, persistent across sessions |
 | 2026-01-30 | Unblock doesn't restore friendship | User must send new friend request after unblock (from 06-04) | Prevents automatic reconnection, gives both users control |
 | 2026-01-30 | Group message filtering per-member | Members who blocked sender don't receive group messages (from 06-04) | Allows blocking individuals within shared groups |
 | 2026-01-30 | Bidirectional blocking prevents messaging | Either user blocking prevents messages in both directions (from 06-04) | Consistent harassment prevention, matches social platform expectations |
@@ -143,6 +148,6 @@ Database schema complete. Ready for backend service implementation (avatar uploa
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Completed 06-04-PLAN.md (blocking service with auto-unfriend and message filtering)
+Stopped at: Completed 06-08-PLAN.md (client-side message search with IndexedDB)
 Resume with: Continue Phase 6 with next plan
 Resume file: None
