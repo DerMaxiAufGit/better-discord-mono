@@ -285,13 +285,13 @@ export function ContactsPage() {
                     userId={friend.oderId}
                     size="small"
                     showStatus
-                    status={presenceMap.get(friend.oderId)?.status as any || 'offline'}
+                    status={presenceMap[friend.oderId]?.status as any || 'offline'}
                   />
                   <div className="flex-1">
                     <p className="font-medium">{friend.username}</p>
                     <LastSeenText
-                      lastSeen={presenceMap.get(friend.oderId)?.lastSeen || null}
-                      status={presenceMap.get(friend.oderId)?.status || 'offline'}
+                      lastSeen={presenceMap[friend.oderId]?.lastSeen || null}
+                      status={presenceMap[friend.oderId]?.status || 'offline'}
                       className="text-xs"
                     />
                   </div>

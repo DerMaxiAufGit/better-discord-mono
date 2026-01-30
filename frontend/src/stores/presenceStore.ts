@@ -12,8 +12,8 @@ interface PresenceState {
   myStatus: PresenceStatus;
   visibilityList: string[];
 
-  // Others' status (Map: userId -> status)
-  presenceMap: Map<string, UserPresence>;
+  // Others' status (plain object for Zustand reactivity)
+  presenceMap: Record<string, UserPresence>;
 
   // Actions
   setMyStatus: (status: PresenceStatus) => Promise<void>;
@@ -30,7 +30,7 @@ export const usePresenceStore = create<PresenceState>()(
     (set, get) => ({
       myStatus: 'online',
       visibilityList: [],
-      presenceMap: new Map(),
+      presenceMap: {},
 
       setMyStatus: async (status: PresenceStatus) => {
         set({ myStatus: status });
@@ -44,10 +44,13 @@ export const usePresenceStore = create<PresenceState>()(
 
       updateUserPresence: (userId: string, status: string, lastSeen: string | null) => {
         set((state) => ({
-          presenceMap: new Map(state.presenceMap).set(userId, {
-            status,
-            lastSeen: lastSeen ? new Date(lastSeen) : null,
-          }),
+          presenceMap: {
+            ...state.presenceMap,
+            [userId]: {
+              status,
+              lastSeen: lastSeen ? new Date(lastSeen) : null,
+            },
+          },
         }));
       },
 
@@ -60,7 +63,10 @@ export const usePresenceStore = create<PresenceState>()(
           };
 
           set((state) => ({
-            presenceMap: new Map(state.presenceMap).set(userId, presence),
+            presenceMap: {
+              ...state.presenceMap,
+              [userId]: presence,
+            },
           }));
 
           return presence;
@@ -76,12 +82,12 @@ export const usePresenceStore = create<PresenceState>()(
           const response = await presenceApi.getBatchStatus(userIds);
 
           set((state) => {
-            const newMap = new Map(state.presenceMap);
+            const newMap: Record<string, UserPresence> = { ...state.presenceMap };
             for (const [userId, data] of Object.entries(response.statuses)) {
-              newMap.set(userId, {
+              newMap[userId] = {
                 status: data.status,
                 lastSeen: data.lastSeen ? new Date(data.lastSeen) : null,
-              });
+              };
             }
             return { presenceMap: newMap };
           });
@@ -90,7 +96,7 @@ export const usePresenceStore = create<PresenceState>()(
         }
       },
 
-      getPresence: (userId: string) => get().presenceMap.get(userId),
+      getPresence: (userId: string) => get().presenceMap[userId],
 
       loadInitialStatus: async () => {
         try {

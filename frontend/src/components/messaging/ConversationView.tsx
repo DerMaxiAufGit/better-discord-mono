@@ -73,7 +73,7 @@ export function ConversationView({
   const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [isBlockLoading, setIsBlockLoading] = useState(false);
-  const presence = usePresenceStore((state) => state.presenceMap.get(contactId));
+  const presence = usePresenceStore((state) => state.presenceMap[contactId]);
   const { isBlocked, blockUser, unblockUser } = useBlockStore();
   const blocked = isBlocked(contactId);
 
