@@ -3,7 +3,7 @@ import { authApi } from '@/lib/api'
 import { useCryptoStore } from './cryptoStore'
 
 interface User {
-  id: number
+  id: string
   email: string
   username: string | null
   createdAt?: string

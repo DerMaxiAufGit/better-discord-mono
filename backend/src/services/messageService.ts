@@ -133,7 +133,8 @@ class MessageService {
     senderId: string,
     groupId: string,
     encryptedContent: string,
-    fileIds?: string[]
+    fileIds?: string[],
+    replyToId?: number
   ): Promise<Message & { groupId: string }> {
     // Verify sender is a member
     const member = await groupService.getMember(groupId, senderId);
@@ -142,10 +143,10 @@ class MessageService {
     }
 
     const result = await query(
-      `INSERT INTO messages (sender_id, group_id, encrypted_content)
-       VALUES ($1, $2, $3)
-       RETURNING id, sender_id, recipient_id, group_id, encrypted_content, created_at, delivered_at, read_at`,
-      [senderId, groupId, encryptedContent]
+      `INSERT INTO messages (sender_id, group_id, encrypted_content, reply_to_id)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, sender_id, recipient_id, group_id, encrypted_content, created_at, delivered_at, read_at, reply_to_id`,
+      [senderId, groupId, encryptedContent, replyToId || null]
     );
     const message = this.mapRowWithGroup(result.rows[0]);
 
@@ -177,7 +178,7 @@ class MessageService {
     }
 
     let queryText = `
-      SELECT m.id, m.sender_id, m.recipient_id, m.group_id, m.encrypted_content, m.created_at, m.delivered_at, m.read_at,
+      SELECT m.id, m.sender_id, m.recipient_id, m.group_id, m.encrypted_content, m.created_at, m.delivered_at, m.read_at, m.reply_to_id,
              u.email as sender_email
       FROM messages m
       JOIN users u ON m.sender_id = u.id
@@ -255,6 +256,7 @@ class MessageService {
       createdAt: row.created_at,
       deliveredAt: row.delivered_at,
       readAt: row.read_at,
+      replyToId: row.reply_to_id || undefined,
     };
   }
 }

@@ -93,11 +93,11 @@ class AvatarService {
   }
 
   /**
-   * Get avatar URL for user and size
-   * Returns null if user has no avatar
+   * Get avatar URL for user and size with cache-busting version
    */
-  getAvatarUrl(userId: string, size: 'tiny' | 'small' | 'large'): string {
-    return `/api/avatars/${userId}/${size}`;
+  getAvatarUrl(userId: string, size: 'tiny' | 'small' | 'large', version?: number): string {
+    const base = `/api/avatars/${userId}/${size}`;
+    return version ? `${base}?v=${version}` : base;
   }
 
   /**

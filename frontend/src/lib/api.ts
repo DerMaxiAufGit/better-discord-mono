@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 interface AuthResponse {
   accessToken: string
   user: {
-    id: number
+    id: string
     email: string
     username: string | null
     createdAt?: string

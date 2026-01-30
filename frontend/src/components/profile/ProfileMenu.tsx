@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -15,12 +15,26 @@ interface ProfileMenuProps {
   onClose: () => void;
   className?: string;
   mode?: 'popover' | 'modal';
+  anchorRef?: React.RefObject<HTMLElement | null>;
 }
 
-export function ProfileMenu({ open, onClose, className, mode = 'popover' }: ProfileMenuProps) {
+export function ProfileMenu({ open, onClose, className, mode = 'popover', anchorRef }: ProfileMenuProps) {
   const user = useAuthStore((state) => state.user);
   const myStatus = usePresenceStore((state) => state.myStatus);
   const [showAvatarUpload, setShowAvatarUpload] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ left: 0, bottom: 0 });
+
+  // Calculate position for popover mode
+  useEffect(() => {
+    if (open && mode === 'popover' && anchorRef?.current) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      setPosition({
+        left: rect.left,
+        bottom: window.innerHeight - rect.top + 8,
+      });
+    }
+  }, [open, mode, anchorRef]);
 
   if (!open) return null;
 
@@ -39,12 +53,14 @@ export function ProfileMenu({ open, onClose, className, mode = 'popover' }: Prof
 
       {/* Menu panel */}
       <div
+        ref={menuRef}
         className={cn(
-          "z-50 bg-card border border-border rounded-lg shadow-lg",
-          "w-80 max-h-[60vh] overflow-y-auto",
-          isModal ? "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" : "absolute",
+          "fixed z-50 bg-card border border-border rounded-lg shadow-lg",
+          "w-72 max-h-[70vh] overflow-y-auto",
+          isModal && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
           className
         )}
+        style={!isModal && anchorRef ? { left: position.left, bottom: position.bottom } : undefined}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">

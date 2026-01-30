@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { avatarApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/auth';
 
 interface AvatarUrls {
   tinyUrl: string;
@@ -58,9 +59,11 @@ export const useAvatarStore = create<AvatarState>((set, get) => ({
       const response = await avatarApi.upload(blob);
       const urls = response.avatar;
 
-      // Update cache for current user
-      const userId = localStorage.getItem('userId');
-      if (userId) {
+      // Update cache for current user using auth store
+      // URLs from backend already include version for cache-busting
+      const user = useAuthStore.getState().user;
+      if (user) {
+        const userId = user.id;
         set((state) => ({
           avatarCache: new Map(state.avatarCache).set(userId, urls),
           isUploading: false,
@@ -83,11 +86,11 @@ export const useAvatarStore = create<AvatarState>((set, get) => ({
     try {
       await avatarApi.delete();
 
-      // Clear cache for current user
-      const userId = localStorage.getItem('userId');
-      if (userId) {
+      // Clear cache for current user using auth store
+      const user = useAuthStore.getState().user;
+      if (user) {
         set((state) => ({
-          avatarCache: new Map(state.avatarCache).set(userId, null),
+          avatarCache: new Map(state.avatarCache).set(user.id, null),
           isUploading: false,
         }));
       } else {

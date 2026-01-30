@@ -1,8 +1,17 @@
 import type { FastifyPluginAsync } from 'fastify';
+import multipart from '@fastify/multipart';
 import { avatarService } from '../services/avatarService.js';
 import fs from 'fs/promises';
 
 const avatarRoutes: FastifyPluginAsync = async (fastify) => {
+  // Register multipart support
+  await fastify.register(multipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max for avatars
+      files: 1
+    }
+  });
+
   // Upload avatar (requires auth)
   fastify.post('/', {
     preValidation: [fastify.authenticate],
@@ -30,12 +39,13 @@ const avatarRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const avatar = await avatarService.uploadAvatar(userId, buffer);
+      const version = new Date(avatar.updated_at).getTime();
       return {
         avatar: {
           id: avatar.id,
-          tinyUrl: avatarService.getAvatarUrl(userId, 'tiny'),
-          smallUrl: avatarService.getAvatarUrl(userId, 'small'),
-          largeUrl: avatarService.getAvatarUrl(userId, 'large'),
+          tinyUrl: avatarService.getAvatarUrl(userId, 'tiny', version),
+          smallUrl: avatarService.getAvatarUrl(userId, 'small', version),
+          largeUrl: avatarService.getAvatarUrl(userId, 'large', version),
         }
       };
     } catch (error) {
@@ -62,11 +72,12 @@ const avatarRoutes: FastifyPluginAsync = async (fastify) => {
       return { avatar: null };
     }
 
+    const version = new Date(avatar.updated_at).getTime();
     return {
       avatar: {
-        tinyUrl: avatarService.getAvatarUrl(userId, 'tiny'),
-        smallUrl: avatarService.getAvatarUrl(userId, 'small'),
-        largeUrl: avatarService.getAvatarUrl(userId, 'large'),
+        tinyUrl: avatarService.getAvatarUrl(userId, 'tiny', version),
+        smallUrl: avatarService.getAvatarUrl(userId, 'small', version),
+        largeUrl: avatarService.getAvatarUrl(userId, 'large', version),
       }
     };
   });

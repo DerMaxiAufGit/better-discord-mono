@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router'
 import { ChevronLeft, ChevronRight, LogOut, MessageCircle, Users, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ const navItems = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const profileButtonRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
   const location = useLocation()
   const user = useAuthStore((state) => state.user)
@@ -84,6 +85,7 @@ export function Sidebar() {
         {/* User info - clickable to open profile menu */}
         <div className="relative">
           <button
+            ref={profileButtonRef}
             onClick={() => setShowProfileMenu(true)}
             className={cn(
               "flex items-center gap-3 p-2 rounded-lg w-full hover:bg-accent transition-colors",
@@ -106,11 +108,12 @@ export function Sidebar() {
             )}
           </button>
 
-          {/* Profile menu */}
+          {/* Profile menu - positioned above the button */}
           <ProfileMenu
             open={showProfileMenu}
             onClose={() => setShowProfileMenu(false)}
-            className="bottom-full left-0 mb-2"
+            mode="popover"
+            anchorRef={profileButtonRef}
           />
         </div>
 

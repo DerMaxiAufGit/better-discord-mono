@@ -49,10 +49,11 @@ interface ReplyPreviewProps {
 
 export function ReplyPreview({ replyTo, onCancel, className }: ReplyPreviewProps) {
   const senderEmail = typeof replyTo.senderEmail === 'string' ? replyTo.senderEmail : ''
-  const senderName = senderEmail.split('@')[0] || 'Unknown'
+  // Use senderEmail directly if it doesn't contain @ (already a username), otherwise extract from email
+  const senderName = senderEmail.includes('@') ? senderEmail.split('@')[0] : senderEmail || 'Unknown'
   const content = typeof replyTo.content === 'string' ? replyTo.content : ''
-  const preview = content.length > 60
-    ? content.slice(0, 60) + '...'
+  const preview = content.length > 20
+    ? content.slice(0, 20) + '...'
     : content
 
   return (

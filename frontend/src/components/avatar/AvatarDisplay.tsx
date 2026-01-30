@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useAvatarStore } from '@/stores/avatarStore';
-import { avatarApi } from '@/lib/api';
 import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,15 +34,18 @@ export function AvatarDisplay({
 }: AvatarDisplayProps) {
   const { avatarCache, fetchAvatar } = useAvatarStore();
 
-  // Fetch avatar on mount if not cached
+  // Fetch avatar on mount if not cached (skip if userId is empty/invalid)
   useEffect(() => {
-    if (!avatarCache.has(userId)) {
+    if (userId && userId !== 'undefined' && !avatarCache.has(userId)) {
       fetchAvatar(userId);
     }
   }, [userId, avatarCache, fetchAvatar]);
 
   const avatarUrls = avatarCache.get(userId);
-  const avatarUrl = avatarUrls ? avatarApi.getUrl(userId, size) : null;
+  // Use cached URLs directly (they include version for cache-busting)
+  const avatarUrl = avatarUrls
+    ? (size === 'tiny' ? avatarUrls.tinyUrl : size === 'small' ? avatarUrls.smallUrl : avatarUrls.largeUrl)
+    : null;
 
   return (
     <div className={cn('relative inline-block', className)}>
