@@ -5,6 +5,8 @@ import { messageService } from '../services/messageService.js';
 import { friendService } from '../services/friendService.js';
 import { handleTypingEvent } from '../services/typingService.js';
 import { pool } from '../db/index.js';
+import { presenceService } from '../services/presenceService.js';
+import type { PresenceStatus } from '../db/schema.js';
 
 // WebRTC ICE candidate type (browser built-in, define for Node)
 interface RTCIceCandidateInit {
@@ -33,7 +35,8 @@ export function broadcastToUsers(userIds: string[], message: object) {
 interface IncomingMessage {
   type: 'message' | 'group-message' | 'typing' | 'read' |
         'call-offer' | 'call-answer' | 'call-ice-candidate' |
-        'call-accept' | 'call-reject' | 'call-hangup';
+        'call-accept' | 'call-reject' | 'call-hangup' |
+        'presence_heartbeat' | 'presence_update';
   recipientId?: string;
   groupId?: string;  // For group messages
   encryptedContent?: string;
@@ -49,6 +52,9 @@ interface IncomingMessage {
   sdp?: string;                              // SDP offer/answer as string
   candidate?: RTCIceCandidateInit;           // ICE candidate
   senderUsername?: string;                   // Caller's username for call notifications
+
+  // Presence fields
+  status?: string;  // For presence_update
 }
 
 interface OutgoingMessage {
@@ -82,7 +88,7 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preValidation', wsAuthHook);
 
   // WebSocket endpoint
-  fastify.get('/ws', { websocket: true }, (socket, request) => {
+  fastify.get('/ws', { websocket: true }, async (socket, request) => {
     const userId = request.user?.userId;
 
     if (!userId) {
@@ -94,6 +100,9 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
     // Store connection
     activeConnections.set(userId, socket);
     fastify.log.info(`User ${userId} connected via WebSocket`);
+
+    // Track presence
+    await presenceService.userConnected(userId);
 
     // Handle incoming messages
     socket.on('message', async (data: Buffer | ArrayBuffer | Buffer[]) => {
@@ -412,6 +421,15 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             }));
           }
           // If peer offline, hangup doesn't matter
+        } else if (msg.type === 'presence_heartbeat') {
+          // Handle heartbeat to prevent ghost users
+          await presenceService.heartbeat(userId);
+        } else if (msg.type === 'presence_update') {
+          // Allow status update via WebSocket
+          const status = msg.status as PresenceStatus;
+          if (['online', 'away', 'dnd', 'invisible'].includes(status)) {
+            await presenceService.updateStatus(userId, status);
+          }
         }
       } catch (err) {
         fastify.log.error(err, 'WebSocket message handling error');
@@ -423,9 +441,12 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     // Handle connection close
-    socket.on('close', () => {
+    socket.on('close', async () => {
       activeConnections.delete(userId);
       fastify.log.info(`User ${userId} disconnected`);
+
+      // Update presence
+      await presenceService.userDisconnected(userId);
     });
 
     // Handle errors
