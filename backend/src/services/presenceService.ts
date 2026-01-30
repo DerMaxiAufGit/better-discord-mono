@@ -216,6 +216,29 @@ class PresenceService {
   }
 
   /**
+   * Get cached presence data
+   */
+  getCachedPresence(userId: string): { status: PresenceStatus; lastSeen: Date; visibilityList: string[] } | undefined {
+    return presenceCache.get(userId);
+  }
+
+  /**
+   * Get user's persisted status from database or cache
+   */
+  async getPersistedStatus(userId: string): Promise<PresenceStatus> {
+    // Check cache first
+    const cached = presenceCache.get(userId);
+    if (cached) return cached.status;
+
+    // Otherwise check database
+    const result = await query(
+      `SELECT status FROM user_presence WHERE user_id = $1`,
+      [userId]
+    );
+    return result.rows[0]?.status || 'offline';
+  }
+
+  /**
    * Broadcast status update to all friends
    */
   private async broadcastStatus(userId: string): Promise<void> {

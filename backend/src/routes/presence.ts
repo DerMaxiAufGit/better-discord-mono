@@ -28,10 +28,10 @@ const presenceRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request) => {
     const userId = (request.user as { userId: string }).userId;
     const visibilityList = await presenceService.getVisibilityList(userId);
-    const isOnline = presenceService.isOnline(userId);
+    const status = await presenceService.getPersistedStatus(userId);
 
     return {
-      status: isOnline ? 'online' : 'offline',
+      status,
       visibilityList,
     };
   });
