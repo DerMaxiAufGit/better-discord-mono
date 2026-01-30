@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 Phase: 6 of 7 (Social Features)
 Version: 1.2.0 target
 Status: **In progress - 5 of 9 plans complete**
-Last activity: 2026-01-30 — Completed 06-08-PLAN.md (client-side message search with IndexedDB)
+Last activity: 2026-01-30 — Completed 06-07-PLAN.md (frontend blocking UI with confirmation dialogs)
 
 Progress: [█████████████████████████░] 99% (47 of 47 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 46
+- Total plans completed: 47
 - Average duration: 4.4 minutes
-- Total execution time: 3.6 hours
+- Total execution time: 3.7 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [███████████████████████
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
 | 05-enhanced-communication | 16 | 130 min | 8.1 min |
-| 06-social-features | 5 | 13 min | 2.6 min |
+| 06-social-features | 6 | 19 min | 3.2 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-08 (3 min), 06-04 (3 min), 06-03 (3 min), 06-02 (1 min), 06-01 (3 min)
-- Trend: Fast frontend/backend implementation
+- Last 5 plans: 06-07 (6 min), 06-08 (3 min), 06-04 (3 min), 06-03 (3 min), 06-02 (1 min)
+- Trend: Steady frontend component implementation
 
 *Updated after each plan completion*
 
@@ -49,6 +49,9 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-30 | History deletion defaults to false in block dialog | Safer default preserves conversation (from 06-07) | Prevents accidental data loss, user must explicitly check |
+| 2026-01-30 | Optimistic state updates for blocking | Block/unblock immediately updates UI before server response (from 06-07) | Reduces perceived latency, better UX |
+| 2026-01-30 | Set-based blocking ID lookup | blockedIds as Set<string> for O(1) checks (from 06-07) | Instant isBlocked() checks without array iteration |
 | 2026-01-30 | Results grouped by conversation with 5-message preview | Shows up to 5 matches per conversation with "+N more" indicator (from 06-08) | Prevents overwhelming UI with dozens of results from single chat |
 | 2026-01-30 | 300ms input debounce for search | Reduces search computation during rapid typing (from 06-08) | Matches industry standard, reduces CPU usage |
 | 2026-01-30 | LRU eviction at 10K messages for IndexedDB | Prevents unbounded cache growth, oldest messages deleted first (from 06-08) | Maintains performance while caching recent messages |
