@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 06-social-features
 source: [06-11-SUMMARY.md - verification of gap fixes]
 started: 2026-01-30T20:30:00Z
@@ -87,51 +87,73 @@ skipped: 0
   reason: "User reported: status doesn't update live in contacts like it does in the chat directly. invisible whitelist doesn't work either"
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "ContactsPage selects entire presenceMap - Zustand shallow comparison unreliable for Map objects"
+  artifacts:
+    - path: "frontend/src/pages/ContactsPage.tsx"
+      issue: "Line 45 selects entire Map instead of specific values"
+  missing:
+    - "Convert presenceMap to plain object Record<string, UserPresence> for reliable reactivity"
 
 - truth: "Presence updates live on Contacts page without refresh"
   status: failed
   reason: "User reported: doesn't update. neither when closing the tab nor when setting to invisible. only after refresh not live"
   severity: major
   test: 6
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Same as test 4 - Zustand Map selector pattern doesn't trigger re-renders"
+  artifacts:
+    - path: "frontend/src/stores/presenceStore.ts"
+      issue: "Uses Map which has unreliable Zustand reactivity"
+  missing:
+    - "Convert presenceMap from Map to plain object"
 
 - truth: "Whitelisted friends see invisible user as Online"
   status: failed
   reason: "User reported: doesn't work. still shows offline when someone is whitelisted"
   severity: major
   test: 7
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Backend hardcodes status='offline' when loading from DB instead of using row.status"
+  artifacts:
+    - path: "backend/src/services/presenceService.ts"
+      issue: "Line 124 hardcodes status: 'offline' instead of row.status"
+  missing:
+    - "Use row.status from database when loading disconnected user presence"
 
 - truth: "After unblock, users can send messages again"
   status: failed
   reason: "User reported: block works. after unblock i still can't send messages tho."
   severity: major
   test: 8
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "By design - block auto-unfriends, unblock doesn't restore friendship. Backend requires friendship to message."
+  artifacts:
+    - path: "backend/src/services/blockService.ts"
+      issue: "blockUser() calls removeFriend(), unblockUser() doesn't restore it"
+    - path: "backend/src/routes/websocket.ts"
+      issue: "Lines 133-141 require areFriends() to send messages"
+  missing:
+    - "Either restore friendship on unblock, or show clear UX that friend request needed"
 
 - truth: "Blocked Users section in Settings page"
   status: failed
   reason: "User reported: blocked users should be moved to contacts page"
   severity: minor
   test: 10
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "UX preference - blocked users section placed in Settings instead of Contacts"
+  artifacts:
+    - path: "frontend/src/pages/SettingsPage.tsx"
+      issue: "Blocked Users section here"
+    - path: "frontend/src/pages/ContactsPage.tsx"
+      issue: "Missing Blocked Users section"
+  missing:
+    - "Move Blocked Users section from SettingsPage to ContactsPage"
 
 - truth: "Search result click highlights message in groups"
   status: failed
   reason: "User reported: works in 1:1 but not in groups. it opens the group but doesn't jump to message or highlight it"
   severity: major
   test: 12
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "highlightMessageId prop not passed to MessageList in renderGroupView function"
+  artifacts:
+    - path: "frontend/src/pages/MessagesPage.tsx"
+      issue: "Lines 662-668 - MessageList in renderGroupView missing highlightMessageId prop"
+  missing:
+    - "Add highlightMessageId={highlightMessageId} to MessageList in renderGroupView"
