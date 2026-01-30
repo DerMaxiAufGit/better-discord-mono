@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { AvatarDisplay } from '@/components/avatar/AvatarDisplay';
+import { LastSeenText } from '@/components/presence/LastSeenText';
 import { Button } from '@/components/ui/button';
-import { Lock, Phone, ArrowLeft } from 'lucide-react';
+import { Phone, ArrowLeft } from 'lucide-react';
 import { useCall } from '@/contexts/CallContext';
 import { usePresenceStore } from '@/stores/presenceStore';
 
@@ -115,10 +116,11 @@ export function ConversationView({
         />
         <div className="flex-1">
           <h2 className="font-semibold">{contactUsername}</h2>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Lock className="h-3 w-3" />
-            <span>End-to-end encrypted</span>
-          </div>
+          <LastSeenText
+            lastSeen={presence?.lastSeen || null}
+            status={presence?.status || 'offline'}
+            className="text-xs"
+          />
         </div>
         <Button
           variant="ghost"

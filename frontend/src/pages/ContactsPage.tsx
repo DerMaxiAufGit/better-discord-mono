@@ -41,7 +41,8 @@ export function ContactsPage() {
   const navigate = useNavigate();
   const { addContact } = useContactStore();
   const { startCall, status: callStatus } = useCall();
-  const { getPresence, fetchBatchPresence } = usePresenceStore();
+  const presenceMap = usePresenceStore((state) => state.presenceMap);
+  const fetchBatchPresence = usePresenceStore((state) => state.fetchBatchPresence);
   const { loadBlockedUsers } = useBlockStore();
 
   // Load friends and pending requests on mount
@@ -283,13 +284,13 @@ export function ContactsPage() {
                     userId={friend.oderId}
                     size="small"
                     showStatus
-                    status={getPresence(friend.oderId)?.status as any || 'offline'}
+                    status={presenceMap.get(friend.oderId)?.status as any || 'offline'}
                   />
                   <div className="flex-1">
                     <p className="font-medium">{friend.username}</p>
                     <LastSeenText
-                      lastSeen={getPresence(friend.oderId)?.lastSeen || null}
-                      status={getPresence(friend.oderId)?.status || 'offline'}
+                      lastSeen={presenceMap.get(friend.oderId)?.lastSeen || null}
+                      status={presenceMap.get(friend.oderId)?.status || 'offline'}
                       className="text-xs"
                     />
                   </div>
