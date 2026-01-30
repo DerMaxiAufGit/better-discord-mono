@@ -33,7 +33,7 @@ export function VisibilityList() {
       try {
         const response = await friendsApi.getFriends();
         const friendsList = response.friends.map((f: any) => ({
-          id: f.otherId,
+          id: f.oderId,
           username: f.username,
         }));
         setFriends(friendsList);
