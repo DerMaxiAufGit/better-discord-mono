@@ -69,7 +69,7 @@ export function MessagesPage() {
 
   // Search
   const [showSearch, setShowSearch] = React.useState(false);
-  const { query, clearSearch } = useSearchStore();
+  const { clearSearch } = useSearchStore();
 
   // Load groups on mount
   React.useEffect(() => {
@@ -162,12 +162,12 @@ export function MessagesPage() {
       });
     };
 
-    window.addEventListener('group-message', handleGroupMessage as EventListener);
-    window.addEventListener('group-message-ack', handleGroupMessageAck as EventListener);
+    window.addEventListener('group-message', handleGroupMessage as unknown as EventListener);
+    window.addEventListener('group-message-ack', handleGroupMessageAck as unknown as EventListener);
 
     return () => {
-      window.removeEventListener('group-message', handleGroupMessage as EventListener);
-      window.removeEventListener('group-message-ack', handleGroupMessageAck as EventListener);
+      window.removeEventListener('group-message', handleGroupMessage as unknown as EventListener);
+      window.removeEventListener('group-message-ack', handleGroupMessageAck as unknown as EventListener);
     };
   }, []);
 
@@ -451,7 +451,7 @@ export function MessagesPage() {
             placeholder="Search all messages..."
           />
           <SearchResults
-            onResultClick={(conversationId, messageId) => {
+            onResultClick={(conversationId, _messageId) => {
               // Navigate to conversation
               // Check if it's a group
               const group = groups.find(g => g.id === conversationId);
@@ -462,7 +462,7 @@ export function MessagesPage() {
                 setSelectedGroupId(null);
                 navigate(`/messages/${conversationId}`);
               }
-              // TODO: scroll to message by ID
+              // TODO: scroll to message by _messageId
               setShowSearch(false);
               clearSearch();
             }}
