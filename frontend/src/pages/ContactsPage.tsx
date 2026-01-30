@@ -8,6 +8,10 @@ import { Input } from '@/components/ui/input';
 import { usersApi, friendsApi } from '@/lib/api';
 import { useContactStore } from '@/stores/contactStore';
 import { useCall } from '@/contexts/CallContext';
+import { AvatarDisplay } from '@/components/avatar/AvatarDisplay';
+import { LastSeenText } from '@/components/presence/LastSeenText';
+import { usePresenceStore } from '@/stores/presenceStore';
+import { useBlockStore } from '@/stores/blockStore';
 
 interface User {
   id: string;
@@ -37,12 +41,25 @@ export function ContactsPage() {
   const navigate = useNavigate();
   const { addContact } = useContactStore();
   const { startCall, status: callStatus } = useCall();
+  const { getPresence, fetchBatchPresence } = usePresenceStore();
+  const { loadBlockedUsers } = useBlockStore();
 
   // Load friends and pending requests on mount
   React.useEffect(() => {
     loadFriends();
     loadPendingRequests();
   }, []);
+
+  React.useEffect(() => {
+    loadBlockedUsers();
+  }, [loadBlockedUsers]);
+
+  React.useEffect(() => {
+    if (friends.length > 0) {
+      const friendIds = friends.map(f => f.oderId);
+      fetchBatchPresence(friendIds);
+    }
+  }, [friends, fetchBatchPresence]);
 
   const loadFriends = async () => {
     try {
@@ -262,9 +279,19 @@ export function ContactsPage() {
                   key={friend.id}
                   className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors"
                 >
-                  <Avatar fallback={friend.username} className="h-10 w-10" />
+                  <AvatarDisplay
+                    userId={friend.oderId}
+                    size="small"
+                    showStatus
+                    status={getPresence(friend.oderId)?.status as any || 'offline'}
+                  />
                   <div className="flex-1">
                     <p className="font-medium">{friend.username}</p>
+                    <LastSeenText
+                      lastSeen={getPresence(friend.oderId)?.lastSeen || null}
+                      status={getPresence(friend.oderId)?.status || 'offline'}
+                      className="text-xs"
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button
