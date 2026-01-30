@@ -9,7 +9,7 @@ interface AvatarDisplayProps {
   size?: 'tiny' | 'small' | 'large';
   className?: string;
   showStatus?: boolean;
-  status?: 'online' | 'away' | 'dnd' | 'offline';
+  status?: 'online' | 'away' | 'dnd' | 'invisible' | 'offline';
 }
 
 const sizeClasses = {
@@ -18,10 +18,11 @@ const sizeClasses = {
   large: 'h-16 w-16',
 };
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   online: 'bg-green-500',
   away: 'bg-yellow-500',
   dnd: 'bg-red-500',
+  invisible: 'bg-gray-400', // Invisible shows as offline
   offline: 'bg-gray-400',
 };
 

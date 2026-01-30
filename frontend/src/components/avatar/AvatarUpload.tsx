@@ -7,7 +7,11 @@ import { useAuthStore } from '@/stores/auth';
 import { Camera, Trash2, Loader2 } from 'lucide-react';
 import { showSuccess, showError } from '@/lib/toast';
 
-export function AvatarUpload() {
+interface AvatarUploadProps {
+  onComplete?: () => void;
+}
+
+export function AvatarUpload({ onComplete }: AvatarUploadProps = {}) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +51,7 @@ export function AvatarUpload() {
     try {
       await uploadAvatar(blob);
       showSuccess('Avatar updated');
+      onComplete?.();
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Upload failed');
     }

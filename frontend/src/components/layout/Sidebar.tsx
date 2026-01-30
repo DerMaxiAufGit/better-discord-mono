@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router'
-import { ChevronLeft, ChevronRight, User, LogOut, MessageCircle, Users, Settings } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LogOut, MessageCircle, Users, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
 import { useCryptoStore } from '@/stores/cryptoStore'
+import { usePresenceStore } from '@/stores/presenceStore'
+import { AvatarDisplay } from '@/components/avatar/AvatarDisplay'
+import { ProfileMenu } from '@/components/profile/ProfileMenu'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -13,11 +16,13 @@ const navItems = [
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const clearKeys = useCryptoStore((state) => state.clearKeys)
+  const myStatus = usePresenceStore((state) => state.myStatus)
 
   const handleLogout = async () => {
     clearKeys() // Clear crypto keys on logout
@@ -75,25 +80,37 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom controls */}
-      <div className="p-3 space-y-1 border-t border-border">
-        {/* User info */}
-        <div
+      <div className="p-3 space-y-1 border-t border-border relative">
+        {/* User info - clickable to open profile menu */}
+        <button
+          onClick={() => setShowProfileMenu(true)}
           className={cn(
-            "flex items-center gap-3 p-2 rounded-lg",
+            "flex items-center gap-3 p-2 rounded-lg w-full hover:bg-accent transition-colors",
             collapsed && "justify-center"
           )}
+          title="Open profile settings"
         >
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-            <User className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <AvatarDisplay
+            userId={user?.id ? String(user.id) : ''}
+            size="tiny"
+            showStatus
+            status={myStatus}
+          />
           {!collapsed && (
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-left">
               <p className="text-sm font-medium text-foreground truncate">
                 {user?.username || 'User'}
               </p>
             </div>
           )}
-        </div>
+        </button>
+
+        {/* Profile menu */}
+        <ProfileMenu
+          open={showProfileMenu}
+          onClose={() => setShowProfileMenu(false)}
+          className="bottom-full left-3 mb-2"
+        />
 
         {/* Settings button */}
         <Link
