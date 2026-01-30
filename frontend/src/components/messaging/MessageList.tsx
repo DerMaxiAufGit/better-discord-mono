@@ -75,8 +75,9 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply,
   // Reaction store
   const { reactions, loadReactions, toggleReaction } = useReactionStore();
 
-  // Block store
-  const { isBlocked } = useBlockStore();
+  // Block store - blockedIds needed for Zustand subscription to trigger re-renders
+  // @ts-ignore - blockedIds unused but required for subscription
+  const { blockedIds, isBlocked } = useBlockStore();
 
   // Build a lookup map for resolving replyToId to full message data
   const messageMap = React.useMemo(() => {
