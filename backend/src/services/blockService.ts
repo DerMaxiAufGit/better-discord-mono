@@ -48,7 +48,7 @@ class BlockService {
 
     // Auto-restore friendship on unblock (better UX than requiring new friend request)
     try {
-      await friendService.sendRequest(blockerId, blockedId);
+      await friendService.restoreFriendship(blockerId, blockedId);
     } catch {
       // Ignore if already friends or other issues - unblock still succeeded
     }

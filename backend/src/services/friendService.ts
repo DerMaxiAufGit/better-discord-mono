@@ -104,6 +104,42 @@ class FriendService {
     );
   }
 
+  /**
+   * Restore a friendship directly (used when unblocking)
+   * Creates an accepted friend_request record without requiring acceptance
+   */
+  async restoreFriendship(userId1: string, userId2: string): Promise<void> {
+    // Check if friendship already exists
+    const existing = await query(
+      `SELECT * FROM friend_requests
+       WHERE (requester_id = $1 AND addressee_id = $2)
+          OR (requester_id = $2 AND addressee_id = $1)`,
+      [userId1, userId2]
+    );
+
+    if (existing.rows.length > 0) {
+      const req = existing.rows[0];
+      if (req.status === 'accepted') {
+        return; // Already friends
+      }
+      // Update existing record to accepted
+      await query(
+        `UPDATE friend_requests
+         SET status = 'accepted', updated_at = NOW()
+         WHERE id = $1`,
+        [req.id]
+      );
+      return;
+    }
+
+    // Create new accepted friendship
+    await query(
+      `INSERT INTO friend_requests (requester_id, addressee_id, status)
+       VALUES ($1, $2, 'accepted')`,
+      [userId1, userId2]
+    );
+  }
+
   // Get pending requests received by user
   async getPendingRequests(userId: string): Promise<FriendWithUser[]> {
     const result = await query(
