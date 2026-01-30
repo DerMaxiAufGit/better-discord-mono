@@ -95,3 +95,38 @@ export interface Reaction {
   emoji: string
   created_at: Date
 }
+
+export type PresenceStatus = 'online' | 'away' | 'dnd' | 'invisible'
+
+export interface Avatar {
+  id: string
+  user_id: string
+  tiny_path: string | null
+  small_path: string | null
+  large_path: string | null
+  created_at: Date
+  updated_at: Date
+}
+
+export interface UserPresence {
+  user_id: string
+  status: PresenceStatus
+  visibility_list: string[]
+  last_seen: Date
+  show_last_seen: boolean
+  updated_at: Date
+}
+
+export interface Block {
+  blocker_id: string
+  blocked_id: string
+  created_at: Date
+}
+
+export interface UserSettings {
+  user_id: string
+  show_last_seen: boolean
+  allow_friend_requests: boolean
+  created_at: Date
+  updated_at: Date
+}

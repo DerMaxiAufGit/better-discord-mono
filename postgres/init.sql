@@ -140,3 +140,45 @@ CREATE INDEX IF NOT EXISTS idx_reactions_message_id ON reactions(message_id);
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS group_id UUID REFERENCES groups(id) ON DELETE CASCADE;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER REFERENCES messages(id) ON DELETE SET NULL;
 ALTER TABLE messages ALTER COLUMN recipient_id DROP NOT NULL;
+
+-- Avatars table for storing avatar metadata (files stored on disk)
+CREATE TABLE IF NOT EXISTS avatars (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tiny_path VARCHAR(500),      -- 32x32 WebP
+    small_path VARCHAR(500),     -- 64x64 WebP
+    large_path VARCHAR(500),     -- 256x256 WebP
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id)  -- One avatar per user
+);
+CREATE INDEX IF NOT EXISTS idx_avatars_user ON avatars(user_id);
+
+-- User presence table for storing presence status (Redis for real-time, PostgreSQL for persistence)
+CREATE TABLE IF NOT EXISTS user_presence (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'online' CHECK (status IN ('online', 'away', 'dnd', 'invisible')),
+    visibility_list UUID[] DEFAULT '{}',  -- User IDs who see true status when invisible
+    last_seen TIMESTAMPTZ DEFAULT NOW(),
+    show_last_seen BOOLEAN DEFAULT TRUE,  -- Privacy: hide last-seen from others
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Blocks table for storing user blocking relationships
+CREATE TABLE IF NOT EXISTS blocks (
+    blocker_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    blocked_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (blocker_id, blocked_id)
+);
+CREATE INDEX IF NOT EXISTS idx_blocks_blocker ON blocks(blocker_id);
+CREATE INDEX IF NOT EXISTS idx_blocks_blocked ON blocks(blocked_id);
+
+-- User settings table for storing user preferences
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    show_last_seen BOOLEAN DEFAULT TRUE,
+    allow_friend_requests BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
