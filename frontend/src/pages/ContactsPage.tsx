@@ -12,6 +12,7 @@ import { AvatarDisplay } from '@/components/avatar/AvatarDisplay';
 import { LastSeenText } from '@/components/presence/LastSeenText';
 import { usePresenceStore } from '@/stores/presenceStore';
 import { useBlockStore } from '@/stores/blockStore';
+import { BlockButton } from '@/components/blocking/BlockButton';
 
 interface User {
   id: string;
@@ -312,6 +313,13 @@ export function ContactsPage() {
                       <MessageCircle className="h-4 w-4 mr-2" />
                       Message
                     </Button>
+                    <BlockButton
+                      userId={friend.oderId}
+                      username={friend.username}
+                      variant="outline"
+                      size="sm"
+                      showLabel={false}
+                    />
                   </div>
                 </div>
               ))}

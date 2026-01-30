@@ -4,9 +4,18 @@ import { MessageInput } from './MessageInput';
 import { AvatarDisplay } from '@/components/avatar/AvatarDisplay';
 import { LastSeenText } from '@/components/presence/LastSeenText';
 import { Button } from '@/components/ui/button';
-import { Phone, ArrowLeft } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Phone, ArrowLeft, MoreVertical, Ban, Check } from 'lucide-react';
 import { useCall } from '@/contexts/CallContext';
 import { usePresenceStore } from '@/stores/presenceStore';
+import { useBlockStore } from '@/stores/blockStore';
+import { BlockConfirmDialog } from '@/components/blocking/BlockConfirmDialog';
+import { showSuccess, showError } from '@/lib/toast';
 
 interface ReplyTo {
   id: number;
@@ -60,7 +69,11 @@ export function ConversationView({
 }: ConversationViewProps) {
   const { startCall, status: callStatus } = useCall();
   const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [isBlockLoading, setIsBlockLoading] = useState(false);
   const presence = usePresenceStore((state) => state.presenceMap.get(contactId));
+  const { isBlocked, blockUser, unblockUser } = useBlockStore();
+  const blocked = isBlocked(contactId);
 
   const handleStartCall = () => {
     startCall(contactId, contactUsername);
@@ -81,6 +94,33 @@ export function ConversationView({
       content: message.content,
       senderEmail,
     });
+  };
+
+  const handleBlock = async (deleteHistory: boolean) => {
+    setShowBlockConfirm(false);
+    setIsBlockLoading(true);
+
+    try {
+      await blockUser(contactId, deleteHistory);
+      showSuccess(`Blocked ${contactUsername}`);
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to block user');
+    } finally {
+      setIsBlockLoading(false);
+    }
+  };
+
+  const handleUnblock = async () => {
+    setIsBlockLoading(true);
+
+    try {
+      await unblockUser(contactId);
+      showSuccess(`Unblocked ${contactUsername}`);
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to unblock user');
+    } finally {
+      setIsBlockLoading(false);
+    }
   };
 
   // Handle Escape key - cancel reply if active, otherwise close chat
@@ -131,7 +171,35 @@ export function ConversationView({
         >
           <Phone className="h-5 w-5" />
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" disabled={isBlockLoading}>
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {blocked ? (
+              <DropdownMenuItem onClick={handleUnblock}>
+                <Check className="h-4 w-4 mr-2" />
+                Unblock
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => setShowBlockConfirm(true)}>
+                <Ban className="h-4 w-4 mr-2" />
+                Block
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      {/* Block confirm dialog */}
+      <BlockConfirmDialog
+        open={showBlockConfirm}
+        username={contactUsername}
+        onConfirm={handleBlock}
+        onCancel={() => setShowBlockConfirm(false)}
+      />
 
       {/* Messages - scrollable area */}
       {isLoading ? (
