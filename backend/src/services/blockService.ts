@@ -38,13 +38,20 @@ class BlockService {
 
   /**
    * Unblock a user
-   * Note: Does NOT restore friendship - user must send new friend request
+   * Auto-restores friendship for better UX
    */
   async unblockUser(blockerId: string, blockedId: string): Promise<void> {
     await query(
       `DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2`,
       [blockerId, blockedId]
     );
+
+    // Auto-restore friendship on unblock (better UX than requiring new friend request)
+    try {
+      await friendService.sendRequest(blockerId, blockedId);
+    } catch {
+      // Ignore if already friends or other issues - unblock still succeeded
+    }
   }
 
   /**

@@ -121,7 +121,7 @@ class PresenceService {
       if (result.rows[0]) {
         const row = result.rows[0];
         presence = {
-          status: 'offline' as PresenceStatus,  // Not in cache = offline
+          status: row.status as PresenceStatus,  // Preserve actual status for invisible whitelist check
           lastSeen: row.last_seen,
           visibilityList: row.visibility_list || [],
         };
