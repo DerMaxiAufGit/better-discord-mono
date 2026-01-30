@@ -6,6 +6,7 @@ import { useContactStore } from '@/stores/contactStore'
 import { useReactionStore } from '@/stores/reactionStore'
 import { useGroupStore } from '@/stores/groupStore'
 import { usePresenceStore } from '@/stores/presenceStore'
+import { useSearchStore } from '@/stores/searchStore'
 import { encryptMessage, decryptMessage } from '@/lib/crypto/messageEncryption'
 import { usersApi, refreshAccessTokenWithResult, friendsApi } from '@/lib/api'
 import { dispatchCallSignaling } from '@/lib/webrtc/useCall'
@@ -183,6 +184,19 @@ export function useMessaging(options: UseMessagingOptions = {}) {
               replyToId,
             })
             console.log('Message added to store')
+
+            // Index message for search
+            const contact = getContact(senderId)
+            const searchStore = useSearchStore.getState()
+            await searchStore.indexMessage({
+              id,
+              conversationId: senderId,
+              conversationType: 'dm',
+              senderId,
+              senderName: contact?.username || senderId,
+              plaintext: content,
+              timestamp: new Date(timestamp),
+            })
           }
         } else if (data.type === 'message_ack') {
           // Acknowledgment for sent message - update pending message with real ID and mark as sent
@@ -230,11 +244,24 @@ export function useMessaging(options: UseMessagingOptions = {}) {
           }
         } else if (data.type === 'group-message') {
           // Incoming group message
-          const { id, groupId, senderId, senderEmail, encryptedContent, timestamp } = data
+          const { id, groupId, senderId, senderEmail, encryptedContent, timestamp, replyToId } = data
           // Dispatch event for group message handling
           window.dispatchEvent(new CustomEvent('group-message', {
-            detail: { id, groupId, senderId, senderEmail, encryptedContent, timestamp }
+            detail: { id, groupId, senderId, senderEmail, encryptedContent, timestamp, replyToId }
           }))
+
+          // Index group message for search (content is not actually encrypted for groups yet)
+          const searchStore = useSearchStore.getState()
+          const senderName = senderEmail?.includes('@') ? senderEmail.split('@')[0] : senderEmail || senderId
+          await searchStore.indexMessage({
+            id,
+            conversationId: groupId,
+            conversationType: 'group',
+            senderId,
+            senderName,
+            plaintext: encryptedContent,
+            timestamp: new Date(timestamp),
+          })
         } else if (data.type === 'group-message_ack') {
           // Acknowledgment for sent group message
           window.dispatchEvent(new CustomEvent('group-message-ack', {

@@ -8,6 +8,7 @@ import { useMessageStore } from '@/stores/messageStore';
 import { useContactStore } from '@/stores/contactStore';
 import { useCryptoStore } from '@/stores/cryptoStore';
 import { useGroupStore, Group } from '@/stores/groupStore';
+import { useSearchStore } from '@/stores/searchStore';
 import { useMessaging } from '@/lib/websocket/useMessaging';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { decryptMessage } from '@/lib/crypto/messageEncryption';
@@ -27,6 +28,13 @@ interface GroupMessage {
   content: string;
   timestamp: Date;
   status: 'sending' | 'sent' | 'delivered' | 'read';
+  replyToId?: number;
+}
+
+interface GroupReplyTo {
+  id: number;
+  content: string;
+  senderEmail: string;
 }
 
 export function MessagesPage() {
@@ -54,6 +62,7 @@ export function MessagesPage() {
   const [inviteLink, setInviteLink] = React.useState<string | null>(null);
   const [copiedLink, setCopiedLink] = React.useState(false);
   const [showMemberList, setShowMemberList] = React.useState(false);
+  const [groupReplyTo, setGroupReplyTo] = React.useState<GroupReplyTo | null>(null);
   const addMember = useGroupStore((s) => s.addMember);
   const createInvite = useGroupStore((s) => s.createInvite);
 
@@ -77,8 +86,24 @@ export function MessagesPage() {
           content: m.encryptedContent, // Not actually encrypted for groups yet
           timestamp: new Date(m.createdAt),
           status: 'delivered' as const,
+          replyToId: m.replyToId,
         }));
         setGroupMessages(prev => new Map(prev).set(selectedGroupId, formatted));
+
+        // Index group messages for search
+        const searchStore = useSearchStore.getState();
+        const messagesToIndex = messages.map(m => ({
+          id: m.id,
+          conversationId: selectedGroupId,
+          conversationType: 'group' as const,
+          senderId: m.senderId,
+          senderName: m.senderEmail?.includes('@') ? m.senderEmail.split('@')[0] : m.senderEmail || m.senderId,
+          plaintext: m.encryptedContent,
+          timestamp: new Date(m.createdAt),
+        }));
+        if (messagesToIndex.length > 0) {
+          await searchStore.indexMessages(messagesToIndex);
+        }
       } catch (e) {
         console.error('Failed to load group messages:', e);
       } finally {
@@ -91,8 +116,8 @@ export function MessagesPage() {
 
   // Listen for incoming group messages
   React.useEffect(() => {
-    const handleGroupMessage = (event: CustomEvent) => {
-      const { id, groupId, senderId, senderEmail, encryptedContent, timestamp } = event.detail;
+    const handleGroupMessage = async (event: CustomEvent) => {
+      const { id, groupId, senderId, senderEmail, encryptedContent, timestamp, replyToId } = event.detail;
       const newMessage: GroupMessage = {
         id,
         senderId,
@@ -100,10 +125,24 @@ export function MessagesPage() {
         content: encryptedContent,
         timestamp: new Date(timestamp),
         status: 'delivered',
+        replyToId,
       };
       setGroupMessages(prev => {
         const existing = prev.get(groupId) || [];
         return new Map(prev).set(groupId, [...existing, newMessage]);
+      });
+
+      // Index the incoming group message for search
+      const searchStore = useSearchStore.getState();
+      const senderName = senderEmail?.includes('@') ? senderEmail.split('@')[0] : senderEmail || senderId;
+      await searchStore.indexMessage({
+        id,
+        conversationId: groupId,
+        conversationType: 'group',
+        senderId,
+        senderName,
+        plaintext: encryptedContent,
+        timestamp: new Date(timestamp),
       });
     };
 
@@ -136,6 +175,24 @@ export function MessagesPage() {
       }
     },
   });
+
+  // Handle Escape key for groups - cancel reply if active, otherwise close group view
+  React.useEffect(() => {
+    if (!selectedGroupId) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (groupReplyTo) {
+          setGroupReplyTo(null);
+        } else {
+          setSelectedGroupId(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedGroupId, groupReplyTo]);
 
   // Load conversations on mount
   React.useEffect(() => {
@@ -247,6 +304,7 @@ export function MessagesPage() {
 
   const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
+    setGroupReplyTo(null); // Clear any pending reply
     navigate('/messages'); // Clear contact selection
   };
 
@@ -272,8 +330,10 @@ export function MessagesPage() {
   const selectedGroup = selectedGroupId ? groups.find(g => g.id === selectedGroupId) : null;
   const activeGroupMessages = selectedGroupId ? groupMessages.get(selectedGroupId) || [] : [];
 
-  const handleSendGroupMessage = (content: string) => {
+  const handleSendGroupMessage = (content: string, options?: { replyToId?: number }) => {
     if (!selectedGroupId || !user) return;
+
+    const replyToId = groupReplyTo?.id ?? options?.replyToId;
 
     // Add optimistic message
     const tempId = -Date.now();
@@ -284,6 +344,7 @@ export function MessagesPage() {
       content,
       timestamp: new Date(),
       status: 'sending',
+      replyToId,
     };
     setGroupMessages(prev => {
       const existing = prev.get(selectedGroupId) || [];
@@ -291,7 +352,10 @@ export function MessagesPage() {
     });
 
     // Send via WebSocket
-    sendGroupMessage(selectedGroupId, content);
+    sendGroupMessage(selectedGroupId, content, { replyToId });
+
+    // Clear reply
+    setGroupReplyTo(null);
   };
 
   const handleAddMember = async () => {
@@ -416,15 +480,6 @@ export function MessagesPage() {
 
   // Group view with messages
   const renderGroupView = (group: Group) => {
-    // Transform group messages for MessageList component
-    const formattedMessages = activeGroupMessages.map(m => ({
-      id: m.id,
-      senderId: m.senderId,
-      content: m.content,
-      timestamp: m.timestamp,
-      status: m.status,
-    }));
-
     // Build a map of sender emails for display
     const senderNames = new Map<string, string>();
     activeGroupMessages.forEach(m => {
@@ -432,6 +487,29 @@ export function MessagesPage() {
         senderNames.set(m.senderId, m.senderEmail.split('@')[0]);
       }
     });
+
+    // Transform group messages for MessageList component
+    const formattedMessages = activeGroupMessages.map(m => ({
+      id: m.id,
+      senderId: m.senderId,
+      senderEmail: m.senderEmail,
+      content: m.content,
+      timestamp: m.timestamp,
+      status: m.status,
+      replyToId: m.replyToId,
+    }));
+
+    // Handle reply in group
+    const handleGroupReply = (message: { id: number; senderId: string; content: string }) => {
+      const senderName = message.senderId === String(user?.id)
+        ? 'You'
+        : senderNames.get(message.senderId) || 'Unknown';
+      setGroupReplyTo({
+        id: message.id,
+        content: message.content,
+        senderEmail: senderName,
+      });
+    };
 
     return (
       <div className="flex h-full overflow-hidden">
@@ -540,6 +618,7 @@ export function MessagesPage() {
               messages={formattedMessages}
               currentUserId={user ? String(user.id) : ''}
               contactUsername={group.name}
+              onReply={handleGroupReply}
             />
           </div>
         )}
@@ -549,6 +628,8 @@ export function MessagesPage() {
             <MessageInput
               onSend={(content) => handleSendGroupMessage(content)}
               placeholder={`Message ${group.name}`}
+              replyTo={groupReplyTo}
+              onCancelReply={() => setGroupReplyTo(null)}
             />
           </div>
         </div>
@@ -585,8 +666,7 @@ export function MessagesPage() {
           <ConversationView
             contactId={contactId}
             contactUsername={activeContact.username}
-            contactEmail={activeContact.id}
-            currentUserId={String(user.id)}
+                        currentUserId={String(user.id)}
             messages={activeMessages}
             onSendMessage={handleSendMessage}
             isLoading={isLoadingHistory}
@@ -629,11 +709,11 @@ export function MessagesPage() {
           <ConversationView
             contactId={contactId}
             contactUsername={activeContact.username}
-            contactEmail={activeContact.id}
             currentUserId={String(user.id)}
             messages={activeMessages}
             onSendMessage={handleSendMessage}
             isLoading={isLoadingHistory}
+            onBack={() => navigate('/messages')}
             typingUsers={typingUsers}
             onInputChange={onInputChange}
           />

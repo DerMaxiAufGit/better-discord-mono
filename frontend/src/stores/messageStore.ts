@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { messageApi } from '@/lib/api'
+import { useSearchStore } from '@/stores/searchStore'
+import { useContactStore } from '@/stores/contactStore'
 
 interface FileAttachment {
   id: string
@@ -26,12 +28,18 @@ interface QueuedMessage {
   tempId: number
 }
 
+type ConnectionState = 'connected' | 'disconnected' | 'reconnecting'
+
 interface MessageState {
   // Messages keyed by contact ID
   conversations: Map<string, Message[]>
   isLoadingHistory: boolean
   // Internal connection state (true state of WebSocket)
   isConnected: boolean
+  // Connection state for UI display
+  connectionState: ConnectionState
+  // Whether to show the connected banner briefly
+  showConnectedBanner: boolean
   // Retry count for current disconnect
   retryCount: number
   // Whether to show connection banner (only after first retry fails)
@@ -47,6 +55,8 @@ interface MessageState {
   loadHistory: (contactId: string, decrypt: (encrypted: string, senderId: string) => Promise<string | null>) => Promise<void>
   clearMessages: () => void
   setConnected: (connected: boolean) => void
+  setConnectionState: (state: ConnectionState) => void
+  setReconnecting: () => void
   incrementRetry: () => void
   resetRetry: () => void
   queueMessage: (msg: QueuedMessage) => void
@@ -61,6 +71,8 @@ export const useMessageStore = create<MessageState>((set, get) => ({
   conversations: new Map(),
   isLoadingHistory: false,
   isConnected: false,
+  connectionState: 'disconnected',
+  showConnectedBanner: false,
   retryCount: 0,
   showConnectionBanner: false,
   messageQueue: [],
@@ -133,18 +145,44 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       const { messages: encryptedMessages } = await messageApi.getHistory(contactId, 50)
 
       const decryptedMessages: Message[] = []
+      const messagesToIndex: Array<{
+        id: number
+        conversationId: string
+        conversationType: 'dm' | 'group'
+        senderId: string
+        senderName: string
+        plaintext: string
+        timestamp: Date
+      }> = []
+
+      // Get contact info for sender name
+      const contactStore = useContactStore.getState()
+      const contact = contactStore.getContact(contactId)
+
       for (const msg of encryptedMessages) {
         const content = await decrypt(msg.encryptedContent, msg.senderId)
         if (content !== null) {
+          const timestamp = new Date(msg.createdAt)
           decryptedMessages.push({
             id: msg.id,
             senderId: msg.senderId,
             recipientId: msg.recipientId,
             content,
-            timestamp: new Date(msg.createdAt),
+            timestamp,
             status: msg.readAt ? 'read' : msg.deliveredAt ? 'delivered' : 'sent',
             files: msg.files,
             replyToId: msg.replyToId,
+          })
+
+          // Prepare message for search indexing
+          messagesToIndex.push({
+            id: msg.id,
+            conversationId: contactId,
+            conversationType: 'dm',
+            senderId: msg.senderId,
+            senderName: contact?.username || msg.senderId,
+            plaintext: content,
+            timestamp,
           })
         }
       }
@@ -153,6 +191,12 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         conversations: new Map(state.conversations).set(contactId, decryptedMessages),
         isLoadingHistory: false,
       }))
+
+      // Index all messages for search
+      if (messagesToIndex.length > 0) {
+        const searchStore = useSearchStore.getState()
+        await searchStore.indexMessages(messagesToIndex)
+      }
     } catch (e) {
       console.error('Failed to load message history:', e)
       set({ isLoadingHistory: false })
@@ -165,25 +209,50 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
   setConnected: (connected: boolean) => {
     if (connected) {
+      const wasDisconnected = !get().isConnected && get().retryCount > 0
       set({
         isConnected: true,
+        connectionState: 'connected',
         retryCount: 0,
         showConnectionBanner: false,
+        showConnectedBanner: wasDisconnected, // Show connected banner if we were reconnecting
         connectionStatus: 'connected'
       })
+      // Auto-hide connected banner after 2 seconds
+      if (wasDisconnected) {
+        setTimeout(() => {
+          set({ showConnectedBanner: false })
+        }, 2000)
+      }
     } else {
-      set({ isConnected: false })
+      set({
+        isConnected: false,
+        connectionState: 'disconnected',
+        showConnectionBanner: true, // Show disconnected banner immediately
+      })
     }
+  },
+
+  setConnectionState: (state: ConnectionState) => {
+    set({ connectionState: state })
+  },
+
+  setReconnecting: () => {
+    set({
+      connectionState: 'reconnecting',
+      showConnectionBanner: true,
+    })
   },
 
   incrementRetry: () => {
     const { retryCount } = get()
     const newCount = retryCount + 1
-    // Show banner only after first retry fails (retryCount >= 1)
+    // Show banner when retrying
     set({
       retryCount: newCount,
-      showConnectionBanner: newCount >= 1,
-      connectionStatus: newCount >= 1 ? 'disconnected' : 'connecting'
+      connectionState: 'reconnecting',
+      showConnectionBanner: true,
+      connectionStatus: 'disconnected'
     })
   },
 
