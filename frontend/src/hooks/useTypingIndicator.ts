@@ -3,13 +3,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 interface UseTypingIndicatorOptions {
   conversationId: string
   sendTypingEvent: (isTyping: boolean) => void
-  debounceMs?: number
   timeoutMs?: number
 }
 
 interface TypingUser {
   userId: string
-  email?: string
+  username?: string
 }
 
 interface UseTypingIndicatorReturn {
@@ -21,18 +20,16 @@ interface UseTypingIndicatorReturn {
 export function useTypingIndicator({
   conversationId,
   sendTypingEvent,
-  debounceMs = 300,
   timeoutMs = 5000
 }: UseTypingIndicatorOptions): UseTypingIndicatorReturn {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([])
   const isTypingRef = useRef(false)
   const timeoutRef = useRef<number | null>(null)
-  const debounceRef = useRef<number | null>(null)
 
   // Handle incoming typing events
   useEffect(() => {
-    const handleTypingEvent = (event: CustomEvent<{ conversationId: string; userId: string; email?: string; isTyping: boolean }>) => {
-      const { conversationId: eventConvId, userId, email, isTyping } = event.detail
+    const handleTypingEvent = (event: CustomEvent<{ conversationId: string; userId: string; username?: string; isTyping: boolean }>) => {
+      const { conversationId: eventConvId, userId, username, isTyping } = event.detail
 
       if (eventConvId !== conversationId) return
 
@@ -40,7 +37,7 @@ export function useTypingIndicator({
         if (isTyping) {
           // Add user if not already typing
           if (current.some(u => u.userId === userId)) return current
-          return [...current, { userId, email }]
+          return [...current, { userId, username }]
         } else {
           // Remove user
           return current.filter(u => u.userId !== userId)
@@ -95,34 +92,21 @@ export function useTypingIndicator({
   }, [sendTypingEvent])
 
   const onInputChange = useCallback(() => {
-    // Debounce the start typing event
-    if (debounceRef.current) {
-      window.clearTimeout(debounceRef.current)
-    }
+    // Send typing immediately (no debounce on start)
+    sendStartTyping()
 
-    debounceRef.current = window.setTimeout(() => {
-      sendStartTyping()
-    }, debounceMs)
-
-    // Reset the timeout for stopping
+    // Reset the timeout for stopping - stop typing after user stops for timeoutMs
     if (timeoutRef.current) {
       window.clearTimeout(timeoutRef.current)
     }
 
-    if (isTypingRef.current) {
-      timeoutRef.current = setTimeout(() => {
-        sendStopTyping()
-      }, timeoutMs)
-    }
-  }, [sendStartTyping, sendStopTyping, debounceMs, timeoutMs])
+    timeoutRef.current = window.setTimeout(() => {
+      sendStopTyping()
+    }, timeoutMs)
+  }, [sendStartTyping, sendStopTyping, timeoutMs])
 
   const onMessageSend = useCallback(() => {
     // Immediately stop typing when message is sent
-    if (debounceRef.current) {
-      window.clearTimeout(debounceRef.current)
-      debounceRef.current = null
-    }
-
     sendStopTyping()
   }, [sendStopTyping])
 
@@ -130,7 +114,6 @@ export function useTypingIndicator({
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      if (debounceRef.current) clearTimeout(debounceRef.current)
       if (isTypingRef.current) {
         sendTypingEvent(false)
       }
@@ -150,7 +133,7 @@ export function useTypingIndicator({
 export function formatTypingIndicator(users: TypingUser[]): string {
   if (users.length === 0) return ''
 
-  const names = users.map(u => u.email?.split('@')[0] || 'Someone')
+  const names = users.map(u => u.username || 'Someone')
 
   if (names.length === 1) {
     return `${names[0]} is typing...`

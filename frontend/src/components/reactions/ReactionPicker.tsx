@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import EmojiPicker, { EmojiClickData, Theme, EmojiStyle } from 'emoji-picker-react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
@@ -20,84 +21,74 @@ export function ReactionPicker({
   position: preferredPosition = 'top',
   align: preferredAlign = 'left'
 }: ReactionPickerProps) {
-  const { theme } = useTheme()
+  const { resolvedTheme } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
+  const anchorRef = useRef<HTMLSpanElement>(null)
   const [style, setStyle] = useState<React.CSSProperties>({ visibility: 'hidden' })
 
-  // Calculate position based on available viewport space
+  // Calculate position based on available viewport space using fixed positioning
   useLayoutEffect(() => {
-    if (!containerRef.current) return
+    if (!anchorRef.current) return
 
-    const parent = containerRef.current.parentElement
+    // Use the parent element (QuickReactions bar) for positioning
+    const parent = anchorRef.current.parentElement
     if (!parent) return
 
-    const parentRect = parent.getBoundingClientRect()
+    const anchorRect = parent.getBoundingClientRect()
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
 
-    // Determine vertical position
-    const spaceAbove = parentRect.top
-    const spaceBelow = viewportHeight - parentRect.bottom
+    // Determine vertical position (fixed coordinates)
+    const spaceAbove = anchorRect.top
+    const spaceBelow = viewportHeight - anchorRect.bottom
 
     let top: number | undefined
-    let bottom: number | undefined
 
     if (preferredPosition === 'top' && spaceAbove >= PICKER_HEIGHT + MARGIN) {
-      // Enough space above - position above
-      bottom = parent.offsetHeight + MARGIN
+      // Position above the anchor
+      top = anchorRect.top - PICKER_HEIGHT - MARGIN
     } else if (spaceBelow >= PICKER_HEIGHT + MARGIN) {
-      // Position below
-      top = parent.offsetHeight + MARGIN
+      // Position below the anchor
+      top = anchorRect.bottom + MARGIN
     } else if (spaceAbove > spaceBelow) {
-      // More space above, but not enough - position at top of viewport
-      bottom = parentRect.top - MARGIN
+      // More space above - constrain to viewport top
+      top = Math.max(MARGIN, anchorRect.top - PICKER_HEIGHT - MARGIN)
     } else {
-      // Position below, constrained
-      top = parent.offsetHeight + MARGIN
+      // More space below - position below, may overflow
+      top = anchorRect.bottom + MARGIN
     }
 
-    // Determine horizontal position
+    // Determine horizontal position (fixed coordinates)
     let left: number | undefined
-    let right: number | undefined
 
     if (preferredAlign === 'left') {
-      // Try to align left edge with parent
-      const leftEdge = parentRect.left
-      if (leftEdge + PICKER_WIDTH <= viewportWidth - MARGIN) {
-        left = 0
-      } else {
-        // Would overflow right - align to right edge instead
-        right = 0
+      left = anchorRect.left
+      // Prevent overflow right
+      if (left + PICKER_WIDTH > viewportWidth - MARGIN) {
+        left = viewportWidth - PICKER_WIDTH - MARGIN
       }
     } else if (preferredAlign === 'right') {
-      // Try to align right edge with parent
-      const rightEdge = viewportWidth - parentRect.right
-      if (rightEdge + PICKER_WIDTH <= viewportWidth - MARGIN) {
-        right = 0
-      } else {
-        // Would overflow left - align to left edge instead
-        left = 0
+      left = anchorRect.right - PICKER_WIDTH
+      // Prevent overflow left
+      if (left < MARGIN) {
+        left = MARGIN
       }
     } else {
       // Center alignment
-      const centerOffset = (parentRect.width - PICKER_WIDTH) / 2
-      const leftEdge = parentRect.left + centerOffset
-      if (leftEdge >= MARGIN && leftEdge + PICKER_WIDTH <= viewportWidth - MARGIN) {
-        left = centerOffset
-      } else if (leftEdge < MARGIN) {
-        left = -parentRect.left + MARGIN
-      } else {
-        right = -(viewportWidth - parentRect.right) + MARGIN
+      left = anchorRect.left + (anchorRect.width - PICKER_WIDTH) / 2
+      // Clamp to viewport
+      if (left < MARGIN) left = MARGIN
+      if (left + PICKER_WIDTH > viewportWidth - MARGIN) {
+        left = viewportWidth - PICKER_WIDTH - MARGIN
       }
     }
 
     setStyle({
-      position: 'absolute',
-      zIndex: 50,
-      ...(top !== undefined ? { top } : {}),
-      ...(bottom !== undefined ? { bottom } : {}),
-      ...(left !== undefined ? { left } : {}),
-      ...(right !== undefined ? { right } : {}),
+      position: 'fixed',
+      zIndex: 9999,
+      top,
+      left,
+      visibility: 'visible',
     })
   }, [preferredPosition, preferredAlign])
 
@@ -131,18 +122,26 @@ export function ReactionPicker({
   }
 
   return (
-    <div ref={containerRef} style={style}>
-      <EmojiPicker
-        onEmojiClick={handleEmojiClick}
-        theme={theme === 'dark' ? Theme.DARK : Theme.LIGHT}
-        emojiStyle={EmojiStyle.TWITTER}
-        width={`${PICKER_WIDTH}px`}
-        height={`${PICKER_HEIGHT}px`}
-        searchPlaceHolder="Search emoji..."
-        previewConfig={{ showPreview: false }}
-        skinTonesDisabled
-      />
-    </div>
+    <>
+      {/* Inline anchor to measure position from parent context */}
+      <span ref={anchorRef} style={{ display: 'inline-block', width: 0, height: 0, verticalAlign: 'top' }} />
+      {/* Portal to render picker at document body */}
+      {createPortal(
+        <div ref={containerRef} style={style}>
+          <EmojiPicker
+            onEmojiClick={handleEmojiClick}
+            theme={resolvedTheme === 'dark' ? Theme.DARK : Theme.LIGHT}
+            emojiStyle={EmojiStyle.TWITTER}
+            width={`${PICKER_WIDTH}px`}
+            height={`${PICKER_HEIGHT}px`}
+            searchPlaceHolder="Search emoji..."
+            previewConfig={{ showPreview: false }}
+            skinTonesDisabled
+          />
+        </div>,
+        document.body
+      )}
+    </>
   )
 }
 

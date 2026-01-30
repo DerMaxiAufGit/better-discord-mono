@@ -17,8 +17,12 @@ interface AuthResponse {
 let isRefreshing = false
 let refreshPromise: Promise<string | null> | null = null
 
-// Thundering herd prevention: single refresh promise shared across concurrent requests
-async function refreshAccessToken(): Promise<string | null> {
+/**
+ * Refresh access token using httpOnly refresh token cookie.
+ * Exported for use by WebSocket reconnection logic.
+ * Thundering herd prevention: single refresh promise shared across concurrent requests.
+ */
+export async function refreshAccessToken(): Promise<string | null> {
   if (isRefreshing && refreshPromise) {
     return refreshPromise
   }
@@ -100,7 +104,17 @@ export async function apiRequest<T>(
     throw new Error(message)
   }
 
-  return response.json()
+  // Handle empty responses (204 No Content or empty body)
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+    return undefined as T
+  }
+
+  const text = await response.text()
+  if (!text) {
+    return undefined as T
+  }
+
+  return JSON.parse(text)
 }
 
 // Auth-specific API methods
@@ -189,12 +203,43 @@ export const messageApi = {
       createdAt: string
       deliveredAt?: string
       readAt?: string
+      replyToId?: number
+      files?: Array<{
+        id: string
+        filename: string
+        mimeType: string
+        sizeBytes: number
+        encryptionHeader: string
+      }>
     }> }>(`/api/messages/${contactId}${query}`)
   },
 
   // Mark messages as read
   markRead: async (contactId: string): Promise<void> => {
     await apiRequest(`/api/messages/${contactId}/read`, { method: 'POST' })
+  },
+
+  // Get group message history
+  getGroupHistory: async (groupId: string, limit?: number, beforeId?: number) => {
+    const params = new URLSearchParams()
+    if (limit) params.set('limit', limit.toString())
+    if (beforeId) params.set('beforeId', beforeId.toString())
+    const query = params.toString() ? `?${params.toString()}` : ''
+    return apiRequest<{ messages: Array<{
+      id: number
+      senderId: string
+      groupId: string
+      encryptedContent: string
+      senderEmail?: string
+      createdAt: string
+      files?: Array<{
+        id: string
+        filename: string
+        mimeType: string
+        sizeBytes: number
+        encryptionHeader: string
+      }>
+    }>; hasMore: boolean }>(`/api/groups/${groupId}/messages${query}`)
   },
 }
 

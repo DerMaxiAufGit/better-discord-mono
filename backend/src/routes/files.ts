@@ -36,7 +36,7 @@ export default async function fileRoutes(fastify: FastifyInstance) {
     const encryptionHeader = Buffer.from((encryptionHeaderBase64 as any).value, 'base64')
 
     try {
-      const userId = (request.user as unknown as { id: string }).id
+      const userId = (request.user as { userId: string }).userId
       const file = await fileService.uploadFile({
         uploaderId: userId,
         conversationId: request.query.conversationId,
@@ -60,7 +60,7 @@ export default async function fileRoutes(fastify: FastifyInstance) {
 
   // Download file
   fastify.get<{ Params: { fileId: string } }>('/files/:fileId', async (request, reply) => {
-    const userId = (request.user as unknown as { id: string }).id
+    const userId = (request.user as { userId: string }).userId
     const result = await fileService.getFileStream(request.params.fileId, userId)
 
     if (!result) {
@@ -80,7 +80,7 @@ export default async function fileRoutes(fastify: FastifyInstance) {
 
   // Get file metadata
   fastify.get<{ Params: { fileId: string } }>('/files/:fileId/meta', async (request, reply) => {
-    const userId = (request.user as unknown as { id: string }).id
+    const userId = (request.user as { userId: string }).userId
     const file = await fileService.getFile(request.params.fileId, userId)
 
     if (!file) {
@@ -99,7 +99,7 @@ export default async function fileRoutes(fastify: FastifyInstance) {
 
   // Delete file
   fastify.delete<{ Params: { fileId: string } }>('/files/:fileId', async (request, reply) => {
-    const userId = (request.user as unknown as { id: string }).id
+    const userId = (request.user as { userId: string }).userId
     const success = await fileService.deleteFile(request.params.fileId, userId)
 
     if (!success) {
@@ -113,7 +113,7 @@ export default async function fileRoutes(fastify: FastifyInstance) {
   fastify.patch<{ Params: { fileId: string }; Body: { messageId: number } }>(
     '/files/:fileId',
     async (request, reply) => {
-      const userId = (request.user as unknown as { id: string }).id
+      const userId = (request.user as { userId: string }).userId
       const success = await fileService.associateFileWithMessage(
         request.params.fileId,
         request.body.messageId,

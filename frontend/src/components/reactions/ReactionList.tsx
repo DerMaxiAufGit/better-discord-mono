@@ -68,7 +68,7 @@ export function ReactionList({
                 <div className="space-y-0.5">
                   {reaction.users.slice(0, 10).map((user) => (
                     <div key={user.userId} className="text-sm">
-                      {user.email.split('@')[0]}
+                      {user.username || user.email.split('@')[0]}
                     </div>
                   ))}
                   {reaction.users.length > 10 && (

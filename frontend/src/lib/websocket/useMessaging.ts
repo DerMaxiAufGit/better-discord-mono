@@ -129,7 +129,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
 
         if (data.type === 'message') {
           // Incoming message from another user
-          const { id, senderId, encryptedContent, timestamp } = data
+          const { id, senderId, encryptedContent, timestamp, replyToId } = data
           const { addContact, getContact } = storeRefs.current
           console.log('Processing incoming message from:', senderId)
 
@@ -175,6 +175,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
               content,
               timestamp: new Date(timestamp),
               status: 'delivered',
+              replyToId,
             })
             console.log('Message added to store')
           }
@@ -209,7 +210,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
             detail: {
               conversationId: data.conversationId,
               userId: data.userId,
-              email: data.email,
+              username: data.username,
               isTyping: data.isTyping
             }
           }))
@@ -328,10 +329,12 @@ export function useMessaging(options: UseMessagingOptions = {}) {
   }, [accessToken, cryptoReady, user?.id, reconnectTrigger]) // reconnectTrigger forces reconnect
 
   // Send encrypted message (queues if disconnected)
-  const sendMessage = useCallback(async (recipientId: string, plaintext: string, fileIds?: string[]) => {
+  const sendMessage = useCallback(async (recipientId: string, plaintext: string, options?: { files?: { id: string; filename: string; mimeType: string; sizeBytes: number }[]; replyToId?: number }) => {
     if (!user) throw new Error('Not authenticated')
 
     const { getOrDeriveSessionKeys, addMessage, fetchContactPublicKey } = storeRefs.current
+    const files = options?.files
+    const replyToId = options?.replyToId
 
     // Add optimistic message to store immediately
     const tempId = -Date.now() // Temporary negative ID
@@ -342,6 +345,8 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       content: plaintext,
       timestamp: new Date(),
       status: 'sending',
+      files: files?.map(f => ({ ...f, encryptionHeader: '' })),
+      replyToId,
     })
 
     // If not connected, queue the message for later
@@ -364,12 +369,14 @@ export function useMessaging(options: UseMessagingOptions = {}) {
     // Encrypt message
     const encryptedContent = await encryptMessage(plaintext, sessionKeys.tx)
 
-    // Send via WebSocket (include fileIds if present)
+    // Send via WebSocket (include fileIds and replyToId if present)
+    const fileIds = files?.map(f => f.id)
     wsRef.current.send(JSON.stringify({
       type: 'message',
       recipientId,
       encryptedContent,
       ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+      ...(replyToId ? { replyToId } : {}),
     }))
   }, [user])
 

@@ -114,24 +114,24 @@ export function FilePreview({
   // Generic file
   return (
     <div className={cn(
-      'flex items-center gap-3 bg-gray-800 rounded-lg p-3 max-w-sm',
+      'flex items-center gap-3 bg-black/20 rounded-lg p-3 max-w-sm',
       className
     )}>
-      <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
-        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="w-10 h-10 bg-black/20 rounded-lg flex items-center justify-center">
+        <svg className="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       </div>
 
       <div className="flex-1 min-w-0">
         <p className="text-sm truncate">{filename}</p>
-        <p className="text-xs text-gray-500">{formatSize(sizeBytes)}</p>
+        <p className="text-xs opacity-70">{formatSize(sizeBytes)}</p>
       </div>
 
       <button
         onClick={handleDownload}
         disabled={isDownloading}
-        className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+        className="p-2 opacity-70 hover:opacity-100 hover:bg-black/20 rounded-lg transition-all disabled:opacity-50"
         title="Download"
       >
         {isDownloading || download?.status === 'downloading' ? (

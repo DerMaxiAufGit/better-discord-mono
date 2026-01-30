@@ -19,6 +19,7 @@ interface SettingsState {
   videoQuality: 'low' | 'medium' | 'high'
   preferredCameraId: string | null
   blurEnabled: boolean
+  blurIntensity: number  // 1-20, default 8
   selfViewPosition: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   selfViewHidden: boolean
 
@@ -35,6 +36,7 @@ interface SettingsState {
   setVideoQuality: (quality: 'low' | 'medium' | 'high') => void
   setPreferredCameraId: (deviceId: string | null) => void
   setBlurEnabled: (enabled: boolean) => void
+  setBlurIntensity: (intensity: number) => void
   setSelfViewPosition: (position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => void
   setSelfViewHidden: (hidden: boolean) => void
 }
@@ -59,6 +61,7 @@ export const useSettingsStore = create<SettingsState>()(
       videoQuality: 'medium' as const,
       preferredCameraId: null,
       blurEnabled: false,
+      blurIntensity: 8,
       selfViewPosition: 'bottom-right' as const,
       selfViewHidden: false,
 
@@ -104,6 +107,10 @@ export const useSettingsStore = create<SettingsState>()(
         set({ blurEnabled: enabled })
       },
 
+      setBlurIntensity: (intensity: number) => {
+        set({ blurIntensity: Math.max(1, Math.min(20, intensity)) })
+      },
+
       setSelfViewPosition: (position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => {
         set({ selfViewPosition: position })
       },
@@ -126,6 +133,7 @@ export const useSettingsStore = create<SettingsState>()(
         videoQuality: state.videoQuality,
         preferredCameraId: state.preferredCameraId,
         blurEnabled: state.blurEnabled,
+        blurIntensity: state.blurIntensity,
         selfViewPosition: state.selfViewPosition,
         selfViewHidden: state.selfViewHidden,
       }),

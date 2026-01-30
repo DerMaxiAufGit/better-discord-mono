@@ -29,32 +29,60 @@ export class BackgroundBlurProcessor {
 
   private onResults(results: Results): void {
     const { width, height } = this.outputCanvas
+    if (width === 0 || height === 0) return
 
-    // Draw blurred background
+    // Clear canvas
+    this.outputCtx.clearRect(0, 0, width, height)
+
+    // Step 1: Draw the blurred background (entire frame with blur)
+    this.outputCtx.globalCompositeOperation = 'source-over'
     this.outputCtx.filter = `blur(${this.blurAmount}px)`
     this.outputCtx.drawImage(results.image, 0, 0, width, height)
-
-    // Draw person without blur using segmentation mask
     this.outputCtx.filter = 'none'
-    this.outputCtx.globalCompositeOperation = 'destination-atop'
+
+    // Step 2: Cut out a person-shaped hole using the segmentation mask
+    // destination-out: removes pixels where the mask is opaque (person area)
+    this.outputCtx.globalCompositeOperation = 'destination-out'
     this.outputCtx.drawImage(results.segmentationMask, 0, 0, width, height)
+
+    // Step 3: Draw the sharp original frame behind (shows through the hole)
+    // destination-over: draws new content behind existing content
+    this.outputCtx.globalCompositeOperation = 'destination-over'
+    this.outputCtx.drawImage(results.image, 0, 0, width, height)
 
     // Reset composite operation
     this.outputCtx.globalCompositeOperation = 'source-over'
   }
 
   start(videoElement: HTMLVideoElement): void {
-    if (this.isProcessing || !this.segmenter) return
-    this.isProcessing = true
+    if (this.isProcessing || !this.segmenter) {
+      console.log('[BackgroundBlur] Cannot start: isProcessing=', this.isProcessing, 'segmenter=', !!this.segmenter)
+      return
+    }
 
     // Match canvas to video dimensions
-    this.outputCanvas.width = videoElement.videoWidth
-    this.outputCanvas.height = videoElement.videoHeight
+    const width = videoElement.videoWidth
+    const height = videoElement.videoHeight
+
+    if (width === 0 || height === 0) {
+      console.error('[BackgroundBlur] Video has no dimensions:', width, height)
+      return
+    }
+
+    this.outputCanvas.width = width
+    this.outputCanvas.height = height
+    this.isProcessing = true
+
+    console.log('[BackgroundBlur] Starting processing at', width, 'x', height)
 
     const processFrame = async () => {
       if (!this.isProcessing) return
 
-      await this.segmenter!.send({ image: videoElement })
+      try {
+        await this.segmenter!.send({ image: videoElement })
+      } catch (e) {
+        console.error('[BackgroundBlur] Error processing frame:', e)
+      }
 
       // Throttle to ~20fps for performance
       this.animationFrameId = requestAnimationFrame(() => {

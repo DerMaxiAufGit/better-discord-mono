@@ -75,10 +75,12 @@ export class PeerConnectionManager {
 
     // Perfect Negotiation: handle negotiation needed
     this.pc.onnegotiationneeded = async () => {
+      console.log('[PeerConnection] onnegotiationneeded fired');
       try {
         this.makingOffer = true;
         // Use parameter-less setLocalDescription for implicit offer
         await this.pc!.setLocalDescription();
+        console.log('[PeerConnection] Sending renegotiation offer');
         this.config.signaling.send({
           type: 'call-offer',
           recipientId: this.config.remoteUserId,
@@ -86,7 +88,7 @@ export class PeerConnectionManager {
           sdp: this.pc!.localDescription!.sdp,
         });
       } catch (err) {
-        console.error('Error during negotiation:', err);
+        console.error('[PeerConnection] Error during negotiation:', err);
       } finally {
         this.makingOffer = false;
       }
@@ -94,11 +96,17 @@ export class PeerConnectionManager {
 
     // Handle incoming tracks (remote audio/video)
     this.pc.ontrack = (event) => {
-      // Create a MediaStream for each track
-      const stream = event.streams[0];
-      if (stream) {
-        this.config.onTrack(stream);
+      console.log(`[PeerConnection] ontrack: ${event.track.kind} track received`);
+
+      // Use the stream from the event, or create one if not provided
+      let stream = event.streams[0];
+      if (!stream) {
+        // Some browsers don't provide streams, create one
+        console.log('[PeerConnection] No stream in event, creating new MediaStream');
+        stream = new MediaStream([event.track]);
       }
+
+      this.config.onTrack(stream);
     };
 
     // Monitor ICE connection state for reconnection handling
@@ -274,6 +282,33 @@ export class PeerConnectionManager {
       }
     }
     return enabled;
+  }
+
+  /**
+   * Get all RTP senders (for track management).
+   */
+  getSenders(): RTCRtpSender[] {
+    return this.pc?.getSenders() ?? [];
+  }
+
+  /**
+   * Add a single track to the peer connection.
+   */
+  addTrack(track: MediaStreamTrack, stream: MediaStream): RTCRtpSender | null {
+    if (!this.pc) {
+      return null;
+    }
+    return this.pc.addTrack(track, stream);
+  }
+
+  /**
+   * Remove a sender from the peer connection.
+   */
+  removeTrack(sender: RTCRtpSender): void {
+    if (!this.pc) {
+      return;
+    }
+    this.pc.removeTrack(sender);
   }
 }
 

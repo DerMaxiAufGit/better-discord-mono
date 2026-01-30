@@ -23,7 +23,16 @@ const fastify = Fastify({
 
 // Register plugins
 await fastify.register(cors, {
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: (origin, cb) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    // or any origin in development, or specific origins from env
+    const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      cb(null, origin || true);
+    } else {
+      cb(null, origin); // Reflect the origin for credentials support
+    }
+  },
   credentials: true
 });
 

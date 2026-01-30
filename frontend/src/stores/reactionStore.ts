@@ -4,7 +4,7 @@ import { apiRequest } from '@/lib/api'
 export interface ReactionSummary {
   emoji: string
   count: number
-  users: { userId: string; email: string }[]
+  users: { userId: string; email: string; username?: string | null }[]
   userReacted: boolean
 }
 

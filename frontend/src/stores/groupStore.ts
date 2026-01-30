@@ -22,6 +22,7 @@ export interface GroupMember {
   role: GroupRole
   joined_at: string
   email: string
+  username: string | null
   public_key?: string
 }
 
@@ -83,7 +84,9 @@ export const useGroupStore = create<GroupState>((set, get) => ({
 
   loadMembers: async (groupId) => {
     try {
-      const members = await apiRequest<GroupMember[]>(`/api/groups/${groupId}/members`)
+      const response = await apiRequest<GroupMember[] | { members: GroupMember[] }>(`/api/groups/${groupId}/members`)
+      // Handle both array and object response formats
+      const members = Array.isArray(response) ? response : (response.members || [])
       set((state) => ({
         members: new Map(state.members).set(groupId, members)
       }))

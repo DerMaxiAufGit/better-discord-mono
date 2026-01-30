@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect, useState } from 'react'
 import { useCallStore, CallStatus } from '@/stores/callStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/auth'
@@ -7,6 +7,7 @@ import { PeerConnectionManager, createPeerConnection, SignalingChannel } from '.
 import { sendViaSharedWebSocket } from '@/lib/websocket/sharedWebSocket'
 import { playRingtone, playRingback, resumeAudioContext, stopCurrentTone } from './ringtone'
 import { toast } from '@/lib/toast'
+import { useBackgroundBlur } from '@/lib/video/useBackgroundBlur'
 
 /**
  * Return type for useCall hook
@@ -21,6 +22,13 @@ interface UseCallReturn {
   isMinimized: boolean
   startTime: Date | null
 
+  // Video state
+  isVideoEnabled: boolean
+  localVideoStream: MediaStream | null
+  remoteVideoStream: MediaStream | null
+  displayStream: MediaStream | null // Stream to display (processed when blur on)
+  isBlurProcessing: boolean
+
   // Actions
   startCall: (userId: string, username: string) => Promise<void>
   acceptCall: () => Promise<void>
@@ -28,6 +36,7 @@ interface UseCallReturn {
   hangup: () => void
   toggleMute: () => void
   toggleMinimized: () => void
+  toggleVideo: () => Promise<void>
 }
 
 /**
@@ -134,12 +143,29 @@ export function useCall(): UseCallReturn {
     reset,
   } = useCallStore()
 
-  const { selectedMicId, ringTimeout, ringtoneEnabled } = useSettingsStore()
+  const { selectedMicId, ringTimeout, ringtoneEnabled, videoQuality, preferredCameraId, blurEnabled, blurIntensity } = useSettingsStore()
   const { user, accessToken } = useAuthStore()
+
+  // Video state
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false)
+  const [localVideoStream, setLocalVideoStream] = useState<MediaStream | null>(null)
+  const [remoteVideoStream, setRemoteVideoStream] = useState<MediaStream | null>(null)
+
+  // Background blur processing
+  console.log('[useCall] Blur state:', { blurEnabled, blurIntensity, hasLocalVideoStream: !!localVideoStream })
+  const { processedStream, isProcessing: isBlurProcessing } = useBackgroundBlur(
+    localVideoStream,
+    blurEnabled,
+    blurIntensity
+  )
+  // Display stream is the processed stream (with blur) or raw stream
+  const displayStream = processedStream || localVideoStream
+  console.log('[useCall] Display stream:', { hasProcessedStream: !!processedStream, hasDisplayStream: !!displayStream })
 
   // Refs for WebRTC resources
   const peerConnectionRef = useRef<PeerConnectionManager | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
+  const localVideoStreamRef = useRef<MediaStream | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
   const qualityIntervalRef = useRef<number | null>(null)
   const ringTimeoutRef = useRef<number | null>(null)
@@ -282,6 +308,15 @@ export function useCall(): UseCallReturn {
       localStreamRef.current = null
     }
 
+    // Stop local video tracks
+    if (localVideoStreamRef.current) {
+      localVideoStreamRef.current.getTracks().forEach((track) => track.stop())
+      localVideoStreamRef.current = null
+    }
+    setIsVideoEnabled(false)
+    setLocalVideoStream(null)
+    setRemoteVideoStream(null)
+
     // Stop remote audio
     if (audioElementRef.current) {
       audioElementRef.current.pause()
@@ -332,17 +367,28 @@ export function useCall(): UseCallReturn {
    * Handle remote track received
    */
   const handleRemoteTrack = useCallback((stream: MediaStream) => {
-    console.log('[useCall] Remote track received')
+    console.log('[useCall] Remote track received, tracks:', stream.getTracks().map(t => t.kind))
     remoteStreamRef.current = stream
 
-    // Create audio element if needed
-    if (!audioElementRef.current) {
-      audioElementRef.current = new Audio()
-      audioElementRef.current.autoplay = true
+    // Check for video tracks
+    const videoTracks = stream.getVideoTracks()
+    if (videoTracks.length > 0) {
+      console.log('[useCall] Remote video track received')
+      setRemoteVideoStream(stream)
     }
 
-    audioElementRef.current.srcObject = stream
-    audioElementRef.current.play().catch((e) => console.error('[useCall] Audio play error:', e))
+    // Check for audio tracks
+    const audioTracks = stream.getAudioTracks()
+    if (audioTracks.length > 0) {
+      // Create audio element if needed
+      if (!audioElementRef.current) {
+        audioElementRef.current = new Audio()
+        audioElementRef.current.autoplay = true
+      }
+
+      audioElementRef.current.srcObject = stream
+      audioElementRef.current.play().catch((e) => console.error('[useCall] Audio play error:', e))
+    }
   }, [])
 
   /**
@@ -600,6 +646,130 @@ export function useCall(): UseCallReturn {
   }, [storeToggleMute])
 
   /**
+   * Toggle video on/off
+   */
+  const toggleVideo = useCallback(async (): Promise<void> => {
+    const pc = peerConnectionRef.current
+
+    if (isVideoEnabled) {
+      // Stop video
+      console.log('[useCall] Stopping video')
+      try {
+        if (localVideoStreamRef.current) {
+          localVideoStreamRef.current.getTracks().forEach(track => track.stop())
+          localVideoStreamRef.current = null
+        }
+        setIsVideoEnabled(false)
+        setLocalVideoStream(null)
+
+        // Remove video track from peer connection
+        if (pc) {
+          try {
+            const senders = pc.getSenders()
+            const videoSender = senders.find((s: RTCRtpSender) => s.track?.kind === 'video')
+            if (videoSender) {
+              pc.removeTrack(videoSender)
+            }
+          } catch (e) {
+            console.error('[useCall] Error removing video track:', e)
+          }
+        }
+      } catch (error) {
+        console.error('[useCall] Error stopping video:', error)
+      }
+    } else {
+      // Start video
+      console.log('[useCall] Starting video')
+      try {
+        // Check if mediaDevices is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          toast.error('Camera not supported on this device')
+          return
+        }
+
+        // Get video constraints based on quality setting
+        const qualityConstraints: Record<string, { width: number; height: number }> = {
+          low: { width: 640, height: 360 },
+          medium: { width: 1280, height: 720 },
+          high: { width: 1920, height: 1080 },
+        }
+        const quality = qualityConstraints[videoQuality] || qualityConstraints.medium
+
+        const constraints: MediaStreamConstraints = {
+          video: {
+            width: { ideal: quality.width },
+            height: { ideal: quality.height },
+            ...(preferredCameraId ? { deviceId: { exact: preferredCameraId } } : {}),
+          },
+          audio: false,
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        localVideoStreamRef.current = stream
+        setLocalVideoStream(stream)
+        setIsVideoEnabled(true)
+
+        // Add video track to peer connection
+        const videoTrack = stream.getVideoTracks()[0]
+        if (videoTrack && pc) {
+          try {
+            pc.addTrack(videoTrack, stream)
+            console.log('[useCall] Video track added to peer connection')
+          } catch (e) {
+            console.error('[useCall] Error adding video track to peer connection:', e)
+            // Video is still available locally even if peer connection fails
+          }
+        } else if (!pc) {
+          console.warn('[useCall] No peer connection, video only available locally')
+        }
+      } catch (error) {
+        console.error('[useCall] Failed to start video:', error)
+        // Provide more specific error messages
+        if (error instanceof Error) {
+          if (error.name === 'NotAllowedError') {
+            toast.error('Camera permission denied')
+          } else if (error.name === 'NotFoundError') {
+            toast.error('No camera found')
+          } else if (error.name === 'NotReadableError') {
+            toast.error('Camera is in use by another app')
+          } else {
+            toast.error('Failed to start camera: ' + error.message)
+          }
+        } else {
+          toast.error('Failed to start camera')
+        }
+      }
+    }
+  }, [isVideoEnabled, videoQuality, preferredCameraId])
+
+  /**
+   * Effect to replace video track when blur is toggled mid-call.
+   * Uses replaceTrack() for seamless switching without renegotiation.
+   */
+  useEffect(() => {
+    const pc = peerConnectionRef.current
+    if (!pc || !isVideoEnabled) return
+
+    // Get the track we should be sending (from processed or raw stream)
+    const streamToSend = processedStream || localVideoStream
+    if (!streamToSend) return
+
+    const newVideoTrack = streamToSend.getVideoTracks()[0]
+    if (!newVideoTrack) return
+
+    // Find the video sender and replace its track
+    const senders = pc.getSenders()
+    const videoSender = senders.find((s: RTCRtpSender) => s.track?.kind === 'video')
+
+    if (videoSender && videoSender.track !== newVideoTrack) {
+      console.log('[useCall] Replacing video track for blur toggle')
+      videoSender.replaceTrack(newVideoTrack).catch((e) => {
+        console.error('[useCall] Failed to replace video track:', e)
+      })
+    }
+  }, [processedStream, localVideoStream, isVideoEnabled])
+
+  /**
    * Handle incoming signaling messages
    */
   useEffect(() => {
@@ -611,8 +781,25 @@ export function useCall(): UseCallReturn {
 
       switch (message.type) {
         case 'call-offer': {
-          // Incoming call
+          // Incoming call or renegotiation
           console.log('[useCall] call-offer received, currentStatus:', currentStatus, 'currentCallId:', currentCallId, 'messageCallId:', message.callId)
+
+          // If this is for our current active call, it's a renegotiation (e.g., adding video)
+          if (currentCallId === message.callId && ['connecting', 'connected', 'reconnecting'].includes(currentStatus)) {
+            console.log('[useCall] Renegotiation offer for current call')
+            if (message.sdp && peerConnectionRef.current) {
+              try {
+                await peerConnectionRef.current.handleRemoteDescription({
+                  type: 'offer',
+                  sdp: message.sdp,
+                })
+                console.log('[useCall] Handled renegotiation offer')
+              } catch (e) {
+                console.error('[useCall] Error handling renegotiation offer:', e)
+              }
+            }
+            return
+          }
 
           // If we're already handling this exact call (same callId), just store the SDP
           // This happens because caller sends initial notification, then Perfect Negotiation sends offer with SDP
@@ -760,6 +947,13 @@ export function useCall(): UseCallReturn {
     isMinimized,
     startTime,
 
+    // Video state
+    isVideoEnabled,
+    localVideoStream,
+    remoteVideoStream,
+    displayStream,
+    isBlurProcessing,
+
     // Actions
     startCall,
     acceptCall,
@@ -767,5 +961,6 @@ export function useCall(): UseCallReturn {
     hangup,
     toggleMute,
     toggleMinimized,
+    toggleVideo,
   }
 }

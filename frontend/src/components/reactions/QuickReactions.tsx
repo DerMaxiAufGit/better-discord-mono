@@ -95,7 +95,7 @@ export function QuickReactions({
         <ReactionPicker
           onSelect={handleReact}
           onClose={closePicker}
-          position="top"
+          position="bottom"
           align={pickerAlign}
         />
       )}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useGroupStore, GroupMember, GroupRole } from '@/stores/groupStore'
 import { useAuthStore } from '@/stores/auth'
 import { Avatar } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface MemberListProps {
@@ -25,29 +26,39 @@ const ROLE_LABELS: Record<GroupRole, string> = {
 }
 
 export function MemberList({ groupId, isCollapsed, onToggle }: MemberListProps) {
-  const members = useGroupStore((s) => s.members.get(groupId) || [])
+  const membersMap = useGroupStore((s) => s.members)
   const loadMembers = useGroupStore((s) => s.loadMembers)
   const removeMember = useGroupStore((s) => s.removeMember)
   const changeRole = useGroupStore((s) => s.changeRole)
   const currentUserId = useAuthStore((s) => s.user?.id)
 
   const [selectedMember, setSelectedMember] = useState<GroupMember | null>(null)
+  const [memberToRemove, setMemberToRemove] = useState<GroupMember | null>(null)
+  const [isRemoving, setIsRemoving] = useState(false)
+
+  // Get members array safely
+  const members = membersMap.get(groupId) || []
+
+  // Ensure members is always an array
+  const membersList = Array.isArray(members) ? members : []
 
   useEffect(() => {
-    loadMembers(groupId)
+    if (groupId) {
+      loadMembers(groupId)
+    }
   }, [groupId, loadMembers])
 
-  const currentUserRole = members.find(m => m.user_id === String(currentUserId))?.role
+  const currentUserRole = membersList.find(m => m.user_id === String(currentUserId))?.role
 
   const canManageRoles = currentUserRole === 'owner'
   const canRemove = currentUserRole === 'owner' || currentUserRole === 'admin'
 
   // Group members by role
   const groupedMembers = {
-    owner: members.filter(m => m.role === 'owner'),
-    admin: members.filter(m => m.role === 'admin'),
-    moderator: members.filter(m => m.role === 'moderator'),
-    member: members.filter(m => m.role === 'member')
+    owner: membersList.filter(m => m.role === 'owner'),
+    admin: membersList.filter(m => m.role === 'admin'),
+    moderator: membersList.filter(m => m.role === 'moderator'),
+    member: membersList.filter(m => m.role === 'member')
   }
 
   const handleRoleChange = async (userId: string, newRole: GroupRole) => {
@@ -55,11 +66,24 @@ export function MemberList({ groupId, isCollapsed, onToggle }: MemberListProps) 
     setSelectedMember(null)
   }
 
-  const handleRemove = async (userId: string) => {
-    if (confirm('Remove this member from the group?')) {
-      await removeMember(groupId, userId)
+  const handleRemoveClick = (member: GroupMember) => {
+    setMemberToRemove(member)
+  }
+
+  const handleRemoveConfirm = async () => {
+    if (!memberToRemove) return
+    setIsRemoving(true)
+    try {
+      await removeMember(groupId, memberToRemove.user_id)
       setSelectedMember(null)
+      setMemberToRemove(null)
+    } finally {
+      setIsRemoving(false)
     }
+  }
+
+  const handleRemoveCancel = () => {
+    setMemberToRemove(null)
   }
 
   if (isCollapsed) {
@@ -79,7 +103,7 @@ export function MemberList({ groupId, isCollapsed, onToggle }: MemberListProps) 
   return (
     <div className="w-60 border-l border-gray-800 bg-gray-900 overflow-y-auto">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <h3 className="font-medium text-gray-300">Members - {members.length}</h3>
+        <h3 className="font-medium text-gray-300">Members - {membersList.length}</h3>
         {onToggle && (
           <button
             onClick={onToggle}
@@ -117,11 +141,11 @@ export function MemberList({ groupId, isCollapsed, onToggle }: MemberListProps) 
                 >
                   <Avatar
                     className="w-8 h-8"
-                    fallback={member.email.charAt(0).toUpperCase()}
+                    fallback={(member.username || member.email || '?').charAt(0).toUpperCase()}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm truncate">
-                      {member.email.split('@')[0]}
+                      {member.username || (member.email || 'Unknown').split('@')[0]}
                       {member.user_id === String(currentUserId) && (
                         <span className="text-gray-500 ml-1">(you)</span>
                       )}
@@ -141,7 +165,7 @@ export function MemberList({ groupId, isCollapsed, onToggle }: MemberListProps) 
             className="absolute right-64 top-1/3 bg-gray-800 rounded-lg shadow-xl p-4 min-w-[200px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="font-medium mb-2">{selectedMember.email.split('@')[0]}</p>
+            <p className="font-medium mb-2">{selectedMember.username || (selectedMember.email || 'Unknown').split('@')[0]}</p>
             <p className="text-sm text-gray-400 mb-4">{ROLE_LABELS[selectedMember.role] || 'Member'}</p>
 
             {canManageRoles && selectedMember.role !== 'owner' && (
@@ -164,12 +188,47 @@ export function MemberList({ groupId, isCollapsed, onToggle }: MemberListProps) 
 
             {canRemove && selectedMember.role !== 'owner' && (
               <button
-                onClick={() => handleRemove(selectedMember.user_id)}
+                onClick={() => handleRemoveClick(selectedMember)}
                 className="w-full text-left px-3 py-1.5 rounded text-sm text-red-500 hover:bg-red-500/10"
               >
                 Remove from Group
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Remove Member Confirmation Dialog */}
+      {memberToRemove && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={handleRemoveCancel}>
+          <div
+            className="bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-2">Remove Member</h3>
+            <p className="text-gray-400 mb-6">
+              Are you sure you want to remove{' '}
+              <span className="text-white font-medium">
+                {memberToRemove.username || (memberToRemove.email || 'Unknown').split('@')[0]}
+              </span>{' '}
+              from this group?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={handleRemoveCancel}
+                disabled={isRemoving}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleRemoveConfirm}
+                disabled={isRemoving}
+              >
+                {isRemoving ? 'Removing...' : 'Remove'}
+              </Button>
+            </div>
           </div>
         </div>
       )}

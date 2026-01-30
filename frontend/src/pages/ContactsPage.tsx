@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usersApi, friendsApi } from '@/lib/api';
 import { useContactStore } from '@/stores/contactStore';
-import { useCall } from '@/lib/webrtc/useCall';
+import { useCall } from '@/contexts/CallContext';
 
 interface User {
   id: string;

@@ -6,10 +6,12 @@ import type { AuthResponse } from '../types/index.js';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Cookie configuration
+// COOKIE_SECURE env var controls secure flag (for HTTPS)
+// Default: false for development/local, set COOKIE_SECURE=true when using HTTPS
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  secure: process.env.COOKIE_SECURE === 'true',
+  sameSite: 'lax' as const, // 'lax' allows cookie on same-site navigation
   path: '/api/auth',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
 };
@@ -150,8 +152,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     // Clear refresh token cookie (must match all options from setCookie)
     reply.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict' as const,
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: 'lax' as const,
       path: '/api/auth',
     });
 

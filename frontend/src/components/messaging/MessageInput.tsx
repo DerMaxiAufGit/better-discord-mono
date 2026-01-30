@@ -15,16 +15,25 @@ interface ReplyTo {
 interface PendingFile {
   id: string;
   filename: string;
+  mimeType: string;
+  sizeBytes: number;
   uploading: boolean;
 }
 
 interface TypingUser {
   userId: string;
-  email?: string;
+  username?: string;
+}
+
+interface FileMetadata {
+  id: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
 }
 
 interface MessageInputProps {
-  onSend: (message: string, options?: { replyToId?: number; fileIds?: string[] }) => void;
+  onSend: (message: string, options?: { replyToId?: number; files?: FileMetadata[] }) => void;
   disabled?: boolean;
   placeholder?: string;
   replyTo?: ReplyTo | null;
@@ -56,7 +65,12 @@ export function MessageInput({
     if ((trimmed || completedFiles.length > 0) && !disabled) {
       onSend(trimmed, {
         replyToId: replyTo?.id,
-        fileIds: completedFiles.map(f => f.id)
+        files: completedFiles.map(f => ({
+          id: f.id,
+          filename: f.filename,
+          mimeType: f.mimeType,
+          sizeBytes: f.sizeBytes
+        }))
       });
       setMessage('');
       setFiles([]);
@@ -73,13 +87,25 @@ export function MessageInput({
 
     for (const file of Array.from(selectedFiles)) {
       const tempId = `temp-${Date.now()}-${file.name}`;
-      setFiles(prev => [...prev, { id: tempId, filename: file.name, uploading: true }]);
+      setFiles(prev => [...prev, {
+        id: tempId,
+        filename: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        sizeBytes: file.size,
+        uploading: true
+      }]);
 
       try {
         const result = await uploadFile(file, conversationId);
         setFiles(prev => prev.map(f =>
           f.id === tempId
-            ? { id: result.id, filename: result.filename, uploading: false }
+            ? {
+                id: result.id,
+                filename: result.filename,
+                mimeType: result.mimeType || file.type || 'application/octet-stream',
+                sizeBytes: result.sizeBytes || file.size,
+                uploading: false
+              }
             : f
         ));
       } catch (err) {
@@ -100,6 +126,41 @@ export function MessageInput({
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const clipboardData = e.clipboardData;
+    if (!clipboardData) return;
+
+    // Check for files directly
+    if (clipboardData.files && clipboardData.files.length > 0) {
+      e.preventDefault();
+      handleFileSelect(clipboardData.files);
+      return;
+    }
+
+    // Check clipboard items (for screenshots/copied images)
+    const items = clipboardData.items;
+    if (!items) return;
+
+    const fileItems: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) {
+          fileItems.push(file);
+        }
+      }
+    }
+
+    if (fileItems.length > 0) {
+      e.preventDefault();
+      // Create a fake FileList-like structure
+      const dt = new DataTransfer();
+      fileItems.forEach(f => dt.items.add(f));
+      handleFileSelect(dt.files);
+    }
+  };
+
   // Auto-resize textarea
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
@@ -117,6 +178,13 @@ export function MessageInput({
           replyTo={replyTo}
           onCancel={() => onCancelReply?.()}
         />
+      )}
+
+      {/* Typing indicator - above input */}
+      {typingUsers.length > 0 && (
+        <div className="px-4 pt-2">
+          <TypingIndicator users={typingUsers} />
+        </div>
       )}
 
       {/* Attached files preview */}
@@ -162,6 +230,7 @@ export function MessageInput({
           value={message}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder={placeholder}
           disabled={disabled}
           rows={1}
@@ -183,13 +252,6 @@ export function MessageInput({
           <span className="sr-only">Send message</span>
         </Button>
       </form>
-
-      {/* Typing indicator */}
-      {typingUsers.length > 0 && (
-        <div className="px-4 pb-2">
-          <TypingIndicator users={typingUsers} />
-        </div>
-      )}
     </div>
   );
 }

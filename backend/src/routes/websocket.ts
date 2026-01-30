@@ -4,6 +4,7 @@ import { wsAuthHook } from '../middleware/wsAuth.js';
 import { messageService } from '../services/messageService.js';
 import { friendService } from '../services/friendService.js';
 import { handleTypingEvent } from '../services/typingService.js';
+import { pool } from '../db/index.js';
 
 // WebRTC ICE candidate type (browser built-in, define for Node)
 interface RTCIceCandidateInit {
@@ -37,6 +38,7 @@ interface IncomingMessage {
   groupId?: string;  // For group messages
   encryptedContent?: string;
   fileIds?: string[];  // Optional file attachment IDs
+  replyToId?: number;  // Optional reply to message ID
 
   // Typing indicator fields
   conversationId?: string;
@@ -123,7 +125,8 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             userId,
             msg.recipientId,
             msg.encryptedContent,
-            msg.fileIds
+            msg.fileIds,
+            msg.replyToId
           );
 
           // Acknowledge to sender (include recipientId so client can match pending message)
@@ -143,7 +146,8 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
               senderId: userId,
               encryptedContent: saved.encryptedContent,
               timestamp: saved.createdAt.toISOString(),
-            } as OutgoingMessage));
+              ...(saved.replyToId ? { replyToId: saved.replyToId } : {}),
+            }));
             await messageService.markDelivered(saved.id);
 
             // Notify sender that message was delivered
@@ -213,22 +217,31 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
           }
         } else if (msg.type === 'typing') {
           // Handle typing indicator with service
-          if (!msg.recipientId || msg.conversationId === undefined || msg.isTyping === undefined) {
+          if (!msg.recipientId || msg.isTyping === undefined) {
             return;
           }
 
-          // Track typing state in service
-          handleTypingEvent(msg.conversationId, userId, msg.isTyping);
+          // Track typing state in service (use recipientId as conversationId for DMs)
+          handleTypingEvent(msg.recipientId, userId, msg.isTyping);
+
+          // Get user's username from database
+          const userResult = await pool.query(
+            'SELECT username, email FROM users WHERE id = $1',
+            [userId]
+          );
+          const username = userResult.rows[0]?.username || userResult.rows[0]?.email?.split('@')[0] || 'Someone';
 
           // Broadcast to recipient (for 1:1 conversations)
+          // Use sender's userId as conversationId - that's how recipient identifies this conversation
           const recipientSocket = activeConnections.get(msg.recipientId);
           if (recipientSocket && recipientSocket.readyState === 1) {
             recipientSocket.send(JSON.stringify({
               type: 'typing',
-              senderId: userId,
-              conversationId: msg.conversationId,
+              userId: userId,
+              username: username,
+              conversationId: userId,  // Recipient's view: conversation with sender
               isTyping: msg.isTyping,
-            } as TypingIndicator));
+            }));
           }
         } else if (msg.type === 'read') {
           // Mark messages as read and notify sender

@@ -35,6 +35,7 @@ export interface Message {
   createdAt: Date;
   deliveredAt: Date | null;
   readAt: Date | null;
+  replyToId?: number;
 }
 
 export interface MessageHistoryResponse {

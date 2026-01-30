@@ -10,7 +10,7 @@ export interface ReactionWithUser extends Reaction {
 export interface ReactionSummary {
   emoji: string
   count: number
-  users: { userId: string; email: string }[]
+  users: { userId: string; email: string; username: string | null }[]
   userReacted: boolean // whether current user has reacted
 }
 
@@ -71,7 +71,7 @@ export async function toggleReaction(messageId: number, userId: string, emoji: s
 
 export async function getReactions(messageId: number, currentUserId?: string): Promise<ReactionSummary[]> {
   const result = await pool.query(
-    `SELECT r.emoji, r.user_id, u.email
+    `SELECT r.emoji, r.user_id, u.email, u.username
      FROM reactions r
      JOIN users u ON r.user_id = u.id
      WHERE r.message_id = $1
@@ -80,7 +80,7 @@ export async function getReactions(messageId: number, currentUserId?: string): P
   )
 
   // Group by emoji
-  const emojiMap = new Map<string, { users: { userId: string; email: string }[] }>()
+  const emojiMap = new Map<string, { users: { userId: string; email: string; username: string | null }[] }>()
 
   for (const row of result.rows) {
     if (!emojiMap.has(row.emoji)) {
@@ -88,7 +88,8 @@ export async function getReactions(messageId: number, currentUserId?: string): P
     }
     emojiMap.get(row.emoji)!.users.push({
       userId: row.user_id,
-      email: row.email
+      email: row.email,
+      username: row.username
     })
   }
 
@@ -110,7 +111,7 @@ export async function getReactionsForMessages(messageIds: number[], currentUserI
   if (messageIds.length === 0) return new Map()
 
   const result = await pool.query(
-    `SELECT r.message_id, r.emoji, r.user_id, u.email
+    `SELECT r.message_id, r.emoji, r.user_id, u.email, u.username
      FROM reactions r
      JOIN users u ON r.user_id = u.id
      WHERE r.message_id = ANY($1)
@@ -119,7 +120,7 @@ export async function getReactionsForMessages(messageIds: number[], currentUserI
   )
 
   // Group by message, then by emoji
-  const messageMap = new Map<number, Map<string, { users: { userId: string; email: string }[] }>>()
+  const messageMap = new Map<number, Map<string, { users: { userId: string; email: string; username: string | null }[] }>>()
 
   for (const row of result.rows) {
     if (!messageMap.has(row.message_id)) {
@@ -132,7 +133,8 @@ export async function getReactionsForMessages(messageIds: number[], currentUserI
     }
     emojiMap.get(row.emoji)!.users.push({
       userId: row.user_id,
-      email: row.email
+      email: row.email,
+      username: row.username
     })
   }
 

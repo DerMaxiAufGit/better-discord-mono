@@ -7,7 +7,7 @@ import { CallControls } from './CallControls'
 import { CallQualityIndicator } from './CallQualityIndicator'
 import { CallTimer } from './CallTimer'
 import { VideoPreview, SelfView } from '@/components/video/VideoPreview'
-import { VideoControlBar } from '@/components/video/VideoControls'
+import { isBlurSupported } from '@/lib/video/backgroundBlur'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { cn } from '@/lib/utils'
 import type { CallStatus } from '@/stores/callStore'
@@ -61,7 +61,8 @@ export function ActiveCallWindow({
   const { isMobile } = useBreakpoint()
 
   // Video settings from store
-  const { selfViewPosition, selfViewHidden, blurEnabled, setBlurEnabled, setSelfViewHidden } = useSettingsStore()
+  const { selfViewPosition, selfViewHidden, blurEnabled, setBlurEnabled, blurIntensity, setBlurIntensity, setSelfViewHidden, videoQuality, setVideoQuality } = useSettingsStore()
+  const [showQualityMenu, setShowQualityMenu] = useState(false)
 
   // Check if remote has active video
   const hasRemoteVideo = remoteVideoStream && remoteVideoStream.getVideoTracks().length > 0 &&
@@ -276,19 +277,78 @@ export function ActiveCallWindow({
           />
         )}
 
-        {/* Video control bar overlay */}
-        {onToggleVideo && (
-          <VideoControlBar
-            isCameraOn={isVideoEnabled}
-            isBlurOn={blurEnabled}
-            onToggleCamera={onToggleVideo}
-            onToggleBlur={() => setBlurEnabled(!blurEnabled)}
-          />
-        )}
       </div>
 
-      {/* Bottom controls - audio controls and hangup */}
-      <div className="absolute bottom-0 left-0 right-0 p-8 flex justify-center">
+      {/* Bottom controls - audio, video, settings, and hangup */}
+      <div className="absolute bottom-0 left-0 right-0 p-8 flex flex-col items-center gap-4">
+        {/* Video settings row (only when video is on) */}
+        {isVideoEnabled && (
+          <div className="flex items-center gap-3">
+            {/* Blur toggle (only if supported) */}
+            {isBlurSupported() && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setBlurEnabled(!blurEnabled)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm transition-colors',
+                    blurEnabled
+                      ? 'bg-blue-600 text-white hover:bg-blue-500'
+                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                  )}
+                  title="Toggle background blur"
+                >
+                  {blurEnabled ? 'Blur On' : 'Blur Off'}
+                </button>
+                {blurEnabled && (
+                  <div className="flex items-center gap-2 bg-gray-700 px-3 py-1.5 rounded-full">
+                    <span className="text-xs text-gray-300">Intensity</span>
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      value={blurIntensity}
+                      onChange={(e) => setBlurIntensity(Number(e.target.value))}
+                      className="w-20 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                      title={`Blur intensity: ${blurIntensity}`}
+                    />
+                    <span className="text-xs text-gray-300 w-4">{blurIntensity}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Quality selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowQualityMenu(!showQualityMenu)}
+                className="px-4 py-2 rounded-full text-sm bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+              >
+                Quality: {videoQuality.charAt(0).toUpperCase() + videoQuality.slice(1)}
+              </button>
+
+              {showQualityMenu && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-800 rounded-lg shadow-lg py-1 min-w-[120px]">
+                  {(['low', 'medium', 'high'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => {
+                        setVideoQuality(q)
+                        setShowQualityMenu(false)
+                      }}
+                      className={cn(
+                        'w-full px-4 py-2 text-left text-sm hover:bg-gray-700',
+                        videoQuality === q ? 'text-blue-400' : 'text-white'
+                      )}
+                    >
+                      {q.charAt(0).toUpperCase() + q.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <CallControls
           isMuted={isMuted}
           onToggleMute={onToggleMute}

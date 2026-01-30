@@ -1,9 +1,16 @@
+import { useState } from 'react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Lock, Phone, ArrowLeft } from 'lucide-react';
-import { useCall } from '@/lib/webrtc/useCall';
+import { useCall } from '@/contexts/CallContext';
+
+interface ReplyTo {
+  id: number;
+  content: string;
+  senderEmail: string;
+}
 
 interface Message {
   id: number;
@@ -11,31 +18,68 @@ interface Message {
   content: string;
   timestamp: Date;
   status: 'sending' | 'sent' | 'delivered' | 'read';
+  replyTo?: ReplyTo;
+}
+
+interface TypingUser {
+  userId: string;
+  username?: string;
+}
+
+interface FileMetadata {
+  id: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
 }
 
 interface ConversationViewProps {
   contactId: string;
   contactUsername: string;
+  contactEmail?: string;
   currentUserId: string;
   messages: Message[];
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, options?: { replyToId?: number; files?: FileMetadata[] }) => void;
   isLoading?: boolean;
-  onBack?: () => void;  // Called when back button clicked (mobile)
+  onBack?: () => void;
+  typingUsers?: TypingUser[];
+  onInputChange?: () => void;
 }
 
 export function ConversationView({
   contactId,
   contactUsername,
+  contactEmail,
   currentUserId,
   messages,
   onSendMessage,
   isLoading,
   onBack,
+  typingUsers = [],
+  onInputChange,
 }: ConversationViewProps) {
   const { startCall, status: callStatus } = useCall();
+  const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
 
   const handleStartCall = () => {
     startCall(contactId, contactUsername);
+  };
+
+  const handleSend = (content: string, options?: { replyToId?: number; files?: FileMetadata[] }) => {
+    onSendMessage(content, { replyToId: replyTo?.id ?? options?.replyToId, files: options?.files });
+    setReplyTo(null);
+  };
+
+  const handleReply = (message: Message) => {
+    // Determine sender email - if it's from the contact, use contactEmail
+    const senderEmail = message.senderId === currentUserId
+      ? 'You'
+      : contactEmail || contactUsername;
+    setReplyTo({
+      id: message.id,
+      content: message.content,
+      senderEmail,
+    });
   };
 
   return (
@@ -77,6 +121,7 @@ export function ConversationView({
             messages={messages}
             currentUserId={currentUserId}
             contactUsername={contactUsername}
+            onReply={handleReply}
           />
         </div>
       )}
@@ -84,8 +129,13 @@ export function ConversationView({
       {/* Input - fixed at bottom, always enabled (messages queue if offline) */}
       <div className="flex-shrink-0">
         <MessageInput
-          onSend={onSendMessage}
+          onSend={handleSend}
           placeholder="Type a message..."
+          replyTo={replyTo}
+          onCancelReply={() => setReplyTo(null)}
+          typingUsers={typingUsers}
+          onInputChange={onInputChange}
+          conversationId={contactId}
         />
       </div>
     </div>

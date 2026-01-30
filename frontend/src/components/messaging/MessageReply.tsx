@@ -14,10 +14,12 @@ interface MessageReplyProps {
 
 // Displayed on a message that is a reply
 export function MessageReply({ replyTo, onClick, className }: MessageReplyProps) {
-  const senderName = replyTo.senderEmail.split('@')[0]
-  const preview = replyTo.content.length > 100
-    ? replyTo.content.slice(0, 100) + '...'
-    : replyTo.content
+  const senderEmail = typeof replyTo.senderEmail === 'string' ? replyTo.senderEmail : ''
+  const senderName = senderEmail.split('@')[0] || 'Unknown'
+  const content = typeof replyTo.content === 'string' ? replyTo.content : ''
+  const preview = content.length > 100
+    ? content.slice(0, 100) + '...'
+    : content
 
   return (
     <div
@@ -46,10 +48,12 @@ interface ReplyPreviewProps {
 }
 
 export function ReplyPreview({ replyTo, onCancel, className }: ReplyPreviewProps) {
-  const senderName = replyTo.senderEmail.split('@')[0]
-  const preview = replyTo.content.length > 60
-    ? replyTo.content.slice(0, 60) + '...'
-    : replyTo.content
+  const senderEmail = typeof replyTo.senderEmail === 'string' ? replyTo.senderEmail : ''
+  const senderName = senderEmail.split('@')[0] || 'Unknown'
+  const content = typeof replyTo.content === 'string' ? replyTo.content : ''
+  const preview = content.length > 60
+    ? content.slice(0, 60) + '...'
+    : content
 
   return (
     <div className={cn(

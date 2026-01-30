@@ -18,9 +18,10 @@ interface ConversationListProps {
   onRefresh?: () => Promise<void>;
 }
 
-function formatRelativeTime(date: Date): string {
+function formatRelativeTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
   const now = new Date();
-  const diff = now.getTime() - date.getTime();
+  const diff = now.getTime() - d.getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
@@ -29,7 +30,7 @@ function formatRelativeTime(date: Date): string {
   if (minutes < 60) return `${minutes}m`;
   if (hours < 24) return `${hours}h`;
   if (days < 7) return `${days}d`;
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
 export function ConversationList({ conversations, activeId, onSelect, onRefresh }: ConversationListProps) {

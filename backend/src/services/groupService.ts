@@ -90,9 +90,9 @@ export async function deleteGroup(groupId: string, userId: string): Promise<bool
   return true
 }
 
-export async function getMembers(groupId: string): Promise<(GroupMember & { email: string })[]> {
+export async function getMembers(groupId: string): Promise<(GroupMember & { email: string; username: string | null })[]> {
   const result = await pool.query(
-    `SELECT gm.*, u.email FROM group_members gm
+    `SELECT gm.*, u.email, u.username FROM group_members gm
      JOIN users u ON gm.user_id = u.id
      WHERE gm.group_id = $1
      ORDER BY gm.role, gm.joined_at`,

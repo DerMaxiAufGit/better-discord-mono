@@ -31,6 +31,13 @@ export function useAudioDevices(): UseAudioDevicesReturn {
       setIsLoading(true)
       setError(null)
 
+      // Check if mediaDevices API is available
+      if (!navigator.mediaDevices?.enumerateDevices) {
+        setDevices({ inputs: [], outputs: [] })
+        setError('Media devices not supported in this browser')
+        return
+      }
+
       const allDevices = await navigator.mediaDevices.enumerateDevices()
 
       // Filter to audio devices only
@@ -72,6 +79,11 @@ export function useAudioDevices(): UseAudioDevicesReturn {
 
   // Get audio stream from microphone
   const getAudioStream = useCallback(async (deviceId?: string): Promise<MediaStream> => {
+    // Check if mediaDevices API is available
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Media devices not supported in this browser')
+    }
+
     const constraints: MediaStreamConstraints = {
       audio: {
         echoCancellation,
@@ -141,10 +153,15 @@ export function useAudioDevices(): UseAudioDevicesReturn {
       enumerateDevices()
     }
 
-    navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange)
+    // Check if mediaDevices API is available before adding listener
+    if (navigator.mediaDevices) {
+      navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange)
+    }
 
     return () => {
-      navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange)
+      if (navigator.mediaDevices) {
+        navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange)
+      }
     }
   }, [checkPermission, enumerateDevices])
 

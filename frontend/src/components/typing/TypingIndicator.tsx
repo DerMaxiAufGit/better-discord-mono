@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 interface TypingUser {
   userId: string
-  email?: string
+  username?: string
 }
 
 interface TypingIndicatorProps {

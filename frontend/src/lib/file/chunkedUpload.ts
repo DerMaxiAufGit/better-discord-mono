@@ -1,4 +1,4 @@
-import { encryptFile } from '@/lib/crypto/fileEncryption'
+import { encryptFile, decryptFile } from '@/lib/crypto/fileEncryption'
 import { useFileStore } from '@/stores/fileStore'
 import { useAuthStore } from '@/stores/auth'
 
@@ -26,8 +26,13 @@ export async function uploadFile(
   try {
     // Encrypt file
     fileStore.updateUploadStatus(tempId, 'encrypting', 10)
-    const { header, encryptedData } = await encryptFile(file)
+    const { header, key, encryptedData } = await encryptFile(file)
     fileStore.updateUploadStatus(tempId, 'encrypting', 50)
+
+    // Combine key + header for storage (temporary solution until proper key management)
+    const combinedHeader = new Uint8Array(key.length + header.length)
+    combinedHeader.set(key)
+    combinedHeader.set(header, key.length)
 
     // Prepare form data
     const formData = new FormData()
@@ -35,7 +40,7 @@ export async function uploadFile(
     const regularArray = new Uint8Array(encryptedData)
     const blob = new Blob([regularArray])
     formData.append('file', blob, file.name)
-    formData.append('encryptionHeader', btoa(String.fromCharCode(...header)))
+    formData.append('encryptionHeader', btoa(String.fromCharCode(...combinedHeader)))
 
     // Upload
     fileStore.updateUploadStatus(tempId, 'uploading', 60)
@@ -98,8 +103,13 @@ export async function downloadFile(fileId: string, filename: string): Promise<Bl
       throw new Error('Missing encryption header')
     }
 
-    // Store header for future use (when key management is implemented)
-    // const header = Uint8Array.from(atob(headerBase64), c => c.charCodeAt(0))
+    // Extract combined header (key + header)
+    const combinedHeader = Uint8Array.from(atob(headerBase64), c => c.charCodeAt(0))
+
+    // Key is 32 bytes (crypto_secretstream_xchacha20poly1305_KEYBYTES)
+    const KEY_BYTES = 32
+    const key = combinedHeader.slice(0, KEY_BYTES)
+    const header = combinedHeader.slice(KEY_BYTES)
 
     const encryptedData = new Uint8Array(await response.arrayBuffer())
 
@@ -108,17 +118,10 @@ export async function downloadFile(fileId: string, filename: string): Promise<Bl
     // Decrypt file
     fileStore.updateDownloadStatus(fileId, 'decrypting', 70)
 
-    // Note: For now, we need the key. In full implementation,
-    // key would be encrypted per-recipient and retrieved separately.
-    // This is a placeholder - actual key retrieval TBD in integration.
-    // For testing, we'll need to store/retrieve the key properly.
+    const decryptedData = await decryptFile(header, key, encryptedData)
 
-    // Placeholder: assume key is stored elsewhere
-    // const key = await getFileKey(fileId)
-    // const decryptedData = await decryptFile(header, key, encryptedData)
-
-    // For now, return raw encrypted data (decryption needs key management)
-    const regularArray = new Uint8Array(encryptedData)
+    // Convert to regular Uint8Array for Blob compatibility
+    const regularArray = new Uint8Array(decryptedData)
     const blob = new Blob([regularArray])
 
     fileStore.completeDownload(fileId, blob)

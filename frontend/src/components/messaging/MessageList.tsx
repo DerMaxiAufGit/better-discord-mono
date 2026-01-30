@@ -5,12 +5,21 @@ import { Avatar } from '@/components/ui/avatar';
 import { QuickReactions } from '@/components/reactions/QuickReactions';
 import { InlineReactions } from '@/components/reactions/ReactionList';
 import { ReplyButton, MessageReply } from '@/components/messaging/MessageReply';
+import { FilePreview } from '@/components/files/FilePreview';
 import { useReactionStore } from '@/stores/reactionStore';
 
 interface ReplyTo {
   id: number;
   content: string;
   senderEmail: string;
+}
+
+interface FileAttachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  encryptionHeader: string;
 }
 
 interface Message {
@@ -20,6 +29,8 @@ interface Message {
   timestamp: Date;
   status: 'sending' | 'sent' | 'delivered' | 'read';
   replyTo?: ReplyTo;
+  replyToId?: number;
+  files?: FileAttachment[];
 }
 
 interface MessageListProps {
@@ -58,6 +69,36 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply 
 
   // Reaction store
   const { reactions, loadReactions, toggleReaction } = useReactionStore();
+
+  // Build a lookup map for resolving replyToId to full message data
+  const messageMap = React.useMemo(() => {
+    const map = new Map<number, Message>();
+    messages.forEach(msg => map.set(msg.id, msg));
+    return map;
+  }, [messages]);
+
+  // Helper to get replyTo data from either replyTo object or replyToId
+  const getReplyTo = (message: Message): ReplyTo | undefined => {
+    if (message.replyTo) return message.replyTo;
+    if (message.replyToId) {
+      const repliedMsg = messageMap.get(message.replyToId);
+      if (repliedMsg) {
+        return {
+          id: repliedMsg.id,
+          content: repliedMsg.content,
+          senderEmail: repliedMsg.senderId === currentUserId ? 'You' : (contactUsername || repliedMsg.senderId),
+        };
+      }
+    }
+    return undefined;
+  };
+
+  // Handle double-click to reply
+  const handleDoubleClick = (message: Message) => {
+    if (onReply && message.id > 0) {
+      onReply(message);
+    }
+  };
 
   // Load reactions for visible messages
   React.useEffect(() => {
@@ -157,16 +198,19 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply 
             <div className="space-y-2">
               {group.messages.map((message) => {
                 const isOwn = message.senderId === currentUserId;
-                const messageReactions = reactions.get(message.id) || [];
+                const messageReactions = Array.isArray(reactions.get(message.id)) ? reactions.get(message.id)! : [];
                 const isHovered = hoveredMessageId === message.id;
+                const messageContent = typeof message.content === 'string' ? message.content : '';
+                const resolvedReplyTo = getReplyTo(message);
                 return (
                   <div
                     key={message.id}
                     id={`message-${message.id}`}
                     className={cn(
-                      'flex gap-2 group relative transition-colors duration-300',
+                      'flex gap-2 group relative transition-colors duration-300 px-2 -mx-2 rounded cursor-pointer',
                       isOwn ? 'justify-end' : 'justify-start'
                     )}
+                    onDoubleClick={() => handleDoubleClick(message)}
                   >
                     {!isOwn && (
                       <Avatar
@@ -176,10 +220,10 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply 
                     )}
                     <div className="flex flex-col max-w-[70%]">
                       {/* Reply preview if this message is a reply */}
-                      {message.replyTo && (
+                      {resolvedReplyTo && (
                         <MessageReply
-                          replyTo={message.replyTo}
-                          onClick={() => scrollToMessage(message.replyTo!.id)}
+                          replyTo={resolvedReplyTo}
+                          onClick={() => scrollToMessage(resolvedReplyTo.id)}
                           className="mb-1"
                         />
                       )}
@@ -197,8 +241,8 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply 
                         {(isHovered || lockedMessageId === message.id) && message.id > 0 && (
                           <div
                             className={cn(
-                              'absolute -top-8 flex items-center gap-1 bg-gray-800 rounded-full px-1 py-0.5 shadow-lg z-10',
-                              isOwn ? 'right-0' : 'left-0'
+                              'absolute top-1/2 -translate-y-1/2 flex items-center gap-1 bg-gray-800 rounded-full px-1 py-0.5 shadow-lg z-10',
+                              isOwn ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'
                             )}
                             onMouseEnter={() => handleMouseEnter(message.id)}
                             onMouseLeave={handleMouseLeave}
@@ -219,7 +263,23 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply 
                             )}
                           </div>
                         )}
-                        <p className="text-sm break-words">{message.content}</p>
+                        {messageContent && (
+                          <p className="text-sm break-words">{messageContent}</p>
+                        )}
+                        {/* File attachments */}
+                        {message.files && message.files.length > 0 && (
+                          <div className="space-y-2 mt-1">
+                            {message.files.map((file) => (
+                              <FilePreview
+                                key={file.id}
+                                fileId={file.id}
+                                filename={file.filename}
+                                mimeType={file.mimeType}
+                                sizeBytes={file.sizeBytes}
+                              />
+                            ))}
+                          </div>
+                        )}
                         <div
                           className={cn(
                             'flex items-center gap-1 mt-1',

@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import { messageApi } from '@/lib/api'
 
+interface FileAttachment {
+  id: string
+  filename: string
+  mimeType: string
+  sizeBytes: number
+  encryptionHeader: string
+}
+
 interface Message {
   id: number
   senderId: string
@@ -8,6 +16,8 @@ interface Message {
   content: string // Decrypted plaintext
   timestamp: Date
   status: 'sending' | 'sent' | 'delivered' | 'read'
+  files?: FileAttachment[]
+  replyToId?: number
 }
 
 interface QueuedMessage {
@@ -125,7 +135,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       const decryptedMessages: Message[] = []
       for (const msg of encryptedMessages) {
         const content = await decrypt(msg.encryptedContent, msg.senderId)
-        if (content) {
+        if (content !== null) {
           decryptedMessages.push({
             id: msg.id,
             senderId: msg.senderId,
@@ -133,6 +143,8 @@ export const useMessageStore = create<MessageState>((set, get) => ({
             content,
             timestamp: new Date(msg.createdAt),
             status: msg.readAt ? 'read' : msg.deliveredAt ? 'delivered' : 'sent',
+            files: msg.files,
+            replyToId: msg.replyToId,
           })
         }
       }
