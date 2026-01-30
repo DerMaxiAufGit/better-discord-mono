@@ -3,6 +3,7 @@ import type { WebSocket } from '@fastify/websocket';
 import { wsAuthHook } from '../middleware/wsAuth.js';
 import { messageService } from '../services/messageService.js';
 import { friendService } from '../services/friendService.js';
+import { blockService } from '../services/blockService.js';
 import { handleTypingEvent } from '../services/typingService.js';
 import { pool } from '../db/index.js';
 import { presenceService } from '../services/presenceService.js';
@@ -119,6 +120,16 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             return;
           }
 
+          // Check if blocked (bidirectional - either user blocked the other)
+          const isBlocked = await blockService.isBlockedBidirectional(userId, msg.recipientId);
+          if (isBlocked) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: "You can't message this user",
+            } as ErrorMessage));
+            return;
+          }
+
           // Check if users are friends
           const areFriends = await friendService.areFriends(userId, msg.recipientId);
           if (!areFriends) {
@@ -204,6 +215,11 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             const memberIds = await messageService.getGroupMemberIds(msg.groupId);
             for (const memberId of memberIds) {
               if (memberId === userId) continue; // Don't send back to sender
+
+              // Check if member blocked the sender (don't deliver to people who blocked sender)
+              const memberBlockedSender = await blockService.isBlocked(memberId, userId);
+              if (memberBlockedSender) continue;  // Skip delivery to this member
+
               const memberSocket = activeConnections.get(memberId);
               if (memberSocket && memberSocket.readyState === 1) {
                 memberSocket.send(JSON.stringify({
