@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
-import { Avatar } from '@/components/ui/avatar';
+import { AvatarDisplay } from '@/components/avatar/AvatarDisplay';
 import { Button } from '@/components/ui/button';
 import { Lock, Phone, ArrowLeft } from 'lucide-react';
 import { useCall } from '@/contexts/CallContext';
+import { usePresenceStore } from '@/stores/presenceStore';
 
 interface ReplyTo {
   id: number;
@@ -36,7 +37,6 @@ interface FileMetadata {
 interface ConversationViewProps {
   contactId: string;
   contactUsername: string;
-  contactEmail?: string;
   currentUserId: string;
   messages: Message[];
   onSendMessage: (content: string, options?: { replyToId?: number; files?: FileMetadata[] }) => void;
@@ -49,7 +49,6 @@ interface ConversationViewProps {
 export function ConversationView({
   contactId,
   contactUsername,
-  contactEmail,
   currentUserId,
   messages,
   onSendMessage,
@@ -60,6 +59,7 @@ export function ConversationView({
 }: ConversationViewProps) {
   const { startCall, status: callStatus } = useCall();
   const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
+  const presence = usePresenceStore((state) => state.presenceMap.get(contactId));
 
   const handleStartCall = () => {
     startCall(contactId, contactUsername);
@@ -71,16 +71,32 @@ export function ConversationView({
   };
 
   const handleReply = (message: Message) => {
-    // Determine sender email - if it's from the contact, use contactEmail
+    // Determine sender name - if it's from the contact, use contactUsername
     const senderEmail = message.senderId === currentUserId
       ? 'You'
-      : contactEmail || contactUsername;
+      : contactUsername;
     setReplyTo({
       id: message.id,
       content: message.content,
       senderEmail,
     });
   };
+
+  // Handle Escape key - cancel reply if active, otherwise close chat
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (replyTo) {
+          setReplyTo(null);
+        } else if (onBack) {
+          onBack();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [replyTo, onBack]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -91,7 +107,12 @@ export function ConversationView({
             <ArrowLeft className="h-5 w-5" />
           </Button>
         )}
-        <Avatar fallback={contactUsername} className="h-10 w-10" />
+        <AvatarDisplay
+          userId={contactId}
+          size="small"
+          showStatus
+          status={(presence?.status as any) || 'offline'}
+        />
         <div className="flex-1">
           <h2 className="font-semibold">{contactUsername}</h2>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">

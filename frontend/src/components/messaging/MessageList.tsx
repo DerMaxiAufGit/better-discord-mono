@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar } from '@/components/ui/avatar';
+import { AvatarDisplay } from '@/components/avatar/AvatarDisplay';
 import { QuickReactions } from '@/components/reactions/QuickReactions';
 import { InlineReactions } from '@/components/reactions/ReactionList';
 import { ReplyButton, MessageReply } from '@/components/messaging/MessageReply';
@@ -244,9 +244,9 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply,
                           onDoubleClick={() => handleDoubleClick(message)}
                         >
                           {!isOwn && (
-                            <Avatar
-                              className="h-8 w-8"
-                              fallback={contactUsername || '?'}
+                            <AvatarDisplay
+                              userId={message.senderId}
+                              size="tiny"
                             />
                           )}
                           <div className="flex flex-col max-w-[70%]">
@@ -307,9 +307,9 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply,
                     onDoubleClick={() => handleDoubleClick(message)}
                   >
                     {!isOwn && (
-                      <Avatar
-                        className="h-8 w-8"
-                        fallback={contactUsername || '?'}
+                      <AvatarDisplay
+                        userId={message.senderId}
+                        size="tiny"
                       />
                     )}
                     <div className="flex flex-col max-w-[70%]">

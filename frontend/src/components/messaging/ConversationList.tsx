@@ -1,6 +1,6 @@
 import PullToRefresh from 'react-simple-pull-to-refresh';
 import { cn } from '@/lib/utils';
-import { Avatar } from '@/components/ui/avatar';
+import { AvatarDisplay } from '@/components/avatar/AvatarDisplay';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Conversation {
@@ -56,7 +56,7 @@ export function ConversationList({ conversations, activeId, onSelect, onRefresh 
                 activeId === conv.contactId && 'bg-accent'
               )}
             >
-              <Avatar fallback={conv.contactUsername} className="h-10 w-10" />
+              <AvatarDisplay userId={conv.contactId} size="small" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm truncate">
