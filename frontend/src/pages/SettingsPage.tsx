@@ -1,31 +1,22 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Check, Info, LogOut, Ban, X } from 'lucide-react';
+import { ArrowLeft, Check, Info, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/stores/auth';
 import { AudioSettings } from '@/components/settings/AudioSettings';
 import { APP_VERSION } from '@/config/version';
-import { useBlockStore } from '@/stores/blockStore';
-import { showSuccess, showError } from '@/lib/toast';
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { user, setUsername, logout } = useAuthStore();
-  const { blockedUsers, loadBlockedUsers, unblockUser } = useBlockStore();
 
   const [newUsername, setNewUsername] = React.useState(user?.username || '');
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
-  const [unblockingId, setUnblockingId] = React.useState<string | null>(null);
-
-  // Load blocked users on mount
-  React.useEffect(() => {
-    loadBlockedUsers();
-  }, [loadBlockedUsers]);
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,19 +48,6 @@ export function SettingsPage() {
       setError(err instanceof Error ? err.message : 'Failed to update username');
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const handleUnblock = async (userId: string, username: string) => {
-    setUnblockingId(userId);
-
-    try {
-      await unblockUser(userId);
-      showSuccess(`Unblocked ${username}`);
-    } catch (error) {
-      showError(error instanceof Error ? error.message : 'Failed to unblock user');
-    } finally {
-      setUnblockingId(null);
     }
   };
 
@@ -162,42 +140,6 @@ export function SettingsPage() {
             </span>
             <span className="text-muted-foreground text-sm">v{APP_VERSION}</span>
           </Button>
-        </section>
-
-        {/* Blocked Users Section */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Ban className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">Blocked Users</h2>
-          </div>
-          {blockedUsers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No blocked users</p>
-          ) : (
-            <div className="space-y-2">
-              {blockedUsers.map((blockedUser) => (
-                <div
-                  key={blockedUser.blockedId}
-                  className="flex items-center justify-between p-3 rounded-lg border"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{blockedUser.username || 'Unknown User'}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Blocked {new Date(blockedUser.blockedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleUnblock(blockedUser.blockedId, blockedUser.username || 'user')}
-                    disabled={unblockingId === blockedUser.blockedId}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    {unblockingId === blockedUser.blockedId ? 'Unblocking...' : 'Unblock'}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
 
         {/* Account Section */}

@@ -665,6 +665,7 @@ export function MessagesPage() {
               contactUsername={group.name}
               onReply={handleGroupReply}
               isGroupConversation={true}
+              highlightMessageId={highlightMessageId}
             />
           </div>
         )}

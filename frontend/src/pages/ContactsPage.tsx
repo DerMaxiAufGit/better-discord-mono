@@ -1,7 +1,7 @@
 import * as React from 'react';
 import PullToRefresh from 'react-simple-pull-to-refresh';
 import { useNavigate } from 'react-router';
-import { Search, MessageCircle, ArrowLeft, UserPlus, Check, X, Clock, Users, Phone } from 'lucide-react';
+import { Search, MessageCircle, ArrowLeft, UserPlus, Check, X, Clock, Users, Phone, Ban } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { LastSeenText } from '@/components/presence/LastSeenText';
 import { usePresenceStore } from '@/stores/presenceStore';
 import { useBlockStore } from '@/stores/blockStore';
 import { BlockButton } from '@/components/blocking/BlockButton';
+import { showSuccess, showError } from '@/lib/toast';
 
 interface User {
   id: string;
@@ -39,12 +40,13 @@ export function ContactsPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
   const [sendingRequest, setSendingRequest] = React.useState<string | null>(null);
+  const [unblockingId, setUnblockingId] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const { addContact } = useContactStore();
   const { startCall, status: callStatus } = useCall();
   const presenceMap = usePresenceStore((state) => state.presenceMap);
   const fetchBatchPresence = usePresenceStore((state) => state.fetchBatchPresence);
-  const { loadBlockedUsers } = useBlockStore();
+  const { blockedUsers, loadBlockedUsers, unblockUser } = useBlockStore();
 
   // Load friends and pending requests on mount
   React.useEffect(() => {
@@ -163,6 +165,19 @@ export function ContactsPage() {
   const handleRefresh = async () => {
     await loadFriends();
     await loadPendingRequests();
+  };
+
+  const handleUnblock = async (userId: string, username: string) => {
+    setUnblockingId(userId);
+    try {
+      await unblockUser(userId);
+      showSuccess(`Unblocked ${username}`);
+      loadFriends(); // Refresh friends since unblock restores friendship
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to unblock user');
+    } finally {
+      setUnblockingId(null);
+    }
   };
 
   const renderFriendButton = (user: User) => {
@@ -323,6 +338,40 @@ export function ContactsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Blocked Users */}
+          {blockedUsers.length > 0 && (
+            <div className="mt-8 pt-6 border-t">
+              <div className="flex items-center gap-2 mb-4">
+                <Ban className="h-5 w-5" />
+                <h2 className="text-lg font-semibold">Blocked Users</h2>
+              </div>
+              <div className="space-y-2">
+                {blockedUsers.map((blockedUser) => (
+                  <div
+                    key={blockedUser.blockedId}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">{blockedUser.username || 'Unknown User'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Blocked {new Date(blockedUser.blockedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUnblock(blockedUser.blockedId, blockedUser.username || 'user')}
+                      disabled={unblockingId === blockedUser.blockedId}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      {unblockingId === blockedUser.blockedId ? 'Unblocking...' : 'Unblock'}
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
