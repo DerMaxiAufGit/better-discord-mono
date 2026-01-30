@@ -5,6 +5,7 @@ import { Toaster } from 'sonner'
 import { useAuthStore } from '@/stores/auth'
 import { useCryptoStore } from '@/stores/cryptoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useBlockStore } from '@/stores/blockStore'
 import { CallProvider, useCall } from '@/contexts/CallContext'
 import { useMessaging } from '@/lib/websocket/useMessaging'
 import { IncomingCallBanner } from '@/components/call/IncomingCallBanner'
@@ -111,6 +112,15 @@ function App() {
   useEffect(() => {
     checkAuth()
   }, [checkAuth])
+
+  // Load blocked users after authentication
+  useEffect(() => {
+    if (isAuthenticated) {
+      useBlockStore.getState().loadBlockedUsers().catch((err) => {
+        console.error('Failed to load blocked users:', err)
+      })
+    }
+  }, [isAuthenticated])
 
   // Recover crypto keys on page refresh using sessionStorage
   useEffect(() => {
