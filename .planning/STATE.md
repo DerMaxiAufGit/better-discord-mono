@@ -11,10 +11,10 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 Phase: 6 of 7 (Social Features)
 Version: 1.2.0 target
-Status: **Phase complete - all 12 plans complete, verified**
-Last activity: 2026-01-30 — Completed 06-12-PLAN.md (UAT gap closure v2 - Phase 6 verified)
+Status: **Phase complete - all 13 plans complete, verified**
+Last activity: 2026-01-30 — Completed 06-13-PLAN.md (UAT gap closure v3 - all gaps resolved)
 
-Progress: [█████████████████████████] 100% (50 of 50 plans complete)
+Progress: [█████████████████████████] 100% (51 of 51 plans complete)
 
 ## Performance Metrics
 
@@ -32,11 +32,11 @@ Progress: [███████████████████████
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
 | 05-enhanced-communication | 16 | 130 min | 8.1 min |
-| 06-social-features | 12 | 56 min | 4.7 min |
+| 06-social-features | 13 | 61 min | 4.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-12 (11 min), 06-11 (24 min), 06-10 (2 min), 06-09 (4 min), 06-08 (3 min)
-- Trend: Phase 6 complete and verified, ready for Phase 7
+- Last 5 plans: 06-13 (5 min), 06-12 (11 min), 06-11 (24 min), 06-10 (2 min), 06-09 (4 min)
+- Trend: Phase 6 complete with all UAT gaps resolved, ready for Phase 7
 
 *Updated after each plan completion*
 
@@ -49,6 +49,8 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-30 | @ts-ignore for Zustand subscription vars | blockedIds needed for re-renders but unused (from 06-13) | Enables reactive updates without artificial variable usage |
+| 2026-01-30 | restoreFriendship bypasses pending status | Unblock creates accepted friendship directly (from 06-13) | Immediate messaging capability after unblock |
 | 2026-01-30 | Message highlight 3-second duration | Search result click highlights message briefly (from 06-11) | Noticeable but not distracting visual feedback |
 | 2026-01-30 | Search name resolution in store | Resolve usernames in searchStore vs UI component (from 06-11) | Single source of truth, cleaner separation |
 | 2026-01-30 | Block dropdown in conversation header | Dropdown menu for block action instead of inline button (from 06-11) | Cleaner UI, follows messaging app patterns |
@@ -128,7 +130,12 @@ None yet.
 ### Blockers/Concerns
 
 **Phase 6 Complete:**
-All 12 plans executed and verified. UAT gap closure v2 (06-12) addressed final 6 issues. Social features (avatars, presence, blocking, search) fully integrated and working end-to-end. Ready for Phase 7.
+All 13 plans executed and verified. UAT gap closure v3 (06-13) resolved final 3 critical issues:
+1. Invisible whitelist property typo (f.otherId → f.oderId)
+2. Blocked messages not hiding live (Zustand subscription fix)
+3. Unblock not auto-restoring friendship (restoreFriendship method added)
+
+Social features (avatars, presence, blocking, search) fully integrated and working end-to-end. Ready for Phase 7.
 
 **Previous phases complete:**
 - Phase 1: Foundation and deployment ✓
@@ -156,6 +163,6 @@ All 12 plans executed and verified. UAT gap closure v2 (06-12) addressed final 6
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Completed 06-12-PLAN.md (UAT gap closure v2 - Phase 6 verified)
-Resume with: Phase 6 complete - ready for Phase 7 planning
+Stopped at: Completed 06-13-PLAN.md (UAT gap closure v3 - all gaps resolved)
+Resume with: Phase 6 complete - ready for Phase 7 planning or production deployment
 Resume file: None
