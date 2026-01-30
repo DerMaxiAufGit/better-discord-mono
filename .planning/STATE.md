@@ -11,17 +11,17 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 Phase: 6 of 7 (Social Features)
 Version: 1.2.0 target
-Status: **In progress - 2 of 9 plans complete**
-Last activity: 2026-01-30 — Completed 06-02-PLAN.md (avatar upload service with Sharp)
+Status: **In progress - 3 of 9 plans complete**
+Last activity: 2026-01-30 — Completed 06-03-PLAN.md (presence service with WebSocket integration)
 
-Progress: [█████████████████████████░] 98% (44 of 44 plans complete)
+Progress: [█████████████████████████░] 98% (45 of 45 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 44
-- Average duration: 4.6 minutes
-- Total execution time: 3.4 hours
+- Total plans completed: 45
+- Average duration: 4.5 minutes
+- Total execution time: 3.5 hours
 
 **By Phase:**
 
@@ -32,10 +32,10 @@ Progress: [███████████████████████
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
 | 05-enhanced-communication | 16 | 130 min | 8.1 min |
-| 06-social-features | 2 | 4 min | 2.0 min |
+| 06-social-features | 3 | 7 min | 2.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-02 (1 min), 06-01 (3 min), 05-16 (8 min), 05-15 (4 min), 05-14 (12 min)
+- Last 5 plans: 06-03 (3 min), 06-02 (1 min), 06-01 (3 min), 05-16 (8 min), 05-15 (4 min)
 - Trend: Fast backend service implementation
 
 *Updated after each plan completion*
@@ -49,6 +49,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-30 | Heartbeat mechanism for presence | WebSocket clients send presence_heartbeat to prevent ghost users (from 06-03) | Updates lastSeen without broadcasting, prevents stale connections |
+| 2026-01-30 | Visibility list for invisible status | Users can appear online to specific friends while invisible (from 06-03) | Enables "invisible to all except..." privacy pattern |
+| 2026-01-30 | In-memory presence cache | Map-based cache for single-instance deployment (from 06-03) | Simple for now, requires Redis for multi-instance scaling |
+| 2026-01-30 | WebSocket lifecycle presence tracking | userConnected/userDisconnected on connect/close (from 06-03) | Automatic presence updates without manual intervention |
 | 2026-01-30 | WebP format with quality differentiation | Tiny/small at 85, large at 90 quality (from 06-02) | Optimized file size vs quality tradeoff for avatars |
 | 2026-01-30 | Square crop with center position | Sharp fit: cover with center position (from 06-02) | Avatars fill frame without letterboxing, subject centered |
 | 2026-01-30 | Directory-based avatar storage | Each user gets ./data/avatars/{userId}/ directory (from 06-02) | Easy cleanup, organized file structure |
@@ -135,6 +139,6 @@ Database schema complete. Ready for backend service implementation (avatar uploa
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Completed 06-02-PLAN.md (avatar upload service with Sharp)
-Resume with: Continue Phase 6 with 06-03-PLAN.md (presence service)
+Stopped at: Completed 06-03-PLAN.md (presence service with WebSocket integration)
+Resume with: Continue Phase 6 with next plan
 Resume file: None
