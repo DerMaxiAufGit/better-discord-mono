@@ -11,16 +11,16 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 Phase: 6 of 7 (Social Features)
 Version: 1.2.0 target
-Status: **In progress - 1 of 9 plans complete**
-Last activity: 2026-01-30 — Completed 06-01-PLAN.md (database schema for social features)
+Status: **In progress - 2 of 9 plans complete**
+Last activity: 2026-01-30 — Completed 06-02-PLAN.md (avatar upload service with Sharp)
 
-Progress: [█████████████████████████░] 97% (43 of 44 plans complete)
+Progress: [█████████████████████████░] 98% (44 of 44 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 43
-- Average duration: 4.7 minutes
+- Total plans completed: 44
+- Average duration: 4.6 minutes
 - Total execution time: 3.4 hours
 
 **By Phase:**
@@ -32,11 +32,11 @@ Progress: [███████████████████████
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
 | 05-enhanced-communication | 16 | 130 min | 8.1 min |
-| 06-social-features | 1 | 3 min | 3.0 min |
+| 06-social-features | 2 | 4 min | 2.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (3 min), 05-16 (8 min), 05-15 (4 min), 05-14 (12 min), 05-13 (12 min)
-- Trend: Quick database schema changes
+- Last 5 plans: 06-02 (1 min), 06-01 (3 min), 05-16 (8 min), 05-15 (4 min), 05-14 (12 min)
+- Trend: Fast backend service implementation
 
 *Updated after each plan completion*
 
@@ -49,6 +49,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-30 | WebP format with quality differentiation | Tiny/small at 85, large at 90 quality (from 06-02) | Optimized file size vs quality tradeoff for avatars |
+| 2026-01-30 | Square crop with center position | Sharp fit: cover with center position (from 06-02) | Avatars fill frame without letterboxing, subject centered |
+| 2026-01-30 | Directory-based avatar storage | Each user gets ./data/avatars/{userId}/ directory (from 06-02) | Easy cleanup, organized file structure |
+| 2026-01-30 | Route-level multipart registration | Registered in avatarRoutes plugin (from 06-02) | Cleaner separation of concerns vs global registration |
 | 2026-01-30 | Composite primary key for blocking | (blocker_id, blocked_id) prevents duplicate blocks (from 06-01) | Efficient blocking queries with bidirectional indexes |
 | 2026-01-30 | Visibility list for invisible status | User can show status to specific contacts while invisible (from 06-01) | Enables "invisible to all except..." feature |
 | 2026-01-30 | Three avatar sizes for responsive UI | 32x32 tiny, 64x64 small, 256x256 large (from 06-01) | Optimized avatar display across different UI contexts |
@@ -131,6 +135,6 @@ Database schema complete. Ready for backend service implementation (avatar uploa
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Completed 06-01-PLAN.md (database schema for social features)
-Resume with: Continue Phase 6 with 06-02-PLAN.md (avatar upload service)
+Stopped at: Completed 06-02-PLAN.md (avatar upload service with Sharp)
+Resume with: Continue Phase 6 with 06-03-PLAN.md (presence service)
 Resume file: None
