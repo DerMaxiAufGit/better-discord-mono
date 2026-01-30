@@ -4,9 +4,13 @@ import { ArrowLeft, Check, Info } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { useAuthStore } from '@/stores/auth';
 import { LogOut } from 'lucide-react';
 import { AudioSettings } from '@/components/settings/AudioSettings';
+import { AvatarUpload } from '@/components/avatar/AvatarUpload';
+import { StatusPicker } from '@/components/presence/StatusPicker';
+import { VisibilityList } from '@/components/presence/VisibilityList';
 import { APP_VERSION } from '@/config/version';
 
 export function SettingsPage() {
@@ -126,6 +130,46 @@ export function SettingsPage() {
           <h2 className="text-lg font-semibold">Audio</h2>
           <AudioSettings />
         </section>
+
+        <Separator />
+
+        {/* Avatar Section */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Avatar</h2>
+            <p className="text-sm text-muted-foreground">
+              Manage your profile picture
+            </p>
+          </div>
+          <div>
+            <AvatarUpload />
+          </div>
+        </section>
+
+        <Separator />
+
+        {/* Presence Section */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Status & Presence</h2>
+            <p className="text-sm text-muted-foreground">
+              Control how you appear to others
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Current Status</label>
+              <div className="mt-2">
+                <StatusPicker />
+              </div>
+            </div>
+            <div>
+              <VisibilityList />
+            </div>
+          </div>
+        </section>
+
+        <Separator />
 
         {/* Info Section */}
         <section className="space-y-4">
