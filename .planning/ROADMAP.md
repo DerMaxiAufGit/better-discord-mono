@@ -133,16 +133,28 @@ Plans:
 - [ ] 05-16-PLAN.md — Integration and verification checkpoint
 
 ### Phase 6: Social Features (v1.2.0)
-**Goal**: Add social networking features for better user connections
+**Goal**: Add social networking layer with avatars, presence, blocking, and search
 **Depends on**: Phase 5
 **Requirements**: TBD
 **Success Criteria** (what must be TRUE):
   1. User can upload and display profile avatar
-  2. User can send/accept/decline friend requests
-  3. User can see online/offline status of contacts
-  4. User can block other users
-  5. User can search through message history
-**Plans**: TBD
+  2. User can set presence status (Online/Away/DND/Invisible)
+  3. User can see online/offline status of contacts with last-seen
+  4. User can block other users (auto-unfriends, hides messages)
+  5. User can search through decrypted message history
+**Plans**: 10 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Database schema for avatars, presence, blocks, settings
+- [ ] 06-02-PLAN.md — Avatar backend service with Sharp multi-size generation
+- [ ] 06-03-PLAN.md — Presence backend service with WebSocket integration
+- [ ] 06-04-PLAN.md — Block service backend with auto-unfriend
+- [ ] 06-05-PLAN.md — Frontend avatar upload with react-easy-crop
+- [ ] 06-06-PLAN.md — Frontend presence store and auto-away tracker
+- [ ] 06-07-PLAN.md — Frontend block store and UI components
+- [ ] 06-08-PLAN.md — Client-side message search with IndexedDB
+- [ ] 06-09-PLAN.md — Avatar and presence UI components (StatusPicker, VisibilityList)
+- [ ] 06-10-PLAN.md — Integration and verification checkpoint
 
 ### Phase 7: Advanced Features (v2.0.0)
 **Goal**: Enterprise-grade features and native platform support
@@ -159,15 +171,17 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Deployment | 5/5 | ✓ Complete | 2026-01-27 |
 | 2. E2E Encrypted Messaging | 7/7 | ✓ Complete | 2026-01-28 |
 | 3. Voice/Video Calls | 7/7 | ✓ Complete | 2026-01-28 |
-| 4. UI Polish & Production Readiness | 0/7 | Ready for execution | - |
+| 4. UI Polish & Production Readiness | 7/7 | ✓ Complete | 2026-01-28 |
+| 5. Enhanced Communication | 16/16 | Awaiting verification | 2026-01-29 |
+| 6. Social Features | 0/10 | Ready for execution | - |
 
 ---
 *Roadmap created: 2026-01-27*
-*Last updated: 2026-01-28 after Phase 4 planning*
+*Last updated: 2026-01-30 after Phase 6 planning*
