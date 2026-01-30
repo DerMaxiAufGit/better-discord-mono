@@ -16,8 +16,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: E2E Encrypted Messaging** - Core value prop: private 1:1 messaging
 - [x] **Phase 3: Voice/Video Calls** - Real-time P2P communication with WebRTC
 - [x] **Phase 4: UI Polish & Production Readiness** - UX refinement and production hardening (v1.0.0)
-- [ ] **Phase 5: Enhanced Communication** - Video calls, group messaging, file sharing (v1.1.0)
-- [ ] **Phase 6: Social Features** - Avatars, presence status, blocking, message search (v1.2.0)
+- [x] **Phase 5: Enhanced Communication** - Video calls, group messaging, file sharing (v1.1.0)
+- [x] **Phase 6: Social Features** - Avatars, presence status, blocking, message search (v1.2.0)
 - [ ] **Phase 7: Advanced Features** - Group calls, screen sharing, native apps (v2.0.0)
 
 ## Phase Details
@@ -156,7 +156,7 @@ Plans:
 - [x] 06-09-PLAN.md — Avatar and presence UI components (StatusPicker, VisibilityList)
 - [x] 06-10-PLAN.md — Integration and verification checkpoint
 - [x] 06-11-PLAN.md — UAT gap closure (avatar display, presence reactivity, blocking UI, search fixes)
-- [ ] 06-12-PLAN.md — UAT gap closure v2 (presence reactivity, invisible whitelist, unblock messaging, blocked users location, group highlighting)
+- [x] 06-12-PLAN.md — UAT gap closure v2 (presence reactivity, invisible whitelist, unblock messaging, blocked users location, group highlighting)
 
 ### Phase 7: Advanced Features (v2.0.0)
 **Goal**: Enterprise-grade features and native platform support
@@ -181,9 +181,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. E2E Encrypted Messaging | 7/7 | ✓ Complete | 2026-01-28 |
 | 3. Voice/Video Calls | 7/7 | ✓ Complete | 2026-01-28 |
 | 4. UI Polish & Production Readiness | 7/7 | ✓ Complete | 2026-01-28 |
-| 5. Enhanced Communication | 16/16 | Awaiting verification | 2026-01-29 |
-| 6. Social Features | 11/12 | In Progress | - |
+| 5. Enhanced Communication | 16/16 | ✓ Complete | 2026-01-29 |
+| 6. Social Features | 12/12 | ✓ Complete | 2026-01-30 |
 
 ---
 *Roadmap created: 2026-01-27*
-*Last updated: 2026-01-30 after 06-12 gap closure plan created*
+*Last updated: 2026-01-30 after Phase 6 complete*
