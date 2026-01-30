@@ -15,20 +15,27 @@ interface AuthResponse {
 }
 
 let isRefreshing = false
-let refreshPromise: Promise<string | null> | null = null
+
+export type RefreshResult =
+  | { type: 'success'; token: string }
+  | { type: 'auth_error' }  // Server returned 401/403 - session expired
+  | { type: 'network_error' }  // Network failure - server unreachable
+
+let refreshResultPromise: Promise<RefreshResult> | null = null
 
 /**
  * Refresh access token using httpOnly refresh token cookie.
  * Exported for use by WebSocket reconnection logic.
  * Thundering herd prevention: single refresh promise shared across concurrent requests.
+ * Returns result type to distinguish network errors from auth errors.
  */
-export async function refreshAccessToken(): Promise<string | null> {
-  if (isRefreshing && refreshPromise) {
-    return refreshPromise
+export async function refreshAccessTokenWithResult(): Promise<RefreshResult> {
+  if (isRefreshing && refreshResultPromise) {
+    return refreshResultPromise
   }
 
   isRefreshing = true
-  refreshPromise = (async () => {
+  refreshResultPromise = (async () => {
     try {
       const response = await fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
@@ -36,21 +43,31 @@ export async function refreshAccessToken(): Promise<string | null> {
       })
 
       if (!response.ok) {
-        return null
+        // Server responded but rejected - auth error (session expired)
+        return { type: 'auth_error' }
       }
 
       const data: AuthResponse = await response.json()
-      return data.accessToken
+      return { type: 'success', token: data.accessToken }
     } catch (error) {
-      console.error('Token refresh failed:', error)
-      return null
+      // Fetch threw - network error (server unreachable)
+      console.error('Token refresh network error:', error)
+      return { type: 'network_error' }
     } finally {
       isRefreshing = false
-      refreshPromise = null
+      refreshResultPromise = null
     }
   })()
 
-  return refreshPromise
+  return refreshResultPromise
+}
+
+/**
+ * Legacy wrapper - returns token or null for backwards compatibility.
+ */
+export async function refreshAccessToken(): Promise<string | null> {
+  const result = await refreshAccessTokenWithResult()
+  return result.type === 'success' ? result.token : null
 }
 
 // Generic API client with automatic token refresh
@@ -232,6 +249,7 @@ export const messageApi = {
       encryptedContent: string
       senderEmail?: string
       createdAt: string
+      replyToId?: number
       files?: Array<{
         id: string
         filename: string
@@ -317,6 +335,41 @@ export const turnApi = {
   },
 };
 
+export const blocksApi = {
+  // Block a user
+  async block(userId: string, deleteHistory: boolean = false): Promise<void> {
+    await apiRequest(`/api/blocks/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deleteHistory }),
+    });
+  },
+
+  // Unblock a user
+  async unblock(userId: string): Promise<void> {
+    await apiRequest(`/api/blocks/${userId}`, { method: 'DELETE' });
+  },
+
+  // Get blocked users list
+  async getBlocked(): Promise<{
+    blockedUsers: Array<{
+      blockedId: string;
+      blockedAt: string;
+      username: string | null;
+    }>
+  }> {
+    return apiRequest('/api/blocks');
+  },
+
+  // Check if specific user is blocked
+  async checkBlock(userId: string): Promise<{
+    isBlocked: boolean;
+    isBlockedByThem: boolean;
+  }> {
+    return apiRequest(`/api/blocks/${userId}`);
+  },
+};
+
 export const api = {
   auth: authApi,
   keys: keyApi,
@@ -324,4 +377,5 @@ export const api = {
   users: usersApi,
   friends: friendsApi,
   turn: turnApi,
+  blocks: blocksApi,
 }
