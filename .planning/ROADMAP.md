@@ -142,7 +142,7 @@ Plans:
   3. User can see online/offline status of contacts with last-seen
   4. User can block other users (auto-unfriends, hides messages)
   5. User can search through decrypted message history
-**Plans**: 12 plans
+**Plans**: 13 plans
 
 Plans:
 - [x] 06-01-PLAN.md — Database schema for avatars, presence, blocks, settings
@@ -157,6 +157,7 @@ Plans:
 - [x] 06-10-PLAN.md — Integration and verification checkpoint
 - [x] 06-11-PLAN.md — UAT gap closure (avatar display, presence reactivity, blocking UI, search fixes)
 - [x] 06-12-PLAN.md — UAT gap closure v2 (presence reactivity, invisible whitelist, unblock messaging, blocked users location, group highlighting)
+- [x] 06-13-PLAN.md — UAT gap closure v3 (invisible whitelist fix, live block updates, unblock auto-restore)
 
 ### Phase 7: Advanced Features (v2.0.0)
 **Goal**: Enterprise-grade features and native platform support
@@ -182,7 +183,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Voice/Video Calls | 7/7 | ✓ Complete | 2026-01-28 |
 | 4. UI Polish & Production Readiness | 7/7 | ✓ Complete | 2026-01-28 |
 | 5. Enhanced Communication | 16/16 | ✓ Complete | 2026-01-29 |
-| 6. Social Features | 12/12 | ✓ Complete | 2026-01-30 |
+| 6. Social Features | 13/13 | ✓ Complete | 2026-01-30 |
 
 ---
 *Roadmap created: 2026-01-27*
