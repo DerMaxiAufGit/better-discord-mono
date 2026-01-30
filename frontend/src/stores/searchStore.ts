@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { messageIndex, type IndexedMessage } from '@/lib/search/messageIndex';
+import { useContactStore } from '@/stores/contactStore';
+import { useGroupStore } from '@/stores/groupStore';
 
 interface SearchResult {
   message: IndexedMessage;
@@ -145,16 +147,28 @@ function escapeRegex(str: string): string {
  */
 function groupByConversation(results: SearchResult[]): GroupedResults[] {
   const groups = new Map<string, GroupedResults>();
+  const contactStore = useContactStore.getState();
+  const groupStore = useGroupStore.getState();
 
   for (const result of results) {
     const { conversationId, conversationType } = result.message;
     const key = conversationId;
 
     if (!groups.has(key)) {
+      // Resolve conversation name from contacts or groups
+      let conversationName = conversationId;
+      if (conversationType === 'dm') {
+        const contact = contactStore.contacts.get(conversationId);
+        conversationName = contact?.username || conversationId;
+      } else if (conversationType === 'group') {
+        const group = groupStore.groups.find((g: any) => g.id === conversationId);
+        conversationName = group?.name || conversationId;
+      }
+
       groups.set(key, {
         conversationId,
         conversationType,
-        conversationName: conversationId,  // Will be resolved by UI
+        conversationName,
         results: [],
       });
     }

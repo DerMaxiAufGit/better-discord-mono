@@ -69,6 +69,7 @@ export function MessagesPage() {
 
   // Search
   const [showSearch, setShowSearch] = React.useState(false);
+  const [highlightMessageId, setHighlightMessageId] = React.useState<number | null>(null);
   const { clearSearch } = useSearchStore();
 
   // Load groups on mount
@@ -451,7 +452,7 @@ export function MessagesPage() {
             placeholder="Search all messages..."
           />
           <SearchResults
-            onResultClick={(conversationId, _messageId) => {
+            onResultClick={(conversationId, messageId) => {
               // Navigate to conversation
               // Check if it's a group
               const group = groups.find(g => g.id === conversationId);
@@ -462,7 +463,9 @@ export function MessagesPage() {
                 setSelectedGroupId(null);
                 navigate(`/messages/${conversationId}`);
               }
-              // TODO: scroll to message by _messageId
+              // Highlight the message
+              setHighlightMessageId(messageId);
+              setTimeout(() => setHighlightMessageId(null), 3000);
               setShowSearch(false);
               clearSearch();
             }}
@@ -716,6 +719,7 @@ export function MessagesPage() {
             onBack={() => navigate('/messages')}
             typingUsers={typingUsers}
             onInputChange={onInputChange}
+            highlightMessageId={highlightMessageId}
           />
         </div>
       );
@@ -759,6 +763,7 @@ export function MessagesPage() {
             onBack={() => navigate('/messages')}
             typingUsers={typingUsers}
             onInputChange={onInputChange}
+            highlightMessageId={highlightMessageId}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">

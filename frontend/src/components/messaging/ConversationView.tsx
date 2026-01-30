@@ -54,6 +54,7 @@ interface ConversationViewProps {
   onBack?: () => void;
   typingUsers?: TypingUser[];
   onInputChange?: () => void;
+  highlightMessageId?: number | null;
 }
 
 export function ConversationView({
@@ -66,6 +67,7 @@ export function ConversationView({
   onBack,
   typingUsers = [],
   onInputChange,
+  highlightMessageId,
 }: ConversationViewProps) {
   const { startCall, status: callStatus } = useCall();
   const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
@@ -213,6 +215,7 @@ export function ConversationView({
             currentUserId={currentUserId}
             contactUsername={contactUsername}
             onReply={handleReply}
+            highlightMessageId={highlightMessageId}
           />
         </div>
       )}

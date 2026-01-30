@@ -42,6 +42,7 @@ interface MessageListProps {
   contactUsername?: string;
   onReply?: (message: Message) => void;
   isGroupConversation?: boolean;
+  highlightMessageId?: number | null;
 }
 
 function formatTime(date: Date | string): string {
@@ -64,7 +65,7 @@ function formatDate(date: Date | string): string {
   }
 }
 
-export function MessageList({ messages, currentUserId, contactUsername, onReply, isGroupConversation = false }: MessageListProps) {
+export function MessageList({ messages, currentUserId, contactUsername, onReply, isGroupConversation = false, highlightMessageId }: MessageListProps) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const endRef = React.useRef<HTMLDivElement>(null);
   const [hoveredMessageId, setHoveredMessageId] = React.useState<number | null>(null);
@@ -132,6 +133,16 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply,
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  // Scroll to highlighted message
+  React.useEffect(() => {
+    if (highlightMessageId) {
+      const element = document.getElementById(`message-${highlightMessageId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [highlightMessageId]);
 
   const handleReact = async (messageId: number, emoji: string) => {
     await toggleReaction(messageId, emoji);
@@ -296,13 +307,16 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply,
                   );
                 }
 
+                const isHighlighted = highlightMessageId === message.id;
+
                 return (
                   <div
                     key={message.id}
                     id={`message-${message.id}`}
                     className={cn(
                       'flex gap-2 group relative transition-colors duration-300 px-2 -mx-2 rounded cursor-pointer',
-                      isOwn ? 'justify-end' : 'justify-start'
+                      isOwn ? 'justify-end' : 'justify-start',
+                      isHighlighted && 'bg-blue-500/20'
                     )}
                     onDoubleClick={() => handleDoubleClick(message)}
                   >
