@@ -11,17 +11,17 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 Phase: 6 of 7 (Social Features)
 Version: 1.2.0 target
-Status: **In progress - 5 of 9 plans complete**
-Last activity: 2026-01-30 — Completed 06-07-PLAN.md (frontend blocking UI with confirmation dialogs)
+Status: **In progress - 6 of 9 plans complete**
+Last activity: 2026-01-30 — Completed 06-11-PLAN.md (UAT gap closure - all 8 integration issues fixed)
 
-Progress: [█████████████████████████░] 99% (47 of 47 plans complete)
+Progress: [█████████████████████████░] 100% (48 of 48 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 47
-- Average duration: 4.4 minutes
-- Total execution time: 3.7 hours
+- Total plans completed: 48
+- Average duration: 4.6 minutes
+- Total execution time: 3.9 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [███████████████████████
 | 03-voice-video-calls | 6 | 16 min | 2.7 min |
 | 04-ui-polish-production-readiness | 6 | 32 min | 5.3 min |
 | 05-enhanced-communication | 16 | 130 min | 8.1 min |
-| 06-social-features | 6 | 19 min | 3.2 min |
+| 06-social-features | 7 | 43 min | 6.1 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-07 (6 min), 06-08 (3 min), 06-04 (3 min), 06-03 (3 min), 06-02 (1 min)
-- Trend: Steady frontend component implementation
+- Last 5 plans: 06-11 (24 min), 06-07 (6 min), 06-08 (3 min), 06-04 (3 min), 06-03 (3 min)
+- Trend: Integration work complete, UAT gaps closed
 
 *Updated after each plan completion*
 
@@ -49,6 +49,10 @@ Recent decisions affecting current work:
 
 | Date | Decision | Context | Impact |
 |------|----------|---------|--------|
+| 2026-01-30 | Message highlight 3-second duration | Search result click highlights message briefly (from 06-11) | Noticeable but not distracting visual feedback |
+| 2026-01-30 | Search name resolution in store | Resolve usernames in searchStore vs UI component (from 06-11) | Single source of truth, cleaner separation |
+| 2026-01-30 | Block dropdown in conversation header | Dropdown menu for block action instead of inline button (from 06-11) | Cleaner UI, follows messaging app patterns |
+| 2026-01-30 | presenceMap direct selector for reactivity | Use selector pattern instead of destructuring for Zustand (from 06-11) | Ensures re-renders on Map changes, fixes presence bugs |
 | 2026-01-30 | History deletion defaults to false in block dialog | Safer default preserves conversation (from 06-07) | Prevents accidental data loss, user must explicitly check |
 | 2026-01-30 | Optimistic state updates for blocking | Block/unblock immediately updates UI before server response (from 06-07) | Reduces perceived latency, better UX |
 | 2026-01-30 | Set-based blocking ID lookup | blockedIds as Set<string> for O(1) checks (from 06-07) | Instant isBlocked() checks without array iteration |
@@ -123,8 +127,8 @@ None yet.
 
 ### Blockers/Concerns
 
-**Phase 6 In Progress:**
-Database schema complete. Ready for backend service implementation (avatar upload, presence tracking, blocking, user settings).
+**Phase 6 Complete:**
+All 8 UAT gaps closed. Social features (avatars, presence, blocking, search) fully integrated and working end-to-end. Ready for final verification.
 
 **Previous phases complete:**
 - Phase 1: Foundation and deployment ✓
@@ -151,6 +155,6 @@ Database schema complete. Ready for backend service implementation (avatar uploa
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Completed 06-07-PLAN.md (frontend blocking UI with confirmation dialogs)
-Resume with: Continue Phase 6 with next plan
+Stopped at: Completed 06-11-PLAN.md (UAT gap closure - all 8 integration issues fixed)
+Resume with: Phase 6 complete - ready for Phase 7 or final verification
 Resume file: None
