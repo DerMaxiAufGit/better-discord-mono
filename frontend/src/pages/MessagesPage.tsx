@@ -619,6 +619,7 @@ export function MessagesPage() {
               currentUserId={user ? String(user.id) : ''}
               contactUsername={group.name}
               onReply={handleGroupReply}
+              isGroupConversation={true}
             />
           </div>
         )}

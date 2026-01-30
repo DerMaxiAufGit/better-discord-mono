@@ -7,6 +7,8 @@ import { InlineReactions } from '@/components/reactions/ReactionList';
 import { ReplyButton, MessageReply } from '@/components/messaging/MessageReply';
 import { FilePreview } from '@/components/files/FilePreview';
 import { useReactionStore } from '@/stores/reactionStore';
+import { useBlockStore } from '@/stores/blockStore';
+import { BlockedMessagePlaceholder } from '@/components/blocking/BlockedMessagePlaceholder';
 
 interface ReplyTo {
   id: number;
@@ -25,6 +27,7 @@ interface FileAttachment {
 interface Message {
   id: number;
   senderId: string;
+  senderEmail?: string; // For groups, the sender's email/username
   content: string;
   timestamp: Date;
   status: 'sending' | 'sent' | 'delivered' | 'read';
@@ -38,6 +41,7 @@ interface MessageListProps {
   currentUserId: string;
   contactUsername?: string;
   onReply?: (message: Message) => void;
+  isGroupConversation?: boolean;
 }
 
 function formatTime(date: Date | string): string {
@@ -60,7 +64,7 @@ function formatDate(date: Date | string): string {
   }
 }
 
-export function MessageList({ messages, currentUserId, contactUsername, onReply }: MessageListProps) {
+export function MessageList({ messages, currentUserId, contactUsername, onReply, isGroupConversation = false }: MessageListProps) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const endRef = React.useRef<HTMLDivElement>(null);
   const [hoveredMessageId, setHoveredMessageId] = React.useState<number | null>(null);
@@ -69,6 +73,9 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply 
 
   // Reaction store
   const { reactions, loadReactions, toggleReaction } = useReactionStore();
+
+  // Block store
+  const { isBlocked } = useBlockStore();
 
   // Build a lookup map for resolving replyToId to full message data
   const messageMap = React.useMemo(() => {
@@ -83,10 +90,22 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply 
     if (message.replyToId) {
       const repliedMsg = messageMap.get(message.replyToId);
       if (repliedMsg) {
+        // For groups, use senderEmail if available; for DMs use contactUsername
+        let senderName: string;
+        if (repliedMsg.senderId === currentUserId) {
+          senderName = 'You';
+        } else if (repliedMsg.senderEmail) {
+          // Extract username from email for groups
+          senderName = repliedMsg.senderEmail.includes('@')
+            ? repliedMsg.senderEmail.split('@')[0]
+            : repliedMsg.senderEmail;
+        } else {
+          senderName = contactUsername || repliedMsg.senderId;
+        }
         return {
           id: repliedMsg.id,
           content: repliedMsg.content,
-          senderEmail: repliedMsg.senderId === currentUserId ? 'You' : (contactUsername || repliedMsg.senderId),
+          senderEmail: senderName,
         };
       }
     }
@@ -202,6 +221,81 @@ export function MessageList({ messages, currentUserId, contactUsername, onReply 
                 const isHovered = hoveredMessageId === message.id;
                 const messageContent = typeof message.content === 'string' ? message.content : '';
                 const resolvedReplyTo = getReplyTo(message);
+                const senderBlocked = isBlocked(message.senderId);
+
+                // In group conversations, show placeholder for blocked users
+                if (senderBlocked && isGroupConversation && !isOwn) {
+                  const senderName = message.senderEmail?.includes('@')
+                    ? message.senderEmail.split('@')[0]
+                    : message.senderEmail || contactUsername || message.senderId;
+
+                  return (
+                    <div
+                      key={message.id}
+                      id={`message-${message.id}`}
+                      className="px-2 -mx-2"
+                    >
+                      <BlockedMessagePlaceholder senderName={senderName}>
+                        <div
+                          className={cn(
+                            'flex gap-2 group relative transition-colors duration-300 rounded cursor-pointer',
+                            'justify-start'
+                          )}
+                          onDoubleClick={() => handleDoubleClick(message)}
+                        >
+                          {!isOwn && (
+                            <Avatar
+                              className="h-8 w-8"
+                              fallback={contactUsername || '?'}
+                            />
+                          )}
+                          <div className="flex flex-col max-w-[70%]">
+                            {/* Reply preview if this message is a reply */}
+                            {resolvedReplyTo && (
+                              <MessageReply
+                                replyTo={resolvedReplyTo}
+                                onClick={() => scrollToMessage(resolvedReplyTo.id)}
+                                className="mb-1"
+                              />
+                            )}
+                            <div className="rounded-lg px-3 py-2 relative bg-muted">
+                              {messageContent && (
+                                <p className="text-sm break-words">{messageContent}</p>
+                              )}
+                              {/* File attachments */}
+                              {message.files && message.files.length > 0 && (
+                                <div className="space-y-2 mt-1">
+                                  {message.files.map((file) => (
+                                    <FilePreview
+                                      key={file.id}
+                                      fileId={file.id}
+                                      filename={file.filename}
+                                      mimeType={file.mimeType}
+                                      sizeBytes={file.sizeBytes}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1 mt-1 justify-start">
+                                <span className="text-xs opacity-70">
+                                  {formatTime(message.timestamp)}
+                                </span>
+                              </div>
+                            </div>
+                            {/* Display existing reactions */}
+                            {messageReactions.length > 0 && (
+                              <InlineReactions
+                                reactions={messageReactions}
+                                onToggle={(emoji) => handleReact(message.id, emoji)}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </BlockedMessagePlaceholder>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={message.id}
