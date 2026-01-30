@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import { ConversationList, ConversationView, MessageList, MessageInput } from '@/components/messaging';
 import { GroupCreator } from '@/components/groups/GroupCreator';
 import { MemberList } from '@/components/groups/MemberList';
+import { MessageSearchBar, SearchResults } from '@/components/search';
 import { useAuthStore } from '@/stores/auth';
 import { useMessageStore } from '@/stores/messageStore';
 import { useContactStore } from '@/stores/contactStore';
@@ -19,7 +20,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { UserPlus, Users, X, Copy, Check } from 'lucide-react';
+import { UserPlus, Users, X, Copy, Check, Search } from 'lucide-react';
 
 interface GroupMessage {
   id: number;
@@ -65,6 +66,10 @@ export function MessagesPage() {
   const [groupReplyTo, setGroupReplyTo] = React.useState<GroupReplyTo | null>(null);
   const addMember = useGroupStore((s) => s.addMember);
   const createInvite = useGroupStore((s) => s.createInvite);
+
+  // Search
+  const [showSearch, setShowSearch] = React.useState(false);
+  const { query, clearSearch } = useSearchStore();
 
   // Load groups on mount
   React.useEffect(() => {
@@ -417,6 +422,15 @@ export function MessagesPage() {
           </button>
         )}
         <h2 className="font-semibold flex-1">Messages</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowSearch(!showSearch)}
+          className={cn("p-2 text-muted-foreground hover:text-foreground", showSearch && "bg-muted text-foreground")}
+          title="Search messages"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
         <button
           onClick={() => setShowGroupCreator(true)}
           className="p-2 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
@@ -428,6 +442,34 @@ export function MessagesPage() {
           </svg>
         </button>
       </div>
+
+      {/* Search panel */}
+      {showSearch && (
+        <div className="border-b p-3 space-y-2">
+          <MessageSearchBar
+            autoFocus
+            placeholder="Search all messages..."
+          />
+          <SearchResults
+            onResultClick={(conversationId, messageId) => {
+              // Navigate to conversation
+              // Check if it's a group
+              const group = groups.find(g => g.id === conversationId);
+              if (group) {
+                setSelectedGroupId(conversationId);
+                navigate('/messages');
+              } else {
+                setSelectedGroupId(null);
+                navigate(`/messages/${conversationId}`);
+              }
+              // TODO: scroll to message by ID
+              setShowSearch(false);
+              clearSearch();
+            }}
+          />
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto">
         {/* Groups section */}
         {groups.length > 0 && (
