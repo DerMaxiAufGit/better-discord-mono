@@ -5,11 +5,12 @@ import { useMessageStore } from '@/stores/messageStore'
 import { useContactStore } from '@/stores/contactStore'
 import { useReactionStore } from '@/stores/reactionStore'
 import { useGroupStore } from '@/stores/groupStore'
+import { usePresenceStore } from '@/stores/presenceStore'
 import { encryptMessage, decryptMessage } from '@/lib/crypto/messageEncryption'
-import { usersApi, refreshAccessToken } from '@/lib/api'
+import { usersApi, refreshAccessTokenWithResult, friendsApi } from '@/lib/api'
 import { dispatchCallSignaling } from '@/lib/webrtc/useCall'
 import { setSharedWebSocket } from './sharedWebSocket'
-import { toast } from '@/lib/toast'
+import { presenceTracker } from '@/lib/presence/presenceTracker'
 
 interface UseMessagingOptions {
   onError?: (error: Error) => void
@@ -89,20 +90,24 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       setIsConnected(true)
       setSharedWebSocket(ws)  // Share for call signaling
 
-      // Update connection status in messageStore
+      // Update connection status in messageStore (this also shows the connected banner briefly)
       const store = useMessageStore.getState()
-      const wasShowingBanner = store.showConnectionBanner
       store.setConnected(true)
-
-      // Toast only if we were showing the banner AND disconnect lasted > 2 seconds
-      // This prevents toast spam on brief connection blips
-      const disconnectDuration = disconnectedAtRef.current
-        ? Date.now() - disconnectedAtRef.current
-        : 0
       disconnectedAtRef.current = null
 
-      if (wasShowingBanner && disconnectDuration > 2000) {
-        toast.success('Connected')
+      // Start presence tracking
+      presenceTracker.start(ws)
+
+      // Load initial status from server
+      usePresenceStore.getState().loadInitialStatus()
+
+      // Fetch friends list and their presence
+      try {
+        const { friends } = await friendsApi.getFriends()
+        const friendIds = friends.map(f => String(f.oderId))
+        usePresenceStore.getState().fetchBatchPresence(friendIds)
+      } catch (e) {
+        console.error('[WS] Failed to fetch friends presence:', e)
       }
 
       // Send any queued messages
@@ -248,6 +253,10 @@ export function useMessaging(options: UseMessagingOptions = {}) {
           if (currentGroupId === groupId) {
             useGroupStore.getState().loadMembers(groupId)
           }
+        } else if (data.type === 'presence_update') {
+          // Real-time presence update from another user
+          const { userId, status, lastSeen } = data
+          usePresenceStore.getState().updateUserPresence(userId, status, lastSeen)
         } else if (data.type?.startsWith('call-')) {
           // Call signaling messages - dispatch to useCall hook
           console.log('Call signaling message received:', data.type)
@@ -265,6 +274,9 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       wsRef.current = null
       setSharedWebSocket(null)  // Clear shared reference
 
+      // Stop presence tracking
+      presenceTracker.stop()
+
       // Track when disconnect happened (for toast debounce)
       if (!disconnectedAtRef.current) {
         disconnectedAtRef.current = Date.now()
@@ -281,28 +293,32 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       // Reconnect after delay - but first try to refresh the access token
       reconnectTimeoutRef.current = window.setTimeout(async () => {
         console.log('[WS] Attempting reconnect, refreshing token first...')
+        useMessageStore.getState().setReconnecting()
 
-        try {
-          // Try to refresh the access token before reconnecting
-          const newToken = await refreshAccessToken()
+        const result = await refreshAccessTokenWithResult()
 
-          if (newToken) {
-            // Update the stored token
-            localStorage.setItem('accessToken', newToken)
-            // Update auth store
-            useAuthStore.setState({ accessToken: newToken })
-            console.log('[WS] Token refreshed successfully, reconnecting...')
-            // Increment retry count - banner only shows after first retry
-            useMessageStore.getState().incrementRetry()
-            setReconnectTrigger(t => t + 1)
-          } else {
-            // Refresh failed - session expired
-            console.log('[WS] Token refresh failed, session expired')
-            useAuthStore.getState().setSessionExpired(true)
-          }
-        } catch (e) {
-          console.error('[WS] Token refresh error:', e)
+        if (result.type === 'success') {
+          // Update the stored token
+          localStorage.setItem('accessToken', result.token)
+          // Update auth store
+          useAuthStore.setState({ accessToken: result.token })
+          console.log('[WS] Token refreshed successfully, reconnecting...')
+          // Increment retry count - banner shows while reconnecting
+          useMessageStore.getState().incrementRetry()
+          setReconnectTrigger(t => t + 1)
+        } else if (result.type === 'auth_error') {
+          // Server responded but rejected - session expired
+          console.log('[WS] Token refresh failed, session expired')
           useAuthStore.getState().setSessionExpired(true)
+        } else {
+          // Network error - backend unreachable, keep retrying
+          console.log('[WS] Network error, will retry in 5 seconds...')
+          useMessageStore.getState().incrementRetry()
+          // Schedule another retry with exponential backoff (capped at 30s)
+          const retryDelay = Math.min(5000 * Math.pow(1.5, useMessageStore.getState().retryCount - 1), 30000)
+          reconnectTimeoutRef.current = window.setTimeout(() => {
+            setReconnectTrigger(t => t + 1)
+          }, retryDelay)
         }
       }, 3000)
     }
@@ -421,7 +437,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
   }, [])
 
   // Send group message (plain text for now - group encryption would need shared keys)
-  const sendGroupMessage = useCallback((groupId: string, content: string, fileIds?: string[]) => {
+  const sendGroupMessage = useCallback((groupId: string, content: string, options?: { fileIds?: string[]; replyToId?: number }) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       console.error('WebSocket not connected')
       return
@@ -433,7 +449,8 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       type: 'group-message',
       groupId,
       encryptedContent: content,
-      ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+      ...(options?.fileIds && options.fileIds.length > 0 ? { fileIds: options.fileIds } : {}),
+      ...(options?.replyToId ? { replyToId: options.replyToId } : {}),
     }))
   }, [])
 
