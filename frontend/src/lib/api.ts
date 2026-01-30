@@ -370,6 +370,105 @@ export const blocksApi = {
   },
 };
 
+export const avatarApi = {
+  // Upload cropped avatar image
+  async upload(blob: Blob): Promise<{
+    avatar: {
+      id: string;
+      tinyUrl: string;
+      smallUrl: string;
+      largeUrl: string;
+    }
+  }> {
+    const formData = new FormData();
+    formData.append('avatar', blob, 'avatar.jpg');
+
+    const accessToken = localStorage.getItem('accessToken');
+    const response = await fetch(`${API_URL}/api/avatars`, {
+      method: 'POST',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || 'Upload failed');
+    }
+
+    return response.json();
+  },
+
+  // Delete own avatar
+  async delete(): Promise<void> {
+    await apiRequest('/api/avatars', { method: 'DELETE' });
+  },
+
+  // Get avatar URLs for user
+  async get(userId: string): Promise<{
+    avatar: {
+      tinyUrl: string;
+      smallUrl: string;
+      largeUrl: string;
+    } | null
+  }> {
+    return apiRequest(`/api/avatars/${userId}`);
+  },
+
+  // Get full avatar URL
+  getUrl(userId: string, size: 'tiny' | 'small' | 'large'): string {
+    return `${API_URL}/api/avatars/${userId}/${size}`;
+  },
+};
+
+export type PresenceStatus = 'online' | 'away' | 'dnd' | 'invisible';
+
+export const presenceApi = {
+  // Update own status
+  async updateStatus(status: PresenceStatus, visibilityList?: string[]): Promise<void> {
+    await apiRequest('/api/presence/status', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, visibilityList }),
+    });
+  },
+
+  // Get own status
+  async getStatus(): Promise<{ status: string; visibilityList: string[] }> {
+    return apiRequest('/api/presence/status');
+  },
+
+  // Get another user's status
+  async getUserStatus(userId: string): Promise<{ status: string; lastSeen: string | null }> {
+    return apiRequest(`/api/presence/${userId}`);
+  },
+
+  // Get batch statuses
+  async getBatchStatus(userIds: string[]): Promise<{
+    statuses: Record<string, { status: string; lastSeen: string | null }>
+  }> {
+    return apiRequest('/api/presence/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userIds }),
+    });
+  },
+
+  // Update visibility list
+  async setVisibilityList(visibilityList: string[]): Promise<void> {
+    await apiRequest('/api/presence/visibility', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visibilityList }),
+    });
+  },
+
+  // Get visibility list
+  async getVisibilityList(): Promise<{ visibilityList: string[] }> {
+    return apiRequest('/api/presence/visibility');
+  },
+};
+
 export const api = {
   auth: authApi,
   keys: keyApi,
@@ -378,4 +477,6 @@ export const api = {
   friends: friendsApi,
   turn: turnApi,
   blocks: blocksApi,
+  avatars: avatarApi,
+  presence: presenceApi,
 }
