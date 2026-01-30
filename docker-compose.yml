@@ -32,6 +32,8 @@ services:
         restart: true
     ports:
       - "3000:3000"
+    volumes:
+      - ./data/avatars:/app/data/avatars
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s

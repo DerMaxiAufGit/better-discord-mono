@@ -14,6 +14,7 @@ import turnRoutes from './routes/turn.js';
 import fileRoutes from './routes/files.js';
 import reactionRoutes from './routes/reactions.js';
 import groupRoutes from './routes/groups.js';
+import avatarRoutes from './routes/avatars.js';
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ await fastify.register(turnRoutes, { prefix: '/api/turn' });
 await fastify.register(fileRoutes, { prefix: '/api' });
 await fastify.register(reactionRoutes, { prefix: '/api' });
 await fastify.register(groupRoutes, { prefix: '/api' });
+await fastify.register(avatarRoutes, { prefix: '/api/avatars' });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
