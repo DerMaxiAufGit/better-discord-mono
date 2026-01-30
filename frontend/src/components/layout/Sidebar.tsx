@@ -80,37 +80,39 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom controls */}
-      <div className="p-3 space-y-1 border-t border-border relative">
+      <div className="p-3 space-y-1 border-t border-border">
         {/* User info - clickable to open profile menu */}
-        <button
-          onClick={() => setShowProfileMenu(true)}
-          className={cn(
-            "flex items-center gap-3 p-2 rounded-lg w-full hover:bg-accent transition-colors",
-            collapsed && "justify-center"
-          )}
-          title="Open profile settings"
-        >
-          <AvatarDisplay
-            userId={user?.id ? String(user.id) : ''}
-            size="tiny"
-            showStatus
-            status={myStatus}
-          />
-          {!collapsed && (
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-foreground truncate">
-                {user?.username || 'User'}
-              </p>
-            </div>
-          )}
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowProfileMenu(true)}
+            className={cn(
+              "flex items-center gap-3 p-2 rounded-lg w-full hover:bg-accent transition-colors",
+              collapsed && "justify-center"
+            )}
+            title="Open profile settings"
+          >
+            <AvatarDisplay
+              userId={user?.id ? String(user.id) : ''}
+              size="tiny"
+              showStatus
+              status={myStatus}
+            />
+            {!collapsed && (
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {user?.username || 'User'}
+                </p>
+              </div>
+            )}
+          </button>
 
-        {/* Profile menu */}
-        <ProfileMenu
-          open={showProfileMenu}
-          onClose={() => setShowProfileMenu(false)}
-          className="bottom-full left-3 mb-2"
-        />
+          {/* Profile menu */}
+          <ProfileMenu
+            open={showProfileMenu}
+            onClose={() => setShowProfileMenu(false)}
+            className="bottom-full left-0 mb-2"
+          />
+        </div>
 
         {/* Settings button */}
         <Link

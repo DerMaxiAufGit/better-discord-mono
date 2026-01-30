@@ -14,28 +14,35 @@ interface ProfileMenuProps {
   open: boolean;
   onClose: () => void;
   className?: string;
+  mode?: 'popover' | 'modal';
 }
 
-export function ProfileMenu({ open, onClose, className }: ProfileMenuProps) {
+export function ProfileMenu({ open, onClose, className, mode = 'popover' }: ProfileMenuProps) {
   const user = useAuthStore((state) => state.user);
   const myStatus = usePresenceStore((state) => state.myStatus);
   const [showAvatarUpload, setShowAvatarUpload] = useState(false);
 
   if (!open) return null;
 
+  const isModal = mode === 'modal';
+
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40"
+        className={cn(
+          "fixed inset-0 z-40",
+          isModal && "bg-black/50"
+        )}
         onClick={onClose}
       />
 
       {/* Menu panel */}
       <div
         className={cn(
-          "fixed z-50 bg-card border border-border rounded-lg shadow-lg",
-          "w-80 max-h-[80vh] overflow-y-auto",
+          "z-50 bg-card border border-border rounded-lg shadow-lg",
+          "w-80 max-h-[60vh] overflow-y-auto",
+          isModal ? "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" : "absolute",
           className
         )}
       >

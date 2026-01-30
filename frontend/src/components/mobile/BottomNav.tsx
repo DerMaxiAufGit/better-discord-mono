@@ -65,7 +65,7 @@ export function BottomNav() {
       <ProfileMenu
         open={showProfileMenu}
         onClose={() => setShowProfileMenu(false)}
-        className="bottom-20 left-4 right-4 w-auto"
+        mode="modal"
       />
     </>
   )
