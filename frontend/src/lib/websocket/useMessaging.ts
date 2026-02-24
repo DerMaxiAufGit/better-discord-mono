@@ -22,6 +22,7 @@ export function useMessaging(options: UseMessagingOptions = {}) {
   const reconnectTimeoutRef = useRef<number | null>(null)
   const isCleaningUpRef = useRef(false) // Track intentional cleanup vs unexpected close
   const disconnectedAtRef = useRef<number | null>(null) // Track when disconnect happened
+  const isAuthedRef = useRef(false)
   const [isConnected, setIsConnected] = useState(false)
 
   const { accessToken, user } = useAuthStore()
@@ -71,21 +72,22 @@ export function useMessaging(options: UseMessagingOptions = {}) {
 
     // Determine WebSocket URL (same host, /api/ws path)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}/api/ws?token=${accessToken}`
+    const wsUrl = `${protocol}//${window.location.host}/api/ws`
 
     console.log('[WS] Creating new WebSocket connection...')
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
+    isAuthedRef.current = false
 
     // Connection timeout - if not connected within 10s, treat as failed
     const connectionTimeout = window.setTimeout(() => {
-      if (ws.readyState !== WebSocket.OPEN) {
+      if (ws.readyState !== WebSocket.OPEN || !isAuthedRef.current) {
         console.log('[WS] Connection timeout, closing...')
         ws.close()
       }
     }, 10000)
 
-    ws.onopen = async () => {
+    const finalizeAuthenticatedConnection = async () => {
       clearTimeout(connectionTimeout)
       console.log('[WS] Connected successfully')
       setIsConnected(true)
@@ -125,9 +127,19 @@ export function useMessaging(options: UseMessagingOptions = {}) {
       }
     }
 
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'auth', token: accessToken }))
+    }
+
     ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data)
+        if (data.type === 'auth_ok') {
+          if (isAuthedRef.current) return
+          isAuthedRef.current = true
+          await finalizeAuthenticatedConnection()
+          return
+        }
         // Always get fresh refs to avoid stale closures
         const { getOrDeriveSessionKeys, addMessage, fetchContactPublicKey, options, user: currentUser } = storeRefs.current
 

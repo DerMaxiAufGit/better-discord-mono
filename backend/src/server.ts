@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
 import websocket from '@fastify/websocket';
@@ -20,6 +21,21 @@ import blockRoutes from './routes/blocks.js';
 
 dotenv.config();
 
+const isProd = process.env.NODE_ENV === 'production';
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (isProd && allowedOrigins.length === 0) {
+  throw new Error('CORS_ORIGIN must be set in production');
+}
+
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret || jwtSecret.length < 32) {
+  throw new Error('JWT_SECRET must be at least 32 characters');
+}
+
 const fastify = Fastify({
   logger: true
 });
@@ -29,21 +45,20 @@ await fastify.register(cors, {
   origin: (origin, cb) => {
     // Allow requests with no origin (like mobile apps or curl)
     // or any origin in development, or specific origins from env
-    const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-      cb(null, origin || true);
-    } else {
-      cb(null, origin); // Reflect the origin for credentials support
-    }
+    if (!origin) return cb(null, true);
+    if (!isProd && allowedOrigins.length === 0) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error('Not allowed'), false);
   },
   credentials: true
 });
 
 await fastify.register(jwt, {
-  secret: process.env.JWT_SECRET || 'dev-secret-change-in-production'
+  secret: jwtSecret
 });
 
 await fastify.register(cookie);
+await fastify.register(rateLimit, { global: false });
 
 // Register WebSocket plugin BEFORE routes
 await fastify.register(websocket);

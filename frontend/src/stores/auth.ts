@@ -52,10 +52,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       // Initialize crypto keys derived from email+password
       await useCryptoStore.getState().initializeKeys(email, password)
-
-      // Store credentials in sessionStorage for page refresh recovery
-      // (cleared when browser closes)
-      sessionStorage.setItem('_ec', btoa(JSON.stringify({ e: email, p: password })))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Signup failed'
       set({ error: message, isAuthenticated: false, user: null })
@@ -79,10 +75,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       // Initialize crypto keys derived from email+password
       await useCryptoStore.getState().initializeKeys(email, password)
-
-      // Store credentials in sessionStorage for page refresh recovery
-      // (cleared when browser closes)
-      sessionStorage.setItem('_ec', btoa(JSON.stringify({ e: email, p: password })))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed'
       set({ error: message, isAuthenticated: false, user: null })
@@ -98,7 +90,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       // Clear state regardless of API call result
       localStorage.removeItem('accessToken')
-      sessionStorage.removeItem('_ec')
       useCryptoStore.getState().clearKeys()
       set({
         user: null,
@@ -171,9 +162,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       // Reinitialize crypto keys with provided credentials
       await useCryptoStore.getState().initializeKeys(email, password)
-
-      // Update stored credentials in sessionStorage
-      sessionStorage.setItem('_ec', btoa(JSON.stringify({ e: email, p: password })))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed'
       set({ error: message })

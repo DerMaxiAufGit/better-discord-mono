@@ -107,6 +107,7 @@ function App() {
   const isCryptoInitialized = useCryptoStore((state) => state.isInitialized)
   const initializeKeys = useCryptoStore((state) => state.initializeKeys)
   const logout = useAuthStore((state) => state.logout)
+  const setSessionExpired = useAuthStore((state) => state.setSessionExpired)
   const logoutTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -122,7 +123,7 @@ function App() {
     }
   }, [isAuthenticated])
 
-  // Recover crypto keys on page refresh using sessionStorage
+  // Require re-auth to recover crypto keys
   useEffect(() => {
     // Clear any pending logout timeout
     if (logoutTimeoutRef.current) {
@@ -131,31 +132,15 @@ function App() {
     }
 
     if (isAuthInitialized && isAuthenticated && !isCryptoInitialized) {
-      const stored = sessionStorage.getItem('_ec')
-      if (stored) {
-        try {
-          const { e, p } = JSON.parse(atob(stored))
-          initializeKeys(e, p).catch((err) => {
-            console.error('Failed to recover crypto keys:', err)
-            sessionStorage.removeItem('_ec')
-            logout()
-          })
-        } catch {
-          console.warn('Could not recover encryption keys - forcing re-login')
-          sessionStorage.removeItem('_ec')
-          logout()
+      // Wait a moment in case login is still in progress
+      logoutTimeoutRef.current = window.setTimeout(() => {
+        const cryptoStore = useCryptoStore.getState()
+        const stillNoKeys = !cryptoStore.isInitialized
+        if (stillNoKeys) {
+          console.warn('No encryption keys available - requiring re-auth')
+          setSessionExpired(true)
         }
-      } else {
-        // Wait a moment in case login is still in progress
-        logoutTimeoutRef.current = window.setTimeout(() => {
-          const cryptoStore = useCryptoStore.getState()
-          const stillNoKeys = !cryptoStore.isInitialized && !sessionStorage.getItem('_ec')
-          if (stillNoKeys) {
-            console.warn('No stored encryption credentials - forcing re-login')
-            logout()
-          }
-        }, 2000)
-      }
+      }, 2000)
     }
 
     return () => {
@@ -166,7 +151,7 @@ function App() {
   }, [isAuthInitialized, isAuthenticated, isCryptoInitialized, initializeKeys, logout])
 
   // Debug logging
-  console.log('[App] Init state:', { isAuthInitialized, isAuthenticated, isCryptoInitialized, hasStoredKeys: !!sessionStorage.getItem('_ec') })
+  console.log('[App] Init state:', { isAuthInitialized, isAuthenticated, isCryptoInitialized })
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
