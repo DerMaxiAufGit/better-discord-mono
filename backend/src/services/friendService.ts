@@ -106,7 +106,7 @@ class FriendService {
 
   /**
    * Restore a friendship directly (used when unblocking)
-   * Creates an accepted friend_request record without requiring acceptance
+   * Only restores if a prior friend_request record exists
    */
   async restoreFriendship(userId1: string, userId2: string): Promise<void> {
     // Check if friendship already exists
@@ -117,26 +117,20 @@ class FriendService {
       [userId1, userId2]
     );
 
-    if (existing.rows.length > 0) {
-      const req = existing.rows[0];
-      if (req.status === 'accepted') {
-        return; // Already friends
-      }
-      // Update existing record to accepted
-      await query(
-        `UPDATE friend_requests
-         SET status = 'accepted', updated_at = NOW()
-         WHERE id = $1`,
-        [req.id]
-      );
+    if (existing.rows.length === 0) {
       return;
     }
 
-    // Create new accepted friendship
+    const req = existing.rows[0];
+    if (req.status === 'accepted') {
+      return; // Already friends
+    }
+    // Update existing record to accepted
     await query(
-      `INSERT INTO friend_requests (requester_id, addressee_id, status)
-       VALUES ($1, $2, 'accepted')`,
-      [userId1, userId2]
+      `UPDATE friend_requests
+       SET status = 'accepted', updated_at = NOW()
+       WHERE id = $1`,
+      [req.id]
     );
   }
 

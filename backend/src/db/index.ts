@@ -1,5 +1,6 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
+import { buildQueryErrorLog, buildQueryLog } from './logging.js';
 
 dotenv.config();
 
@@ -25,10 +26,10 @@ export const query = async (text: string, params?: any[]) => {
   try {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: result.rowCount });
+    console.log('Executed query', buildQueryLog(text, duration, result.rowCount || 0, process.env.NODE_ENV));
     return result;
   } catch (error) {
-    console.error('Database query error:', { text, error });
+    console.error('Database query error:', buildQueryErrorLog(text, error, process.env.NODE_ENV));
     throw error;
   }
 };
