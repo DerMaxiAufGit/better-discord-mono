@@ -1,108 +1,110 @@
-# Security Issues (Ready to file)
+# Security & Codebase Audit
 
-Below are issue drafts based on the repository review.
+## 1. Bugs & Correctness
 
----
+### [Critical] Single-socket map breaks multi-device sessions and causes dropped delivery
 
-## Issue 1: CORS misconfiguration reflects arbitrary origins while allowing credentials
+- **Location:** `backend/src/routes/websocket.ts:21`, `backend/src/routes/websocket.ts:117`, `backend/src/routes/websocket.ts:486`
+- `activeConnections` stores only one socket per user. A second login overwrites the first socket; when either socket closes, `delete(userId)` removes the user entirely. This causes active devices to stop receiving messages/call events.
 
-**Severity:** High  
-**Component:** Backend API (`fastify` CORS config)
+### [Moderate] Unvalidated numeric query params can generate runtime errors
 
-### Description
-The CORS origin callback returns the request origin even when that origin is not in the allowlist, while `credentials: true` is enabled.
-
-### Evidence
-- `backend/src/server.ts`:
-  - `origin` callback returns `cb(null, origin)` on non-allowlisted origin.
-  - `credentials: true`.
-
-### Security impact
-A malicious site can potentially make authenticated cross-origin requests and read responses if browser CORS checks succeed with reflected origins.
-
-### Recommended remediation
-- Reject non-allowlisted origins explicitly.
-- Require non-empty allowlist in production.
-- Add CSRF controls for cookie-backed auth endpoints.
+- **Location:** `backend/src/routes/messages.ts:39-40`, `backend/src/routes/groups.ts:180-181`, `backend/src/routes/reactions.ts:51`
+- `parseInt` outputs are used without validating `Number.isFinite(...)`. Inputs like `limit=abc` or `messageId=foo` can propagate `NaN` into DB calls and produce avoidable 4xx/5xx behavior.
 
 ---
 
-## Issue 2: JWT secret has insecure hardcoded fallback
+## 2. Security
 
-**Severity:** High  
-**Component:** Backend auth/JWT config
+### [Critical] Unblocking auto-creates friendship without mutual consent
 
-### Description
-Server uses a predictable fallback secret (`dev-secret-change-in-production`) when `JWT_SECRET` is unset.
+- **Location:** `backend/src/services/blockService.ts:43-52`, `backend/src/services/friendService.ts:109-136`
+- `unblockUser` calls `restoreFriendship`, which can create an `accepted` friendship record directly. A user can block/unblock any known user ID and become “friends” without the target accepting.
 
-### Evidence
-- `backend/src/server.ts`: `secret: process.env.JWT_SECRET || 'dev-secret-change-in-production'`
+### [Moderate] Call signaling lacks relationship/block authorization checks
 
-### Security impact
-If production env var is missing, attackers can forge valid JWTs and impersonate users.
+- **Location:** `backend/src/routes/websocket.ts:323-463`
+- `call-*` handlers do not enforce friend status or block status (unlike DM messaging). Any authenticated user with a target ID can push ringing/signaling traffic.
 
-### Recommended remediation
-- Remove fallback; fail startup when `JWT_SECRET` is missing.
-- Enforce minimum secret entropy (length + randomness checks).
+### [Moderate] SQL text is logged for every query in production path
 
----
-
-## Issue 3: Plaintext user credentials stored in sessionStorage
-
-**Severity:** High  
-**Component:** Frontend auth store
-
-### Description
-The app stores `{ email, password }` in `sessionStorage` (`_ec`) after login/signup/relogin.
-
-### Evidence
-- `frontend/src/stores/auth.ts`:
-  - `sessionStorage.setItem('_ec', btoa(JSON.stringify({ e: email, p: password })))`
-
-### Security impact
-Any XSS or compromised script can retrieve raw credentials, enabling full account takeover and reuse against other services.
-
-### Recommended remediation
-- Stop storing raw passwords in browser storage.
-- Replace with secure re-auth flow and/or device-bound encrypted key material.
+- **Location:** `backend/src/db/index.ts:28-31`
+- Raw query text and error objects are logged for all operations, increasing leakage risk of sensitive data-access patterns and expanding log attack surface.
 
 ---
 
-## Issue 4: WebSocket access token sent via query string
+## 3. Architecture & Design
 
-**Severity:** Medium  
-**Component:** Frontend + backend WebSocket auth
+### [Moderate] WebSocket route is a god-module with many responsibilities
 
-### Description
-Frontend appends bearer token in WebSocket URL (`?token=...`) and backend reads token from query parameters.
-
-### Evidence
-- `frontend/src/lib/websocket/useMessaging.ts`: `/api/ws?token=${accessToken}`
-- `backend/src/middleware/wsAuth.ts`: reads `request.query.token`
-
-### Security impact
-Tokens in URLs can leak via logs, proxy instrumentation, and browser artifacts.
-
-### Recommended remediation
-- Authenticate WebSocket upgrade via headers/cookies instead of query params.
-- Redact query strings in access logs.
+- **Location:** `backend/src/routes/websocket.ts:87-502`
+- The single handler mixes auth, DM, groups, reactions, typing, presence, and call signaling. This increases coupling and regression risk.
 
 ---
 
-## Issue 5: No rate limiting on authentication endpoints
+## 4. Error Handling
 
-**Severity:** Medium  
-**Component:** Backend auth routes
+### [Moderate] `createGroup` can leave partial state on failure
 
-### Description
-No rate limiting or anti-automation controls are configured for signup/login/refresh endpoints.
+- **Location:** `backend/src/services/groupService.ts:18-29`
+- Group creation and owner-membership insertion are not wrapped in a transaction. If the second query fails, an orphan group row can remain.
 
-### Evidence
-- `backend/src/server.ts` and `backend/src/routes/auth.ts` have no throttle/rate-limit controls.
+---
 
-### Security impact
-Increases risk of credential stuffing, brute force, and resource exhaustion (especially bcrypt-heavy login attempts).
+## 5. Performance
 
-### Recommended remediation
-- Add per-IP and per-account rate limits.
-- Add failure-based backoff/lockout and monitoring alerts.
+### [Moderate] Message history does N+1 file queries
+
+- **Location:** `backend/src/services/messageService.ts:77-91`, `backend/src/services/fileService.ts:125-130`
+- Each message in history triggers a separate `getFilesByMessage` query, causing linear DB round-trips as page size grows.
+
+### [Moderate] Presence batch endpoint performs sequential per-user lookups
+
+- **Location:** `backend/src/services/presenceService.ts:159-166`
+- `getBatchVisibleStatus` loops with awaited calls one-by-one, increasing latency for larger friend lists.
+
+### [Moderate] File uploads fully buffer content in memory
+
+- **Location:** `backend/src/routes/files.ts:24-29`
+- Uploads up to 100MB are accumulated in RAM before write. Concurrent uploads can create memory pressure and GC stalls.
+
+---
+
+## 6. Data Integrity
+
+### [Moderate] Invite usage limit is race-prone
+
+- **Location:** `backend/src/services/groupService.ts:220-246`
+- Max-use check, membership insert, and `uses` increment happen in separate non-transactional statements. Concurrent joins can exceed `max_uses`.
+
+---
+
+## 7. Dependencies & Build
+
+### [Moderate] Backend has known vulnerable transitive dependencies
+
+- **Location:** `backend/package.json:13`
+- `npm audit --omit=dev` reports 9 production vulnerabilities (4 moderate, 5 high), including chains through:
+  - `@fastify/jwt -> fast-jwt -> asn1.js -> bn.js`
+  - `@mapbox/node-pre-gyp -> tar/glob/minimatch/rimraf`
+
+---
+
+## 8. Testing Gaps
+
+### [Moderate] No automated tests for critical auth/realtime/blocking flows
+
+- **Location:** `backend/package.json:5-9`, `frontend/package.json:6-10`
+- Only build/dev scripts are present. No `*.test.*` / `*.spec.*` files were found in `backend/` or `frontend/`.
+
+---
+
+## Top Priority Findings
+
+| # | Severity | Area | Issue | Location |
+|---|----------|------|-------|----------|
+| 1 | Critical | Security | Unblock path can create accepted friendships without consent | `backend/src/services/blockService.ts:43`, `backend/src/services/friendService.ts:135` |
+| 2 | Critical | Bugs & Correctness | Single-socket connection map drops active device delivery/presence | `backend/src/routes/websocket.ts:21`, `backend/src/routes/websocket.ts:486` |
+| 3 | Moderate | Security | Call signaling has no friend/block authorization checks | `backend/src/routes/websocket.ts:323` |
+| 4 | Moderate | Data Integrity | Invite max-use check is race-prone (non-transactional) | `backend/src/services/groupService.ts:220` |
+| 5 | Moderate | Performance | Message history performs N+1 file queries | `backend/src/services/messageService.ts:77`, `backend/src/services/fileService.ts:125` |
