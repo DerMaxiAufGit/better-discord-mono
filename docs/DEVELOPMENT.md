@@ -20,10 +20,11 @@ This guide covers setting up a local development environment for contributing to
 better-discord-mono/
 ├── backend/               # Fastify API server
 │   ├── src/
-│   │   ├── index.ts       # Entry point
-│   │   ├── db.ts          # Database connection
-│   │   ├── auth/          # Authentication service & routes
-│   │   └── types.ts       # Shared TypeScript types
+│   │   ├── server.ts      # Entry point
+│   │   ├── db/            # Database connection + schema
+│   │   ├── routes/        # HTTP + WebSocket routes
+│   │   ├── services/      # Business logic layer
+│   │   └── types/         # Shared TypeScript types
 │   ├── package.json
 │   └── tsconfig.json
 ├── frontend/              # React application
@@ -170,11 +171,11 @@ Backend runs on **http://localhost:3000**
 
 Available endpoints:
 - `GET /health` - Health check
-- `POST /auth/signup` - Create account
-- `POST /auth/login` - Login
-- `POST /auth/refresh` - Refresh access token
-- `POST /auth/logout` - Logout
-- `GET /auth/me` - Get current user
+- `POST /api/auth/signup` - Create account
+- `POST /api/auth/login` - Login
+- `POST /api/auth/refresh` - Refresh access token
+- `POST /api/auth/logout` - Logout
+- `GET /api/auth/me` - Get current user
 
 ### Running Frontend (Development Mode)
 
@@ -201,8 +202,8 @@ Frontend runs on **http://localhost:5173**
 
 Example: Add new route
 ```typescript
-// backend/src/auth/routes.ts
-fastify.get('/auth/test', async (request, reply) => {
+// backend/src/routes/auth.ts
+fastify.get('/api/auth/test', async (request, reply) => {
   return { message: 'Test endpoint' };
 });
 ```
@@ -258,18 +259,18 @@ export function TestComponent() {
 curl http://localhost:3000/health
 
 # Signup
-curl -X POST http://localhost:3000/auth/signup \
+curl -X POST http://localhost:3000/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"Test1234"}'
 
 # Login
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -c cookies.txt \
   -d '{"email":"test@example.com","password":"Test1234"}'
 
 # Get current user (requires access token from login response)
-curl http://localhost:3000/auth/me \
+curl http://localhost:3000/api/auth/me \
   -H "Authorization: Bearer <access-token-from-login>"
 ```
 
@@ -411,7 +412,7 @@ TRUNCATE users CASCADE;
 lsof -i :3000  # macOS/Linux
 netstat -ano | findstr :3000  # Windows
 
-# Kill process or change port in backend/src/index.ts
+# Kill process or change BACKEND_PORT in .env for Docker
 ```
 
 ### Database Connection Failed
@@ -428,14 +429,11 @@ netstat -ano | findstr :3000  # Windows
 **Problem**: Frontend can't call backend API
 
 **Solution**:
-- Backend CORS is configured for `http://localhost:5173`
-- If using different frontend port, update `backend/src/index.ts`:
-  ```typescript
-  fastify.register(cors, {
-    origin: 'http://localhost:YOUR_PORT',
-    credentials: true,
-  });
-  ```
+- Set `CORS_ORIGIN` in your env to include your frontend origin(s)
+- Examples:
+  - Docker/nginx: `CORS_ORIGIN=http://localhost,http://127.0.0.1`
+  - Vite dev server: `CORS_ORIGIN=http://localhost:5173,http://127.0.0.1:5173`
+- Restart backend after changing env values
 
 ### TypeScript Errors
 

@@ -2,7 +2,7 @@
  * Application version and changelog
  */
 
-export const APP_VERSION = '1.0.0'
+export const APP_VERSION = '1.2.0'
 export const APP_NAME = 'ChatApp'
 
 export interface RoadmapPhase {
@@ -30,7 +30,7 @@ export const ROADMAP: RoadmapPhase[] = [
   {
     version: '1.1.0',
     title: 'Enhanced Communication',
-    status: 'planned',
+    status: 'completed',
     features: [
       'Video calls',
       'Group messaging',
@@ -42,7 +42,7 @@ export const ROADMAP: RoadmapPhase[] = [
   {
     version: '1.2.0',
     title: 'Social Features',
-    status: 'planned',
+    status: 'current',
     features: [
       'User profiles with avatars',
       'Friend requests system',
@@ -66,6 +66,29 @@ export const ROADMAP: RoadmapPhase[] = [
 ]
 
 export const CHANGELOG = [
+  {
+    version: '1.2.0',
+    date: '2026-02-24',
+    changes: [
+      'Social layer rollout in progress',
+      'User avatars and profile surfaces',
+      'Friend request flow',
+      'Presence system with status and visibility controls',
+      'Blocking and unblock restore behavior',
+      'Message search and indexing',
+    ],
+  },
+  {
+    version: '1.1.0',
+    date: '2026-02-10',
+    changes: [
+      'Video call support on top of existing WebRTC voice calls',
+      'Group messaging',
+      'File upload and attachment delivery',
+      'Message reactions',
+      'Typing indicators for direct and group conversations',
+    ],
+  },
   {
     version: '1.0.0',
     date: '2026-01-28',

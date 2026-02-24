@@ -39,16 +39,25 @@ Copy the example environment file:
 cp .env.example .env
 ```
 
-**CRITICAL**: Edit `.env` and change these values:
+**CRITICAL**: Edit `.env` and set these values:
 
 ```bash
 # Generate a secure JWT secret (64+ characters recommended)
 openssl rand -base64 64
 
+# Generate a TURN secret (required for TURN auth)
+openssl rand -hex 32
+
 # Then update .env:
 JWT_SECRET=<paste-generated-secret-here>
 DB_PASSWORD=<choose-strong-database-password>
+CORS_ORIGIN=http://localhost,http://127.0.0.1
+TURN_SECRET=<paste-generated-turn-secret-here>
+TURN_REALM=localhost
+TURN_HOST=localhost
 ```
+
+`CORS_ORIGIN` is required when backend runs in production mode. If it is empty, backend startup fails fast.
 
 **Security Warning**: Never commit `.env` to version control. The `.gitignore` already excludes it.
 
@@ -68,11 +77,12 @@ This command will:
 
 **Expected output:**
 ```
-[+] Running 4/4
+[+] Running 5/5
  ✔ Network better-discord-mono_default    Created
  ✔ Container better-discord-mono-postgres-1   Started
  ✔ Container better-discord-mono-backend-1    Started
  ✔ Container better-discord-mono-frontend-1   Started
+ ✔ Container better-discord-mono-coturn-1     Started
 ```
 
 ### 4. Wait for Health Checks
@@ -96,7 +106,10 @@ NAME                               STATUS
 better-discord-mono-postgres-1     Up (healthy)
 better-discord-mono-backend-1      Up (healthy)
 better-discord-mono-frontend-1     Up (healthy)
+better-discord-mono-coturn-1       Up
 ```
+
+Note: `coturn` may show `unhealthy` if TURN env values are missing or invalid.
 
 ### 5. Access the Application
 
@@ -263,11 +276,12 @@ docker compose down -v  # Removes volumes with database data
 For production deployments:
 
 1. **Use HTTPS**: Add SSL/TLS certificates to nginx configuration
-2. **Change Default Secrets**: Generate new JWT_SECRET and DB_PASSWORD
+2. **Change Default Secrets**: Generate new JWT_SECRET, DB_PASSWORD, and TURN_SECRET
 3. **Backup Database**: Set up automated PostgreSQL backups
 4. **Resource Limits**: Configure container memory/CPU limits in docker-compose.yml
 5. **Monitoring**: Add logging and monitoring solutions
 6. **Firewall**: Restrict port 3000 to localhost only (nginx proxy handles external traffic)
+7. **Set Explicit Origins/Relay**: Configure CORS_ORIGIN, TURN_REALM, and TURN_HOST for your domain
 
 See [CONFIGURATION.md](CONFIGURATION.md) for production environment variable recommendations.
 

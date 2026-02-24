@@ -75,6 +75,39 @@ The application uses JSON Web Tokens (JWT) for authentication with a dual-token 
 - **Production Notes**: Keep as `/api` when using docker-compose.yml
 - **Development Notes**: Change to `http://localhost:3000` when running frontend/backend separately
 
+### CORS Configuration
+
+#### `CORS_ORIGIN`
+- **Description**: Comma-separated allowlist of frontend origins allowed to call the backend
+- **Default**: `http://localhost,http://127.0.0.1` (example)
+- **Required**: Yes in production
+- **Security**: Backend startup fails in production mode if this value is empty
+- **Format**: `https://app.example.com,https://admin.example.com`
+- **Development Notes**: When `NODE_ENV` is not `production`, backend allows requests if no allowlist is set
+
+### TURN Configuration (WebRTC)
+
+These variables configure coturn for NAT traversal in voice/video calls.
+
+#### `TURN_SECRET`
+- **Description**: Shared secret used for TURN REST authentication
+- **Default**: `CHANGE_ME_GENERATE_WITH_OPENSSL_RAND_HEX_32_MIN_64_HEX_CHARS`
+- **Required**: Yes for reliable TURN relay behavior
+- **Security**: **CRITICAL** - Must be random and private in production
+- **Generate**: `openssl rand -hex 32`
+
+#### `TURN_REALM`
+- **Description**: TURN realm used by coturn and credential generation
+- **Default**: `localhost`
+- **Required**: Strongly recommended
+- **Production Notes**: Set to your public domain (for example: `chat.example.com`)
+
+#### `TURN_HOST`
+- **Description**: Public host/IP clients use to reach your TURN server
+- **Default**: `localhost`
+- **Required**: Yes for internet-facing deployments
+- **Production Notes**: Set to your server hostname or public IP
+
 ## Configuration Examples
 
 ### Development Environment
@@ -90,6 +123,10 @@ JWT_ACCESS_EXPIRY=15m
 JWT_REFRESH_EXPIRY=7d
 
 VITE_API_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:5173,http://127.0.0.1:5173
+TURN_SECRET=<generate-with-openssl-rand-hex-32>
+TURN_REALM=localhost
+TURN_HOST=localhost
 ```
 
 ### Production Environment
@@ -105,6 +142,10 @@ JWT_ACCESS_EXPIRY=15m
 JWT_REFRESH_EXPIRY=7d
 
 VITE_API_URL=/api
+CORS_ORIGIN=https://chat.example.com
+TURN_SECRET=<generate-with-openssl-rand-hex-32>
+TURN_REALM=chat.example.com
+TURN_HOST=chat.example.com
 ```
 
 ## Docker Compose Configuration

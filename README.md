@@ -4,17 +4,21 @@ A self-hostable, end-to-end encrypted communication platform for messaging and c
 
 ## Features
 
-### Current (Phase 1)
-- **User Authentication**: Secure signup and login with JWT tokens
-- **Session Persistence**: Stay logged in across browser restarts (7-day refresh tokens)
-- **Theme Support**: Light and dark mode with system preference detection
-- **Docker Deployment**: One-command deployment with Docker Compose
-- **Security**: Bcrypt password hashing, httpOnly cookies, CORS protection
+### Current State (as of February 24, 2026)
+- **Authentication & Sessions**: Signup/login, JWT auth, refresh tokens, protected routes
+- **Messaging**: End-to-end encrypted direct messaging with real-time delivery and reconnect handling
+- **Calls**: WebRTC voice and video calling with TURN integration support
+- **Groups & Social Layer**: Group messaging, friend requests, presence, avatars, user blocking
+- **Interaction & Media**: Typing indicators, message reactions, message search, file uploads
+- **Deployment**: Docker Compose stack with frontend, backend, Postgres, and coturn services
 
-### Coming Soon
-- **E2E Encrypted Messaging**: Private 1:1 messaging (Phase 2)
-- **Voice/Video Calls**: P2P WebRTC calls with screen sharing (Phase 3)
-- **Production Polish**: Mobile responsiveness, error handling, UX refinements (Phase 4)
+### About-To-Be Plans (Roadmap-Aligned)
+- **v2.0.0 Advanced Features (planned)**:
+  - Voice channels (group calls)
+  - Screen sharing
+  - Push notifications
+  - Desktop app (Electron)
+  - Mobile app (React Native)
 
 ## Install (Docker)
 
@@ -37,7 +41,10 @@ A self-hostable, end-to-end encrypted communication platform for messaging and c
    # Edit .env and change at minimum:
    # - DB_PASSWORD
    # - JWT_SECRET
+   # - CORS_ORIGIN
    # - TURN_SECRET (for WebRTC)
+   # - TURN_REALM
+   # - TURN_HOST
    ```
 
 3. **Start the application**
@@ -82,7 +89,7 @@ docker compose up -d
    │        │
 ┌──▼──┐  ┌──▼──────┐
 │React│  │ Fastify │  Port 3000 (API)
-│Next │  │ Backend │
+│ Vite│  │ Backend │
 └─────┘  └────┬────┘
               │
          ┌────▼────────┐
@@ -107,19 +114,20 @@ docker compose up -d
 
 ## Project Status
 
-This project is in active development. Phase 1 (Foundation & Deployment) is complete.
+This project is in active development.
 
 **What's Working:**
-- Full authentication flow (signup, login, logout, session persistence)
-- Theme toggle with persistence
-- Docker-based deployment
-- Protected routes and auth guards
+- v1.0.0 **Foundation & Core Features**: completed
+- v1.1.0 **Enhanced Communication**: completed
+- v1.2.0 **Social Features**: currently in progress/stabilization
 
 **What's Coming:**
-- E2E encrypted 1:1 messaging
-- P2P voice and video calls
-- Screen sharing
-- Mobile-responsive UI
+- v2.0.0 **Advanced Features**:
+  - Voice channels (group calls)
+  - Screen sharing
+  - Push notifications
+  - Desktop app (Electron)
+  - Mobile app (React Native)
 
 ## Development
 
