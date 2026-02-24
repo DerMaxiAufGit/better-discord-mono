@@ -20,7 +20,9 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /auth/signup
   fastify.post<{
     Body: { email: string; password: string };
-  }>('/signup', async (request, reply) => {
+  }>('/signup', {
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const { email, password } = request.body;
 
     // Validate email format
@@ -69,7 +71,9 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /auth/login
   fastify.post<{
     Body: { email: string; password: string };
-  }>('/login', async (request, reply) => {
+  }>('/login', {
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const { email, password } = request.body;
 
     if (!email || !password) {
@@ -112,7 +116,9 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /auth/refresh
-  fastify.post('/refresh', async (request, reply) => {
+  fastify.post('/refresh', {
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const refreshToken = request.cookies.refreshToken;
 
     if (!refreshToken) {

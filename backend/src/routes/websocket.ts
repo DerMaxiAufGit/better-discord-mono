@@ -1,6 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { WebSocket } from '@fastify/websocket';
-import { wsAuthHook } from '../middleware/wsAuth.js';
 import { messageService } from '../services/messageService.js';
 import { friendService } from '../services/friendService.js';
 import { blockService } from '../services/blockService.js';
@@ -34,10 +33,11 @@ export function broadcastToUsers(userIds: string[], message: object) {
 
 // Message types for WebSocket communication
 interface IncomingMessage {
-  type: 'message' | 'group-message' | 'typing' | 'read' |
+  type: 'auth' | 'message' | 'group-message' | 'typing' | 'read' |
         'call-offer' | 'call-answer' | 'call-ice-candidate' |
         'call-accept' | 'call-reject' | 'call-hangup' |
         'presence_heartbeat' | 'presence_update';
+  token?: string;
   recipientId?: string;
   groupId?: string;  // For group messages
   encryptedContent?: string;
@@ -85,30 +85,54 @@ interface ErrorMessage {
 }
 
 const websocketRoutes: FastifyPluginAsync = async (fastify) => {
-  // Apply authentication to all routes in this plugin
-  fastify.addHook('preValidation', wsAuthHook);
-
   // WebSocket endpoint
   fastify.get('/ws', { websocket: true }, async (socket, request) => {
-    const userId = request.user?.userId;
-
-    if (!userId) {
-      fastify.log.error('WebSocket connection without userId - should not happen after auth');
-      socket.close(1008, 'Unauthorized');
-      return;
-    }
-
-    // Store connection
-    activeConnections.set(userId, socket);
-    fastify.log.info(`User ${userId} connected via WebSocket`);
-
-    // Track presence
-    await presenceService.userConnected(userId);
+    let userId: string | null = null;
+    let isAuthed = false;
+    const authTimeout = setTimeout(() => {
+      if (!isAuthed) {
+        socket.close(1008, 'Unauthorized');
+      }
+    }, 10000);
 
     // Handle incoming messages
     socket.on('message', async (data: Buffer | ArrayBuffer | Buffer[]) => {
       try {
         const msg: IncomingMessage = JSON.parse(data.toString());
+
+        if (!isAuthed) {
+          if (msg.type !== 'auth' || !msg.token) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'Unauthorized',
+            } as ErrorMessage));
+            return;
+          }
+
+          try {
+            const decoded = await fastify.jwt.verify<{ userId: string }>(msg.token);
+            userId = decoded.userId;
+            isAuthed = true;
+            clearTimeout(authTimeout);
+            activeConnections.set(userId, socket);
+            fastify.log.info(`User ${userId} connected via WebSocket`);
+            await presenceService.userConnected(userId);
+            socket.send(JSON.stringify({ type: 'auth_ok' }));
+            return;
+          } catch (err) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              message: 'Invalid authentication token',
+            } as ErrorMessage));
+            socket.close(1008, 'Unauthorized');
+            return;
+          }
+        }
+
+        if (!userId) {
+          socket.close(1008, 'Unauthorized');
+          return;
+        }
 
         if (msg.type === 'message') {
           // Validate required fields
@@ -458,17 +482,21 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Handle connection close
     socket.on('close', async () => {
-      activeConnections.delete(userId);
-      fastify.log.info(`User ${userId} disconnected`);
-
-      // Update presence
-      await presenceService.userDisconnected(userId);
+      if (userId) {
+        activeConnections.delete(userId);
+        fastify.log.info(`User ${userId} disconnected`);
+        await presenceService.userDisconnected(userId);
+      }
     });
 
     // Handle errors
     socket.on('error', (error: Error) => {
-      fastify.log.error(`WebSocket error for user ${userId}: ${error.message}`);
-      activeConnections.delete(userId);
+      if (userId) {
+        fastify.log.error(`WebSocket error for user ${userId}: ${error.message}`);
+        activeConnections.delete(userId);
+      } else {
+        fastify.log.error(`WebSocket error before auth: ${error.message}`);
+      }
     });
   });
 };
