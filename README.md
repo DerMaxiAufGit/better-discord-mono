@@ -16,14 +16,14 @@ A self-hostable, end-to-end encrypted communication platform for messaging and c
 - **Voice/Video Calls**: P2P WebRTC calls with screen sharing (Phase 3)
 - **Production Polish**: Mobile responsiveness, error handling, UX refinements (Phase 4)
 
-## Quick Start
+## Install (Docker)
 
 ### Prerequisites
 - Docker and Docker Compose installed
 - 2GB RAM minimum
-- Ports 80 and 3000 available
+- Ports 80 and 3000 available (backend port can be changed via `BACKEND_PORT`)
 
-### Deploy in 3 Steps
+### Deploy in 4 Steps
 
 1. **Clone the repository**
    ```bash
@@ -34,7 +34,10 @@ A self-hostable, end-to-end encrypted communication platform for messaging and c
 2. **Configure environment**
    ```bash
    cp .env.example .env
-   # Edit .env and change JWT_SECRET and DB_PASSWORD
+   # Edit .env and change at minimum:
+   # - DB_PASSWORD
+   # - JWT_SECRET
+   # - TURN_SECRET (for WebRTC)
    ```
 
 3. **Start the application**
@@ -42,9 +45,25 @@ A self-hostable, end-to-end encrypted communication platform for messaging and c
    docker compose up -d
    ```
 
-   Wait 60 seconds for health checks, then visit **http://localhost**
+4. **Open the app**
+   Wait ~60 seconds for health checks, then visit **http://localhost**
 
 For detailed instructions, see [docs/SETUP.md](docs/SETUP.md)
+
+### Database Setup
+- The database runs as a Postgres container and is initialized automatically from `postgres/init.sql`.
+- DB credentials come from `.env` (`DB_USER`, `DB_PASSWORD`, `DB_NAME`).
+- Data is persisted in the Docker volume `postgres_data`.
+
+**Reset the database (erases all data):**
+```bash
+docker compose down -v
+docker compose up -d
+```
+
+### Ports
+- Frontend: `http://localhost` (port 80)
+- Backend API: `http://localhost:3000` (change with `BACKEND_PORT`)
 
 ## Documentation
 
