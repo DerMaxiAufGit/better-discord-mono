@@ -4,6 +4,7 @@ import { messageService } from '../services/messageService.js';
 import { friendService } from '../services/friendService.js';
 import { blockService } from '../services/blockService.js';
 import { handleTypingEvent } from '../services/typingService.js';
+import { canSignalCall } from '../services/callAuth.js';
 import { pool } from '../db/index.js';
 import { presenceService } from '../services/presenceService.js';
 import type { PresenceStatus } from '../db/schema.js';
@@ -320,6 +321,16 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             return;
           }
 
+          const callAuth = await canSignalCall(userId, msg.recipientId);
+          if (!callAuth.ok) {
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: callAuth.reason,
+            }));
+            return;
+          }
+
           const recipientSocket = activeConnections.get(msg.recipientId);
           fastify.log.info(`[CALL] Recipient ${msg.recipientId} socket exists: ${!!recipientSocket}, readyState: ${recipientSocket?.readyState}`);
           fastify.log.info(`[CALL] Active connections: ${Array.from(activeConnections.keys()).join(', ')}`);
@@ -354,6 +365,16 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             return;
           }
 
+          const callAuth = await canSignalCall(userId, msg.recipientId);
+          if (!callAuth.ok) {
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: callAuth.reason,
+            }));
+            return;
+          }
+
           const recipientSocket = activeConnections.get(msg.recipientId);
           if (recipientSocket && recipientSocket.readyState === 1) {
             recipientSocket.send(JSON.stringify({
@@ -381,6 +402,16 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             return;
           }
 
+          const callAuth = await canSignalCall(userId, msg.recipientId);
+          if (!callAuth.ok) {
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: callAuth.reason,
+            }));
+            return;
+          }
+
           const recipientSocket = activeConnections.get(msg.recipientId);
           if (recipientSocket && recipientSocket.readyState === 1) {
             recipientSocket.send(JSON.stringify({
@@ -400,6 +431,16 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
               type: 'error',
               message: 'call-accept requires recipientId and callId',
             } as ErrorMessage));
+            return;
+          }
+
+          const callAuth = await canSignalCall(userId, msg.recipientId);
+          if (!callAuth.ok) {
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: callAuth.reason,
+            }));
             return;
           }
 
@@ -429,6 +470,16 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
             return;
           }
 
+          const callAuth = await canSignalCall(userId, msg.recipientId);
+          if (!callAuth.ok) {
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: callAuth.reason,
+            }));
+            return;
+          }
+
           const recipientSocket = activeConnections.get(msg.recipientId);
           if (recipientSocket && recipientSocket.readyState === 1) {
             recipientSocket.send(JSON.stringify({
@@ -449,6 +500,16 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
               type: 'error',
               message: 'call-hangup requires recipientId and callId',
             } as ErrorMessage));
+            return;
+          }
+
+          const callAuth = await canSignalCall(userId, msg.recipientId);
+          if (!callAuth.ok) {
+            socket.send(JSON.stringify({
+              type: 'call-error',
+              callId: msg.callId,
+              error: callAuth.reason,
+            }));
             return;
           }
 
